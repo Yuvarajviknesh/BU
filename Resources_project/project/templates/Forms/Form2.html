@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block content %}
+  <style>
+    /* ---------- Table Design for ICT Facilities ---------- */
+    .table-responsive {
+      margin-top: 20px;
+    }
+    table.ict-table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      margin-bottom: 20px;
+    }
+    table.ict-table thead {
+      background-color: #002d6b;
+      color: white;
+    }
+    table.ict-table thead th {
+      padding: 12px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+    table.ict-table tbody tr {
+      border-bottom: 1px solid #ddd;
+      transition: background-color 0.3s ease;
+    }
+    table.ict-table tbody tr:hover {
+      background-color: #fffcf7;
+    }
+    table.ict-table tbody td {
+      padding: 12px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+    
+    .btn-view, .btn-edit {
+      padding: 5px 15px;
+      text-transform: uppercase;
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      font-size: 0.9rem;
+    }
+    .btn-view {
+      background-color: #f4a641; 
+      color: #000;
+    }
+    .btn-view::before {
+      content: "👁 ";
+      margin-right: 3px;
+    }
+    .btn-edit {
+      background-color: #007bff; 
+      color: #fff;
+    }
+    .btn-edit::before {
+      content: "✏️ ";
+      margin-right: 3px;
+    }
+    .btn-view:hover, .btn-edit:hover {
+      border-color: #000;
+    }
+
+    .action-cell {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    /* ---------- Toast Notification Styling ---------- */
+    .toast {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1050;
+    }
+    .btn-add {
+    background-color: #f4a641;
+    color: #000;
+    padding: 6px 15px;
+    text-transform: uppercase;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    font-size: 0.9rem;
+  }
+  .btn-add:hover {
+    border-color: #000;
+    background-color: white;
+  }
+
+  </style>
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="section-title m-0">Department ICT Facilities and Resources</h2>
+      <a href="{% url 'addData2' %}" class="btn btn-add">+  Add</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover ict-table">
+        <thead>
+          <tr>
+            <th>Department Code</th>
+            <th>Department Name</th>
+            <th>Room Type</th>
+            <th>Room No</th>
+            <th>Type of ICT Facility</th>
+            <th>Link to Geo-tagged Photo</th>
+            <th>Link to Master Time Table</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>CS101</td>
+            <td>Computer Science</td>
+            <td>Lecture Hall</td>
+            <td>101</td>
+            <td>Projector, Wi-Fi</td>
+            <td><a href="https://example.com/photo1" target="_blank">View Photo</a></td>
+            <td><a href="https://example.com/timetable1" target="_blank">View Timetable</a></td>
+            <td class="action-cell">
+              <a href="#" class="btn btn-sm btn-view">View</a>
+              <a href="#" class="btn btn-sm btn-edit" data-bs-toggle="modal" data-bs-target="#editModal">Edit</a>
+            </td>
+          </tr>
+          <tr>
+            <td>ME102</td>
+            <td>Mechanical Engineering</td>
+            <td>Laboratory</td>
+            <td>202</td>
+            <td>Desktop Computers, Printer</td>
+            <td><a href="https://example.com/photo2" target="_blank">View Photo</a></td>
+            <td><a href="https://example.com/timetable2" target="_blank">View Timetable</a></td>
+            <td class="action-cell">
+              <a href="#" class="btn btn-sm btn-view">View</a>
+              <a href="#" class="btn btn-sm btn-edit" data-bs-toggle="modal" data-bs-target="#editModal">Edit</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editModalLabel">Edit Department ICT Facility</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editForm">
+            <div class="mb-3">
+              <label for="departmentCode" class="form-label">Department Code</label>
+              <input type="text" class="form-control" id="departmentCode" value="CS101">
+            </div>
+            <div class="mb-3">
+              <label for="departmentName" class="form-label">Department Name</label>
+              <input type="text" class="form-control" id="departmentName" value="Computer Science">
+            </div>
+            <div class="mb-3">
+              <label for="roomType" class="form-label">Room Type</label>
+              <input type="text" class="form-control" id="roomType" value="Lecture Hall">
+            </div>
+            <div class="mb-3">
+              <label for="roomNo" class="form-label">Room No</label>
+              <input type="text" class="form-control" id="roomNo" value="101">
+            </div>
+            <div class="mb-3">
+              <label for="ictFacility" class="form-label">Type of ICT Facility</label>
+              <input type="text" class="form-control" id="ictFacility" value="Projector, Wi-Fi">
+            </div>
+            <div class="mb-3">
+              <label for="geoTagLink" class="form-label">Link to Geo-tagged Photo</label>
+              <input type="url" class="form-control" id="geoTagLink" value="https://example.com/photo1">
+            </div>
+            <div class="mb-3">
+              <label for="timetableLink" class="form-label">Link to Master Time Table</label>
+              <input type="url" class="form-control" id="timetableLink" value="https://example.com/timetable1">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" form="editForm">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endblock %}

@@ -1,0 +1,25 @@
+{% load static %}
+<header class="header">
+  <div class="d-flex align-items-center">
+      <img src="{% static 'images/logo2.png' %}" alt="Bharathiar University" class="logo">
+  </div>
+
+  <!-- Desktop View: Username & Logout -->
+  <div class="user-info d-none d-md-flex align-items-center">
+      <span class="username">Hello, {{ user.username }}!</span>
+      <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+  </div>
+
+  <!-- Mobile View: Menu Icon -->
+  <button class="navbar-toggler d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#mobileNav">
+      ☰
+  </button>
+</header>
+
+<!-- Mobile Dropdown Menu -->
+<div class="collapse fullwidth-menu" id="mobileNav">
+  <div class="menu-content">
+      <span class="username">Hello, {{ user.username }}!</span>
+      <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+  </div>
+</div>

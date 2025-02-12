@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Home Page{% endblock %}
+
+{% block content %}
+<style>
+/* Main Container */
+.main {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 20px;
+    margin: 0 auto;
+    max-width: 100%;
+    margin-top: 30px;
+}
+
+/* Card Styles */
+.card {
+    background-color: #002d6b;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    flex: 1 1 calc(25% - 40px); /* 4 cards in a row with gap */
+    min-width: 250px;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    text-decoration: none;
+    overflow: hidden;
+    word-wrap: break-word;
+    cursor: pointer;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out, color 0.3s ease-in-out;
+}
+.card a{
+    text-decoration: none;
+}
+
+/* Center the Text */
+.card h2 {
+    margin: 0;
+    padding: 10px;
+    font-size: 16px;
+    text-align: center;
+    color: white;
+    transition: color 0.3s ease-in-out;
+    
+}
+
+/* Hover Effect */
+.card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.card:hover h2 {
+    color: #f4a641;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1024px) {
+    .card {
+        flex: 1 1 calc(50% - 40px); /* 2 cards per row */
+    }
+}
+
+@media (max-width: 600px) {
+    .card {
+        flex: 1 1 calc(100% - 40px); /* 1 card per row */
+    }
+}
+
+</style>
+<div class="main">
+    <div class="card">
+        <a href="{% url 'form2' %}"><h2>
+            ICT Facilities in Classrooms/Seminar Halls
+        </h2></a>
+    </div>
+    <div class="card">
+        <a href="{% url 'library_resources' %}" ><h2>
+            Institution Has Subscription For E-Library Resources 
+        </h2></a>
+    </div>
+    <div class="card">
+       <a href="{% url 'form4' %}">
+        <h2>
+            Total Expenditure Incurred on Maintenance of Physical Facilities and Academic Support Facilities Excluding Salary Component During the Year
+        </h2>
+       </a>
+    </div>
+    <div class="card">
+        <a href="{% url 'form3' %}">
+         <h2>
+            Institution Has the Following Facilities for E-Content Development: 
+            Media Centre,
+            Audio Visual Centre,
+            Lecture Capturing System (LCS),
+            Mixing Equipments and Softwares for Editing
+         </h2>
+        </a>
+     </div>
+</div>
+{% endblock %}

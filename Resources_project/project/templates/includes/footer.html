@@ -1,0 +1,12 @@
+<footer class="footer">
+    <p>&copy; 2025 Bharathiar University. All Rights Reserved. <a href="#">Privacy Policy</a></p>
+</footer>
+<script>
+    document.getElementById("saveChanges").addEventListener("click", function() {
+      var successToast = new bootstrap.Toast(document.getElementById("successToast"));
+      successToast.show();
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    });
+  </script>

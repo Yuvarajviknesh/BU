@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  /* Toast Notification */
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+  }
+  .toast-header {
+    font-weight: bold;
+  }
+
+  /* Table Styling */
+  .table-responsive {
+    margin-top: 20px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    margin-bottom: 20px;
+  }
+
+  /* Table Header */
+  table thead {
+    background-color: #002d6b;
+    color: white;
+  }
+  table thead th {
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #ddd;
+    font-weight: bold;
+    vertical-align: middle;
+  }
+
+  /* Table Body */
+  table tbody td {
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #ddd;
+    vertical-align: middle;
+  }
+
+  /* Action Buttons */
+  .btn-view, .btn-edit {
+    padding: 6px 15px;
+    text-transform: uppercase;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    font-size: 0.9rem;
+  }
+  .btn-view {
+    background-color: #f4a641;
+    color: #000;
+  }
+  .btn-view::before {
+    content: "👁 ";
+    margin-right: 3px;
+  }
+  .btn-edit {
+    background-color: #007bff;
+    color: #fff;
+  }
+  .btn-edit::before {
+    content: "✏️ ";
+    margin-right: 3px;
+  }
+  .btn-view:hover, .btn-edit:hover {
+    border-color: #000;
+  }
+  .btn-add {
+    background-color: #f4a641;
+    color: #000;
+    padding: 6px 15px;
+    text-transform: uppercase;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    font-size: 0.9rem;
+  }
+  .btn-add:hover {
+    border-color: #000;
+    background-color: white;
+  }
+
+  .action-cell {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    align-items: center;
+  }
+
+  @media (max-width: 767px) {
+    table thead th, table tbody td {
+      padding: 8px;
+      font-size: 0.85rem;
+    }
+    .btn-view, .btn-edit {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+    }
+  }
+</style>
+
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="section-title m-0 text-center w-100">Total Expenditure Incurred on Maintenance</h2>
+    <a href="{% url 'addData4' %}" class="btn btn-add">+ Add</a>
+  </div>
+  
+  <div class="table-responsive">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Year</th>
+          <th>Budget Allocated for Infrastructure Augmentation</th>
+          <th>Expenditure for Infrastructure Augmentation</th>
+          <th>Total Expenditure Excluding Salary</th>
+          <th>Expenditure on Maintenance of Academic Facilities</th>
+          <th>Expenditure on Maintenance of Physical Facilities</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2024</td>
+          <td>₹10,00,000</td>
+          <td>₹8,50,000</td>
+          <td>₹12,00,000</td>
+          <td>₹2,00,000</td>
+          <td>₹1,50,000</td>
+          <td class="action-cell">
+            <a href="#" class="btn btn-sm btn-view">View</a>
+            <a href="#" class="btn btn-sm btn-edit" data-bs-toggle="modal" data-bs-target="#editModal">Edit</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Expenditure Record</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="mb-3">
+            <label class="form-label">Year</label>
+            <input type="text" class="form-control" value="2024">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Budget Allocated</label>
+            <input type="text" class="form-control" value="₹10,00,000">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Expenditure for Infrastructure Augmentation</label>
+            <input type="text" class="form-control" value="₹8,50,000">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Total Expenditure Excluding Salary</label>
+            <input type="text" class="form-control" value="₹12,00,000">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Expenditure on Maintenance of Academic Facilities</label>
+            <input type="text" class="form-control" value="₹2,00,000">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Expenditure on Maintenance of Physical Facilities</label>
+            <input type="text" class="form-control" value="₹1,50,000">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="saveChanges">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container position-fixed">
+  <div id="successToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">Changes saved successfully!</div>
+      <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+{% endblock %}

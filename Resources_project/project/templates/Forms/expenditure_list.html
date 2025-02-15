@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block content %}
+  <style>
+    .table-responsive { margin-top: 20px; }
+    table.expenditure-table { width: 100%; border-collapse: collapse; background-color: #fff; border: 1px solid #ddd; margin-bottom: 20px; }
+    table.expenditure-table thead { background-color: #002d6b; color: white; }
+    table.expenditure-table th, table.expenditure-table td { padding: 12px; text-align: center; border: 1px solid #ddd; }
+    table.expenditure-table tbody tr:hover { background-color: #fffcf7; }
+    
+    .btn-delete, .btn-edit, .btn-add {
+      padding: 6px 15px; text-transform: uppercase; border: 2px solid transparent; transition: all 0.3s ease; white-space: nowrap; font-size: 0.9rem;
+    }
+    .btn-delete { background-color: rgb(237, 27, 27); color: #fff; }
+    .btn-edit { background-color: #007bff; color: #fff; }
+    .btn-add { background-color: #f4a641; color: #fff; }
+    .btn-delete:hover, .btn-edit:hover, .btn-add:hover { border-color: #000; }
+    .action-cell { display: flex; justify-content: center; gap: 10px; }
+  </style>
+
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="section-title m-0">Expenditure Management</h2>
+      <a href="{% url 'add_expenditure' %}" class="btn btn-add">+ Add</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover expenditure-table">
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>Budget Allocated</th>
+            <th>Expenditure on Infrastructure</th>
+            <th>Expenditure on Maintenance of Academic Facilities</th>
+            <th>Expenditure on Maintenance of Physical Facilities</th>
+            <th>Total Expenditure Excluding Salary</th> <!-- Added This -->
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for expenditure in expenditures %}
+          <tr>
+            <td>{{ expenditure.year }}</td>
+            <td>{{ expenditure.budget_allocated }}</td>
+            <td>{{ expenditure.expenditure_infra }}</td>
+            <td>{{ expenditure.academic_facilities }}</td>
+            <td>{{ expenditure.physical_facilities }}</td>
+            <td>{{ expenditure.total_expenditure }}</td>
+
+            <td class="action-cell">
+              <button class="btn btn-sm btn-edit" data-bs-toggle="modal" data-bs-target="#editModal"
+                data-id="{{ expenditure.id }}"
+                data-year="{{ expenditure.year }}"
+                data-budget="{{ expenditure.budget_allocated }}"
+                data-infra="{{ expenditure.expenditure_infra }}"
+                data-academic="{{ expenditure.academic_facilities }}"
+                data-physical="{{ expenditure.physical_facilities }}"
+                data-total="{{ expenditure.total_expenditure }}" 
+                data-update-url="{% url 'update_expenditure' expenditure.id %}">
+                ✏️ Edit
+              </button>
+              <a href="#" class="btn btn-sm btn-delete" onclick="confirmDelete(event, '{% url 'delete_expenditure' expenditure.id  %}')">🗑️ Delete</a>    
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Expenditure</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editForm" method="POST">
+            {% csrf_token %}
+            <input type="hidden" id="expenditureId" name="expenditure_id">
+            <div class="mb-3">
+              <label class="form-label">Year</label>
+              <input type="text" class="form-control" id="editYear" name="year" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Budget Allocated</label>
+              <input type="text" class="form-control" id="editBudget" name="budget_allocated" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Expenditure Infrastructure</label>
+              <input type="text" class="form-control" id="editInfra" name="expenditure_infra" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Academic Facilities</label>
+              <input type="text" class="form-control" id="editAcademic" name="academic_facilities" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Physical Facilities</label>
+              <input type="text" class="form-control" id="editPhysical" name="physical_facilities" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Total Expenditure Excluding Salary</label>
+              <input type="text" class="form-control" id="editTotal" name="total_expenditure_excluding_salary" required>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var editModal = document.getElementById("editModal");
+  
+      editModal.addEventListener("show.bs.modal", function (event) {
+        var button = event.relatedTarget;
+  
+        document.getElementById("expenditureId").value = button.getAttribute("data-id");
+        document.getElementById("editYear").value = button.getAttribute("data-year");
+        document.getElementById("editBudget").value = button.getAttribute("data-budget");
+        document.getElementById("editInfra").value = button.getAttribute("data-infra");
+        document.getElementById("editAcademic").value = button.getAttribute("data-academic");
+        document.getElementById("editPhysical").value = button.getAttribute("data-physical");
+        document.getElementById("editTotal").value = button.getAttribute("data-total");  // Load total expenditure
+        document.getElementById("editForm").action = button.getAttribute("data-update-url");
+      });
+  
+      window.confirmDelete = function (event, deleteUrl) {
+        event.preventDefault();
+        if (confirm("Are you sure?")) window.location.href = deleteUrl;
+      };
+    });
+  </script>
+{% endblock %}

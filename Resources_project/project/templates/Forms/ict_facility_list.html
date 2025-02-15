@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block content %}
+  <style>
+    /* Table Design */
+    .table-responsive { margin-top: 20px; }
+    table.ict-table { width: 100%; border-collapse: collapse; background-color: #fff; border: 1px solid #ddd; margin-bottom: 20px; }
+    table.ict-table thead { background-color: #002d6b; color: white; }
+    table.ict-table thead th, table.ict-table tbody td { padding: 12px; text-align: center; border: 1px solid #ddd; }
+    table.ict-table tbody tr:hover { background-color: #fffcf7; }
+    
+    /* Buttons */
+    .btn-delete, .btn-edit, .btn-add {
+      padding: 6px 15px; text-transform: uppercase; border: 2px solid transparent; transition: all 0.3s ease; white-space: nowrap; font-size: 0.9rem;
+    }
+    .btn-delete { background-color: rgb(237, 27, 27); color: #fff; }
+    .btn-delete:hover, .btn-edit:hover, .btn-add:hover { border-color: #000; }
+    .btn-edit { background-color: #007bff; color: #fff; }
+    .btn-add { background-color: #f4a641; color: #fff; }
+    
+    .action-cell { display: flex; justify-content: center; gap: 10px; }
+  </style>
+
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="section-title m-0">Department ICT Facilities and Resources</h2>
+      <a href="{% url 'add_ict_facility' %}" class="btn btn-add">+ Add</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover ict-table">
+        <thead>
+          <tr>
+            <th>Department Code</th>
+            <th>Department Name</th>
+            <th>Room Type</th>
+            <th>Room No</th>
+            <th>Type of ICT Facility</th>
+            <th>Geo-Tagged Photo</th>
+            <th>Master Time Table</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for facility in facilities %}
+          <tr>
+            <td>{{ facility.department.department_code }}</td>
+            <td>{{ facility.department.department_name }}</td>
+            <td>{{ facility.room_type }}</td>
+            <td>{{ facility.room_no }}</td>
+            <td>{{ facility.ict_facility }}</td>
+            <td>
+            {% if facility.geo_tagged_photo.url %}
+            <a href="{{ facility.geo_tagged_photo.url }}" target="_blank">View Photo</a>
+          {% else %}
+            <span class="text-danger">No Image Available</span>
+          {% endif %}
+            </td>
+          <td>
+            {% if facility.master_timetable %}
+              <a href="{{ facility.master_timetable.url }}" target="_blank">View Timetable</a>
+            {% else %}
+              <span class="text-danger">No Timetable Available</span>
+            {% endif %}
+          </td>
+          
+            <td class="action-cell">
+              <button class="btn btn-sm btn-edit" data-bs-toggle="modal" data-bs-target="#editModal"
+                data-id="{{ facility.id }}" 
+                data-department-code="{{ facility.department.department_code }}"
+                data-department-name="{{ facility.department.department_name }}"
+                data-room-type="{{ facility.room_type }}"
+                data-room-no="{{ facility.room_no }}"
+                data-ict-facility="{{ facility.ict_facility }}"
+                data-geo-tag-url="{{ facility.geo_tagged_photo.url }}"
+                data-timetable-url="{{ facility.master_timetable.url }}"
+                data-update-url="{% url 'update_facility' facility.id %}">
+                ✏️ Edit
+              </button>
+              <a href="#" class="btn btn-sm btn-delete" onclick="confirmDelete(event, '{% url 'delete_facility' facility.id  %}')">🗑️ Delete</a>    
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit ICT Facility</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editForm" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" id="facilityId" name="facility_id">
+            
+            <div class="mb-3">
+              <label class="form-label">Department Code</label>
+              <input type="text" class="form-control" id="departmentCode" name="department_code" readonly>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Department Name</label>
+              <input type="text" class="form-control" id="departmentName" name="department_name" readonly>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Room Type</label>
+              <input type="text" class="form-control" id="roomType" name="room_type" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Room No</label>
+              <input type="text" class="form-control" id="roomNo" name="room_no" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Type of ICT Facility</label>
+              <input type="text" class="form-control" id="ictFacility" name="ict_facility" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Geo-Tagged Photo</label>
+              <a id="geoTagLink" href="#" target="_blank">View</a>
+              <input type="file" class="form-control mt-2" name="geo_tagged_photo">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Master Time Table</label>
+              <a id="timetableLink" href="#" target="_blank">View</a>
+              <input type="file" class="form-control mt-2" name="master_timetable">
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var editModal = document.getElementById("editModal");
+
+      editModal.addEventListener("show.bs.modal", function (event) {
+        var button = event.relatedTarget;
+        
+        document.getElementById("facilityId").value = button.getAttribute("data-id");
+        document.getElementById("departmentCode").value = button.getAttribute("data-department-code");
+        document.getElementById("departmentName").value = button.getAttribute("data-department-name");
+        document.getElementById("roomType").value = button.getAttribute("data-room-type");
+        document.getElementById("roomNo").value = button.getAttribute("data-room-no");
+        document.getElementById("ictFacility").value = button.getAttribute("data-ict-facility");
+
+        document.getElementById("geoTagLink").href = button.getAttribute("data-geo-tag-url");
+        document.getElementById("timetableLink").href = button.getAttribute("data-timetable-url");
+
+        document.getElementById("editForm").action = button.getAttribute("data-update-url");
+      });
+
+      window.confirmDelete = function (event, deleteUrl) {
+        event.preventDefault();
+        if (confirm("Are you sure?")) window.location.href = deleteUrl;
+      };
+    });
+  </script>
+{% endblock %}

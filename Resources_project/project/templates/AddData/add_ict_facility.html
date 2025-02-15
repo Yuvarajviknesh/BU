@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .card-container {
+    max-width: 700px;
+    margin: 50px auto;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 100px;
+  }
+  .card-header {
+    background-color: #002d6b;
+    color: white;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 15px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+</style>
+
+<div class="container">
+  <div class="card-container">
+    <div class="card-header">Add New ICT Facility</div>
+    <div class="card-body">
+      <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row">
+          
+          <!-- Department Selection -->
+          <div class="col-md-12 mb-3">
+            <label class="form-label fw-bold">Department</label>
+            {% if request.user.is_superuser %}
+              <select name="department" class="form-control" required>
+                <option value="">Select Department</option>
+                {% for dept in departments %}
+                  <option value="{{ dept.department_code }}">{{ dept.department_name }}</option>
+                {% endfor %}
+              </select>
+            {% else %}
+              <input type="text" class="form-control" value="{{ request.user.userprofile.department.department_name }}" readonly>
+              <input type="hidden" name="department" value="{{ request.user.userprofile.department.department_code }}">
+            {% endif %}
+          </div>
+
+          <!-- Room Type -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Room Type</label>
+            <select name="room_type" class="form-control" required>
+              <option value="">Select Room Type</option>
+              <option value="Seminar Hall">Seminar Hall</option>
+              <option value="Classroom">Classroom</option>
+              <option value="Lab">Lab</option>
+            </select>
+          </div>
+
+          <!-- Room No -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Room No</label>
+            <input type="text" class="form-control" name="room_no" placeholder="E.g., 101" required>
+          </div>
+
+          <!-- ICT Facility -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Type of ICT Facility</label>
+            <input type="text" class="form-control" name="ict_facility" placeholder="E.g., Projector, Wi-Fi" required>
+          </div>
+
+          <!-- Geo-tagged Photo Upload -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Geo-tagged Photo</label>
+            <input type="file" class="form-control" name="geo_tagged_photo" required>
+          </div>
+
+          <!-- Master Time Table Upload -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Master Time Table</label>
+            <input type="file" class="form-control" name="master_timetable" required>
+          </div>
+        </div>
+      
+        <div class="text-center mt-3">
+          <button type="reset" class="btn btn-danger px-4">Cancel</button>
+          <button type="submit" class="btn btn-primary px-4">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

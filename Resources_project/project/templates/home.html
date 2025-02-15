@@ -16,6 +16,16 @@
     margin-top: 30px;
 }
 
+/* Title Styling */
+.title {
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    color: #002d6b;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
 /* Card Styles */
 .card {
     background-color: #002d6b;
@@ -37,7 +47,8 @@
     cursor: pointer;
     transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out, color 0.3s ease-in-out;
 }
-.card a{
+
+.card a {
     text-decoration: none;
 }
 
@@ -49,7 +60,6 @@
     text-align: center;
     color: white;
     transition: color 0.3s ease-in-out;
-    
 }
 
 /* Hover Effect */
@@ -74,36 +84,31 @@
         flex: 1 1 calc(100% - 40px); /* 1 card per row */
     }
 }
-
 </style>
+
+<!-- Title Outside the Main Container -->
+<h2 class="title">Criterion 4 - Infrastructure and Learning Resources</h2>
+
 <div class="main">
     <div class="card">
-        <a href="{% url 'form2' %}"><h2>
-            ICT Facilities in Classrooms/Seminar Halls
-        </h2></a>
-    </div>
-    <div class="card">
-        <a href="{% url 'library_resources' %}" ><h2>
-            Institution Has Subscription For E-Library Resources 
-        </h2></a>
-    </div>
-    <div class="card">
-       <a href="{% url 'form4' %}">
-        <h2>
-            Total Expenditure Incurred on Maintenance of Physical Facilities and Academic Support Facilities Excluding Salary Component During the Year
-        </h2>
-       </a>
-    </div>
-    <div class="card">
-        <a href="{% url 'form3' %}">
-         <h2>
-            Institution Has the Following Facilities for E-Content Development: 
-            Media Centre,
-            Audio Visual Centre,
-            Lecture Capturing System (LCS),
-            Mixing Equipments and Softwares for Editing
-         </h2>
+        <a href="{% url 'ict_facility_list' %}">
+            <h2>ICT Facilities in Classrooms/Seminar Halls</h2>
         </a>
-     </div>
+    </div>
+    <div class="card">
+        <a href="{% url 'library_resources' %}">
+            <h2>Institution Has Subscription For E-Library Resources</h2>
+        </a>
+    </div>
+    <div class="card">
+        <a href="{% url 'expenditure_list' %}">
+            <h2>Total Expenditure Incurred on Maintenance of Physical Facilities and Academic Support Facilities Excluding Salary Component During the Year</h2>
+        </a>
+    </div>
+    <div class="card">
+        <a href="{% url 'show_econtent' %}">
+            <h2>Institution Has the Following Facilities for E-Content Development: Media Centre, Audio Visual Centre, Lecture Capturing System (LCS), Mixing Equipment and Software for Editing</h2>
+        </a>
+    </div>
 </div>
 {% endblock %}

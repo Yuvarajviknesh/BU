@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .card-container {
+    max-width: 700px;
+    margin: 50px auto;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 100px;
+  }
+  .card-header {
+    background-color: #002d6b;
+    color: white;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 15px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+  .form-container {
+    padding: 20px;
+  }
+  .form-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+</style>
+
+<div class="container">
+  <div class="card-container">
+    <div class="card-header">
+      Add New Expenditure
+    </div>
+    <div class="card-body form-container">
+      <form id="addDataForm" method="post" action="{% url 'add_expenditure' %}">
+        {% csrf_token %}
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="year" class="form-label fw-bold">Year</label>
+            <input type="text" class="form-control" name="year" id="year" placeholder="Enter year" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="budget" class="form-label fw-bold">Budget Allocated</label>
+            <input type="number" class="form-control" name="budget" id="budget" placeholder="Enter budget allocated" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="expenditure" class="form-label fw-bold">Expenditure on Infrastructure</label>
+            <input type="number" class="form-control" name="expenditure" id="expenditure" placeholder="Enter expenditure on infrastructure" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="totalExpenditure" class="form-label fw-bold">Total Expenditure Excluding Salary</label>
+            <input type="number" class="form-control" name="total_expenditure" id="totalExpenditure" placeholder="Enter total expenditure excluding salary" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="academicExpenditure" class="form-label fw-bold">Expenditure on Maintenance of Academic Facilities</label>
+            <input type="number" class="form-control" name="academic_expenditure" id="academicExpenditure" placeholder="Enter expenditure on academic facilities" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="physicalExpenditure" class="form-label fw-bold">Expenditure on Maintenance of Physical Facilities</label>
+            <input type="number" class="form-control" name="physical_expenditure" id="physicalExpenditure" placeholder="Enter expenditure on physical facilities" required>
+          </div>
+        </div>
+        <div class="form-footer">
+          <button type="button" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+          <button type="submit" class="btn btn-primary px-4">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

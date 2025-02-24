@@ -114,7 +114,7 @@
 
   <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="section-title m-0">Institution Has Subscription for e-Library Resources</h2>
+      <h2 class="section-title m-0">e-Library Resources</h2>
       <a href="{% url 'add_library_resource' %}" class="btn btn-add">+ Add</a>
     </div>
     
@@ -247,37 +247,14 @@
   
         form.action = button.getAttribute("data-update-url");
       });
-  
-      // Handle form submission with AJAX
-      document.getElementById("editForm").addEventListener("submit", function (event) {
-    event.preventDefault(); // Prevent default form submission
-
-    let form = event.target;
-    let formData = new FormData(form);
-
-    fetch(form.action, {
-        method: "POST",
-        body: formData,
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert("Library resource updated successfully!");
-            location.reload(); // Reload the page to show updates
-        } else {
-            alert("Error: " + data.error);
-        }
-    })
-    .catch(error => console.error("Error:", error));
     });
-    });
+
     function confirmDelete(event, deleteUrl) {
-    event.preventDefault();  // Stop default action
-
-    if (confirm("Are you sure you want to delete this resource?")) {
-      window.location.href = deleteUrl;  // Redirect only if confirmed
+      event.preventDefault();
+      if (confirm("Are you sure you want to delete this resource?")) {
+        window.location.href = deleteUrl;
+      }
     }
-  }
   </script>
-  
-{% endblock %} 
+
+{% endblock %}

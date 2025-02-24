@@ -2,14 +2,14 @@ import os
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
-# ✅ File size validation (Max 5MB)
 def validate_file_size(value):
     max_size = 5 * 1024 * 1024  # 5MB
     if value.size > max_size:
         raise ValidationError("File size should not exceed 5MB.")
 
-# ✅ File type validation (PDF & Word only)
 def validate_file_extension(value):
     ext = os.path.splitext(value.name)[1].lower()
     valid_extensions = ['.pdf', '.doc', '.docx']
@@ -34,7 +34,7 @@ class UserProfile(models.Model):
         return f"{self.user.username} - {self.department.department_name if self.department else 'No Department'}"
 
 class Teacher(models.Model):
-    user_profile = models.OneToOneField(UserProfile, on_delete=models.CASCADE)  # Linked to UserProfile
+    user_profile = models.OneToOneField(UserProfile, on_delete=models.CASCADE) 
     position = models.CharField(max_length=100, choices=[
         ('Professor', 'Professor'),
         ('Associate Professor', 'Associate Professor'),
@@ -96,3 +96,11 @@ class Expenditure(models.Model):
 
     def __str__(self):
         return f"{self.department} - {self.year} - ₹{self.total_expenditure}"
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    instance.userprofile.save()

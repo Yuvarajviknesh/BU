@@ -16,6 +16,7 @@
     .btn-delete:hover, .btn-edit:hover, .btn-add:hover { border-color: #000; }
     .action-cell { display: flex; justify-content: center; gap: 10px; }
   </style>
+  
 
   <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -28,6 +29,7 @@
         <thead>
           <tr>
             <th>Year</th>
+            <th>Department</th>
             <th>Budget Allocated</th>
             <th>Expenditure on Infrastructure</th>
             <th>Expenditure on Maintenance of Academic Facilities</th>
@@ -40,6 +42,7 @@
           {% for expenditure in expenditures %}
           <tr>
             <td>{{ expenditure.year }}</td>
+            <td>{{expenditure.department.department_name}}</td>
             <td>{{ expenditure.budget_allocated }}</td>
             <td>{{ expenditure.expenditure_infra }}</td>
             <td>{{ expenditure.academic_facilities }}</td>

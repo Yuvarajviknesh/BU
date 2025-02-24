@@ -83,7 +83,7 @@
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="section-title m-0">Institution Has Facilities for E-Content Development</h2>
+        <h2 class="section-title m-0">E-Content Development</h2>
         <a href="{% url 'add_econtent' %}" class="btn btn-add">+ Add</a>
     </div>
     <div class="table-responsive">
@@ -91,6 +91,7 @@
             <thead>
                 <tr>
                     <th>Name of the Teacher</th>
+                    <th>Department</th>
                     <th>Name of the Module Developed</th>
                     <th>Platform</th>
                     <th>Date of Launch</th>
@@ -104,6 +105,7 @@
                 {% for record in records %}
                 <tr>
                     <td>{{ record.teacher.user_profile.user.username }}</td>
+                    <td>{{record.teacher.user_profile.department.department_name }}</td>
                     <td>{{ record.module_name }}</td>
                     <td>{{ record.platform }}</td>
                     <td>{{ record.launch_date }}</td>

@@ -32,14 +32,14 @@
     color: white;
     text-align: center;
     padding: 20px;
-    flex: 1 1 calc(25% - 40px); /* 4 cards in a row with gap */
+    flex: 1 1 calc(33.3% - 40px); /* 4 cards in a row with gap */
     min-width: 250px;
     height: 220px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 10px;
-    font-size: 14px;
+    font-size: 18px;
     font-weight: bold;
     text-decoration: none;
     overflow: hidden;
@@ -50,16 +50,7 @@
 
 .card a {
     text-decoration: none;
-}
-
-/* Center the Text */
-.card h2 {
-    margin: 0;
-    padding: 10px;
-    font-size: 16px;
-    text-align: center;
     color: white;
-    transition: color 0.3s ease-in-out;
 }
 
 /* Hover Effect */
@@ -68,47 +59,59 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-.card:hover h2 {
+.card:hover a {
     color: #f4a641;
 }
 
 /* Responsive Adjustments */
 @media (max-width: 1024px) {
     .card {
-        flex: 1 1 calc(50% - 40px); /* 2 cards per row */
+        flex: 1 1 calc(50% - 40px); /* 2 cards per row on medium screens */
     }
 }
 
 @media (max-width: 600px) {
     .card {
-        flex: 1 1 calc(100% - 40px); /* 1 card per row */
+        flex: 1 1 calc(100% - 40px); /* 1 card per row on small screens */
     }
 }
+
 </style>
 
 <!-- Title Outside the Main Container -->
-<h2 class="title">Criterion 4 - Infrastructure and Learning Resources</h2>
+<h2 class="title">Criteria Overview</h2>
 
 <div class="main">
     <div class="card">
-        <a href="{% url 'ict_facility_list' %}">
-            <h2>ICT Facilities in Classrooms/Seminar Halls</h2>
+        <a href="{% url 'criterion_page' 1 %}">
+            Criterion 1
         </a>
     </div>
     <div class="card">
-        <a href="{% url 'library_resources' %}">
-            <h2>Institution Has Subscription For E-Library Resources</h2>
+        <a href="{% url 'criterion_page' 2 %}">
+            Criterion 2
         </a>
     </div>
     <div class="card">
-        <a href="{% url 'expenditure_list' %}">
-            <h2>Total Expenditure Incurred on Maintenance of Physical Facilities and Academic Support Facilities Excluding Salary Component During the Year</h2>
+        <a href="{% url 'criterion_page' 3 %}">
+            Criterion 3
         </a>
     </div>
     <div class="card">
-        <a href="{% url 'show_econtent' %}">
-            <h2>Institution Has the Following Facilities for E-Content Development: Media Centre, Audio Visual Centre, Lecture Capturing System (LCS), Mixing Equipment and Software for Editing</h2>
+        <a href="{% url 'criterion_page' 4 %}">
+            Criterion 4
+        </a>
+    </div>
+    <div class="card">
+        <a href="{% url 'criterion_page' 5 %}">
+            Criterion 5
+        </a>
+    </div>
+    <div class="card">
+        <a href="{% url 'criterion_page' 6 %}">
+            Criterion 6
         </a>
     </div>
 </div>
+<div class="main"></div>
 {% endblock %}

@@ -1,9 +1,11 @@
 /* General Styles */
-body {
+body, html {
     font-family: Arial, sans-serif;
     background-color: #f5f5f5;
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+    padding-top: 80px; /* To prevent content from hiding under fixed header */
 }
 
 /* Header Styles */
@@ -14,10 +16,19 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    position: fixed; /* Sticks the header to the top */
+    top: 0;
+    left: 0;
+    width: 100%; /* Full width */
+    z-index: 1000; /* On top of all elements */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    box-sizing: border-box;
 }
 
+/* Logo */
 .logo {
     height: 60px;
+    display: block;
 }
 
 /* User Info (Desktop) */
@@ -111,7 +122,7 @@ body {
 
 /* Login Section */
 .login-section {
-    margin: 80px auto;
+    margin: 100px auto;
     max-width: 400px;
     background: white;
     padding: 20px;
@@ -128,9 +139,53 @@ body {
 .btn-primary {
     background-color: #002d6b;
     border: none;
+    color: white;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
 }
 
 .btn-primary:hover {
     background-color: #f4a641;
     border: none;
+}
+
+/* Utility Classes */
+.text-center {
+    text-align: center;
+}
+
+.mt-20 {
+    margin-top: 20px;
+}
+
+.mb-20 {
+    margin-bottom: 20px;
+}
+
+.p-20 {
+    padding: 20px;
+}
+
+/* Responsive Fixes */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        padding: 10px;
+    }
+
+    .logo {
+        height: 50px;
+        margin-bottom: 10px;
+    }
+
+    .fullwidth-menu {
+        padding: 15px 0;
+    }
+
+    .login-section {
+        width: 90%;
+        margin: 120px auto;
+    }
 }

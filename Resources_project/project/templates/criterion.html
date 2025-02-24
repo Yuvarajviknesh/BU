@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Criterion {{ criterion_number }}{% endblock %}
+
+{% block content %}
+<style>
+/* ✅ Content Container */
+.content-container {
+    padding: 20px;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.no-data {
+    text-align: center;
+    color: #777;
+}
+</style>
+
+<!-- ✅ Data Display Section -->
+<div class="content-container" id="dataContainer">
+    <h2>Criterion {{ criterion_number }}</h2>
+    <p class="no-data">Please select filters to view data.</p>
+</div>
+
+{% endblock %}

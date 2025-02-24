@@ -1,0 +1,121 @@
+<style>
+    .breadcrumb {
+        background-color: transparent;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-wrap: wrap;
+        list-style: none;
+        align-items: center;
+    }
+
+    /* Breadcrumb Items */
+    .breadcrumb-item {
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        color: #6c757d;
+        position: relative;
+    }
+
+    /* Separator Using Pseudo-Element */
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: '>';
+        margin: 0 8px;
+        color: #6c757d;
+        font-weight: bold;
+    }
+
+    /* Breadcrumb Links */
+    .breadcrumb-item a {
+        text-decoration: none;
+        color: #6c757d;
+        font-weight: bold;
+        margin-left: 5px;
+    }
+
+    /* Hover Effect on Links */
+    .breadcrumb-item a:hover {
+        text-decoration: none;
+        color: #5a6268;
+    }
+
+    /* Active Breadcrumb */
+    .breadcrumb-item.active {
+        color: #343a40;
+        font-weight: bold;
+    }
+
+    /* Icon Styling */
+    .breadcrumb i {
+        margin-right: 5px;
+        color: #6c757d;
+    }
+</style>
+
+<!-- ✅ Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" style="padding: 10px 20px;">
+    <ol class="breadcrumb" style="background-color: transparent; padding: 0; margin: 0;">
+        <li class="breadcrumb-item">
+            <i class="fas fa-home"></i>
+            <a href="{% url 'home' %}">Home</a>
+        </li>
+
+        {% if 'library-resource' in request.path %}
+            <li class="breadcrumb-separator"> &gt; </li>
+            <li class="breadcrumb-item">
+                <i class="fas fa-book"></i>
+                <a href="{% url 'library_resources' %}">Library Resources</a>
+            </li>
+            {% if 'add' in request.path %}
+                <li class="breadcrumb-separator"> &gt; </li>
+                <li class="breadcrumb-item active"><i class="fas fa-plus-circle"></i> Add Resource</li>
+            {% elif 'edit' in request.path %}
+                <li class="breadcrumb-separator"> &gt; </li>
+                <li class="breadcrumb-item active"><i class="fas fa-edit"></i> Edit Resource</li>
+            {% endif %}
+
+        {% elif 'facilities' in request.path %}
+            <li class="breadcrumb-separator"> &gt; </li>
+            <li class="breadcrumb-item">
+                <i class="fas fa-laptop-house"></i>
+                <a href="{% url 'ict_facility_list' %}">ICT Facilities</a>
+            </li>
+            {% if 'add' in request.path %}
+                <li class="breadcrumb-separator"> &gt; </li>
+                <li class="breadcrumb-item active"><i class="fas fa-plus-circle"></i> Add Facility</li>
+            {% elif 'edit' in request.path %}
+                <li class="breadcrumb-separator"> &gt; </li>
+                <li class="breadcrumb-item active"><i class="fas fa-edit"></i> Edit Facility</li>
+            {% endif %}
+
+        {% elif 'econtent' in request.path %}
+            <li class="breadcrumb-separator"> &gt; </li>
+            <li class="breadcrumb-item">
+                <i class="fas fa-file-alt"></i>
+                <a href="{% url 'show_econtent' %}">E-Content</a>
+            </li>
+            {% if 'add' in request.path %}
+                <li class="breadcrumb-separator"> &gt; </li>
+                <li class="breadcrumb-item active"><i class="fas fa-plus-circle"></i> Add E-Content</li>
+            {% elif 'edit' in request.path %}
+                <li class="breadcrumb-separator"> &gt; </li>
+                <li class="breadcrumb-item active"><i class="fas fa-edit"></i> Edit E-Content</li>
+            {% endif %}
+
+        {% elif 'expenditure' in request.path %}
+            <li class="breadcrumb-separator"> &gt; </li>
+            <li class="breadcrumb-item">
+                <i class="fas fa-money-bill-wave"></i>
+                <a href="{% url 'expenditure_list' %}">Expenditure</a>
+            </li>
+            {% if 'add' in request.path %}
+                <li class="breadcrumb-separator"> &gt; </li>
+                <li class="breadcrumb-item active"><i class="fas fa-plus-circle"></i> Add Expenditure</li>
+            {% elif 'edit' in request.path %}
+                <li class="breadcrumb-separator"> &gt; </li>
+                <li class="breadcrumb-item active"><i class="fas fa-edit"></i> Edit Expenditure</li>
+            {% endif %}
+        {% endif %}
+    </ol>
+</nav>

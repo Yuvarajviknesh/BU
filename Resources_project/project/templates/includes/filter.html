@@ -1,0 +1,106 @@
+<!-- ✅ Filter Block Styling -->
+<style>
+    /* Filter Container */
+    .filter-container {
+        position: relative;
+        width: 100%;
+        background: orange;
+        padding: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        z-index: 999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    /* Dropdown Wrapper */
+    .dropdown-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    /* Dropdown Labels */
+    .filter-container label {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    /* Dropdown Styling */
+    .filter-container select {
+        width: 250px;
+        padding: 8px 12px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        outline: none;
+        background-color: white;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+    .filter-container select:hover {
+        background-color: gray;
+        color: white;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .filter-container {
+            flex-direction: column;
+            align-items: flex-start;
+            position: relative;
+            z-index: 3;
+        }
+
+        .filter-container select {
+            width: 100%;
+        }
+    }
+</style>
+
+<!-- ✅ Filter Form -->
+<form method="GET" class="filter-container">
+    <!-- Department Dropdown -->
+    <div class="dropdown-wrapper">
+        <label for="department">Department:</label>
+        <select name="department" id="department" onchange="this.form.submit()">
+            <option value="" {% if not selected_department %}selected{% endif %}>All Departments</option>
+            {% for dept in departments %}
+                <option value="{{ dept.department_code }}" {% if selected_department == dept.department_code %}selected{% endif %}>
+                    {{ dept.department_name }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Criterion Title Dropdown -->
+    <div class="dropdown-wrapper">
+        <label for="criterion_title">Title:</label>
+        <select name="criterion_title" id="criterion_title" onchange="redirectToPage()">
+            <option value="" {% if not selected_criterion_title %}selected{% endif %}>Select Title</option>
+            {% if criterion_id == 3 %}
+                <option value="{% url 'form1' %}" {% if selected_criterion_title == "incentives" %}selected{% endif %}>Incentives for Teachers</option>
+                <option value="{% url 'form2' %}" {% if selected_criterion_title == "grants" %}selected{% endif %}>Grants for Research</option>
+            {% elif criterion_id == 4 %}
+                <option value="{% url 'ict_facility_list' %}" {% if selected_criterion_title == "ict" %}selected{% endif %}>ICT Facilities</option>
+                <option value="{% url 'library_resources' %}" {% if selected_criterion_title == "library" %}selected{% endif %}>E-Library Resources</option>
+                <option value="{% url 'expenditure_list' %}" {% if selected_criterion_title == "expenditure" %}selected{% endif %}>Expenditure on Facilities</option>
+                <option value="{% url 'show_econtent' %}" {% if selected_criterion_title == "econtent" %}selected{% endif %}>E-Content Development</option>
+            {% endif %}
+        </select>
+    </div>
+</form>
+
+<!-- ✅ JavaScript for Redirection -->
+<script>
+function redirectToPage() {
+    const titleDropdown = document.getElementById("criterion_title");
+    const selectedURL = titleDropdown.value;
+    if (selectedURL) {
+        window.location.href = selectedURL;
+    }
+}
+</script>

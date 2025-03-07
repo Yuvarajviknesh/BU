@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+
 <style>
   .card-container {
     max-width: 700px;
@@ -37,34 +38,50 @@
       Add Teacher Fellowship/Financial Support
     </div>
     <div class="card-body form-container">
-      <form id="addFellowshipForm" method="post" action="">
+      <form id="addFellowshipForm" method="post">
         {% csrf_token %}
         <div class="row">
           <div class="col-md-12 mb-3">
-            <label for="teacher_name" class="form-label fw-bold">Name of the Teacher</label>
-            <input type="text" class="form-control" name="teacher_name" id="teacher_name" placeholder="Enter teacher's name" required>
+            <label class="form-label fw-bold">Name of the Teacher</label>
+
+            {% if is_admin %}
+              <select class="form-control" name="teacher" required>
+                <option value="">Select Teacher</option>
+                {% for teacher in teachers %}
+                  <option value="{{ teacher.id }}">{{ teacher.user_profile.user.username }}</option>
+                {% endfor %}
+              </select>
+            {% else %}
+              <input type="hidden" name="teacher" value="{{ user.id }}">
+              <input type="text" class="form-control" value="{{ user.get_full_name }}" readonly>
+            {% endif %}
           </div>
+
           <div class="col-md-12 mb-3">
-            <label for="award_name" class="form-label fw-bold">Name of the Award/Fellowship</label>
-            <input type="text" class="form-control" name="award_name" id="award_name" placeholder="Enter award/fellowship name" required>
+            <label class="form-label fw-bold">Name of the Award/Fellowship</label>
+            <input type="text" class="form-control" name="award_name" placeholder="Enter award/fellowship name" required>
           </div>
+
           <div class="col-md-6 mb-3">
-            <label for="award_year" class="form-label fw-bold">Year of Award</label>
-            <input type="number" class="form-control" name="award_year" id="award_year" placeholder="Enter year" required>
+            <label class="form-label fw-bold">Year of Award</label>
+            <input type="number" class="form-control" name="award_year" min="1900" max="2025" required>
           </div>
+
           <div class="col-md-6 mb-3">
-            <label for="award_agency" class="form-label fw-bold">Awarding Agency</label>
-            <input type="text" class="form-control" name="award_agency" id="award_agency" placeholder="Enter awarding agency" required>
+            <label class="form-label fw-bold">Awarding Agency</label>
+            <input type="text" class="form-control" name="award_agency" placeholder="Enter awarding agency" required>
           </div>
+
           <div class="col-md-12 mb-3">
-            <label for="recognition_level" class="form-label fw-bold">Recognition Level</label>
-            <select class="form-control" name="recognition_level" id="recognition_level" required>
+            <label class="form-label fw-bold">Recognition Level</label>
+            <select class="form-control" name="recognition_level" required>
               <option value="">Select Recognition Level</option>
               <option value="National">National</option>
               <option value="International">International</option>
             </select>
           </div>
         </div>
+
         <div class="form-footer">
           <button type="button" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
           <button type="submit" class="btn btn-primary px-4">Save</button>

@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .card-container {
+    max-width: 900px;
+    margin: 50px auto;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 100px;
+  }
+  .card-header {
+    background-color: #002d6b;
+    color: white;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 15px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+  .form-container {
+    padding: 20px;
+  }
+  .form-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+</style>
+
+<div class="container">
+  <div class="card-container">
+    <div class="card-header">
+      Revenue from Consultancy & Corporate Training
+    </div>
+    <div class="card-body form-container">
+      <form method="POST" action="" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <h5 class="fw-bold">Consultancy Revenue</h5>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="consultantName" class="form-label fw-bold">Name of the Consultant</label>
+            <input type="text" class="form-control" id="consultantName" name="consultant_name" required>
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <label for="projectTitle" class="form-label fw-bold">Name of Consultancy Project</label>
+            <input type="text" class="form-control" id="projectTitle" name="project_title" required>
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <label for="agencyDetails" class="form-label fw-bold">Consulting/Sponsoring Agency & Contact</label>
+            <input type="text" class="form-control" id="agencyDetails" name="agency_details" required>
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <label for="year" class="form-label fw-bold">Year</label>
+            <input type="number" class="form-control" id="year" name="year" min="2000" max="2100" required>
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <label for="revenue" class="form-label fw-bold">Revenue Generated (INR in Lakhs)</label>
+            <input type="number" class="form-control" id="revenue" name="revenue" step="0.01" required>
+          </div>
+        </div>
+
+        <h5 class="fw-bold mt-4">Corporate Training Revenue</h5>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="trainerName" class="form-label fw-bold">Name of Trainer(s)</label>
+            <input type="text" class="form-control" id="trainerName" name="trainer_name" required>
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <label for="trainingTitle" class="form-label fw-bold">Title of Corporate Training</label>
+            <input type="text" class="form-control" id="trainingTitle" name="training_title" required>
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <label for="agencyTraining" class="form-label fw-bold">Agency Seeking Training & Contact</label>
+            <input type="text" class="form-control" id="agencyTraining" name="agency_training" required>
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <label for="trainingYear" class="form-label fw-bold">Year</label>
+            <input type="number" class="form-control" id="trainingYear" name="training_year" min="2000" max="2100" required>
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <label for="trainingRevenue" class="form-label fw-bold">Revenue Generated (INR)</label>
+            <input type="number" class="form-control" id="trainingRevenue" name="training_revenue" step="0.01" required>
+          </div>
+          
+          <div class="col-md-6 mb-3">
+            <label for="traineeCount" class="form-label fw-bold">Number of Trainees</label>
+            <input type="number" class="form-control" id="traineeCount" name="trainee_count" required>
+          </div>
+        </div>
+
+        <div class="form-footer">
+          <button type="button" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+          <button type="submit" class="btn btn-primary px-4">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

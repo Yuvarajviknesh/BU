@@ -31,33 +31,42 @@
   }
   .input-group {
     display: flex;
-    justify-content: space-between;
     align-items: center;
   }
-  .input-group button {
-    margin-left: 10px;
-    background-color: #007bff;
+  .add-investor-btn {
+    background-color: #f4a641;
     color: white;
     border: none;
     border-radius: 5px;
     padding: 6px 12px;
+    display: flex;
+    align-items: center;
   }
-  .input-group button:hover {
-    background-color: #0056b3;
+  .add-investor-btn i {
+    margin-right: 5px;
+  }
+  .add-investor-btn:hover {
+    background-color: #f19823;
+  }
+  .remove-investor {
+    background: none;
+    border: none;
+    color: red;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 5px;
+  }
+  .remove-investor i {
+    font-size: 18px;
+  }
+  .remove-investor:hover {
+    color: darkred;
   }
   .investor-container {
     margin-top: 10px;
   }
-  .investor-container input {
+  .investor-container .input-group {
     margin-bottom: 5px;
-  }
-  .remove-investor {
-    color: red;
-    font-size: 18px;
-    cursor: pointer;
-  }
-  .remove-investor:hover {
-    color: darkred;
   }
   .input-group select, .form-control {
     width: 100%;
@@ -70,49 +79,68 @@
       Add Research Grants and Recognitions
     </div>
     <div class="card-body form-container">
-      <form id="addResearchGrantForm" method="post" action="">
+      <form id="addResearchGrantForm" method="post" action="{% url 'add_research_grant' %}">
         {% csrf_token %}
         <div class="row">
           <div class="col-md-12 mb-3">
             <label for="scheme_name" class="form-label fw-bold">Name of the Scheme/Project/Endowments/Chairs</label>
             <input type="text" class="form-control" name="scheme_name" id="scheme_name" placeholder="Enter scheme/project name" required>
           </div>
+
           <div class="col-md-12 mb-3">
             <label for="investor" class="form-label fw-bold">Principal Investigator/Co-Investigator</label>
             <div class="input-group">
               <input type="text" class="form-control" name="investor[]" id="investor" placeholder="Enter investigator's name" required>
-              <button type="button" class="btn" onclick="addInvestor()">Add Investor</button>
+              <button type="button" class="add-investor-btn" onclick="addInvestor()">
+              + Add Investigator
+              </button>
             </div>
             <div id="investorList" class="investor-container"></div>
           </div>
+
           <div class="col-md-12 mb-3">
             <label for="funding_agency" class="form-label fw-bold">Name of the Funding Agency</label>
             <input type="text" class="form-control" name="funding_agency" id="funding_agency" placeholder="Enter funding agency" required>
           </div>
+
           <div class="col-md-6 mb-3">
-            <label for="type" class="form-label fw-bold">Type (Government/Non-Government)</label>
-            <select class="form-control" name="type" id="type" required>
+            <label for="grant_type" class="form-label fw-bold">Type (Government/Non-Government)</label>
+            <select class="form-control" name="grant_type" id="grant_type" required>
               <option value="">Select Type</option>
               <option value="Government">Government</option>
               <option value="Non-Government">Non-Government</option>
             </select>
           </div>
+
           <div class="col-md-6 mb-3">
             <label for="department" class="form-label fw-bold">Department</label>
-            <input type="text" class="form-control" name="department" id="department" value="{{ user.department }}" readonly>
+            {% if request.user.is_superuser %}
+              <select class="form-control" name="department" id="department">
+                <option value="">Select Department</option>
+                {% for dept in departments %}
+                  <option value="{{ dept.department_code }}">{{ dept.department_name }}</option>
+                {% endfor %}
+              </select>
+            {% else %}
+              <input type="text" class="form-control" name="department" id="department"
+                     value="{{ department.department_name }}" readonly>
+            {% endif %}
           </div>
+
           <div class="col-md-6 mb-3">
             <label for="year_of_award" class="form-label fw-bold">Year of Award</label>
-            <input type="number" class="form-control" name="year_of_award" id="year_of_award" placeholder="Enter year" required>
+            <input type="number" class="form-control" name="year_of_award" id="year_of_award" placeholder="Enter year" min="2000" max="2100" required>
           </div>
+
           <div class="col-md-6 mb-3">
             <label for="funds_provided" class="form-label fw-bold">Funds Provided (INR in Lakhs)</label>
-            <input type="number" class="form-control" name="funds_provided" id="funds_provided" placeholder="Enter funds" required>
+            <input type="number" class="form-control" name="funds_provided" id="funds_provided" placeholder="Enter funds" min="1" required>
           </div>
+
           <div class="col-md-12 mb-3">
             <label for="duration" class="form-label fw-bold">Duration of the Project</label>
             <div class="input-group">
-              <input type="number" class="form-control" name="duration" id="duration" placeholder="Enter duration" required>
+              <input type="number" class="form-control" name="duration" id="duration" placeholder="Enter duration" min="1" required>
               <select class="form-control" name="duration_unit" id="duration_unit" required>
                 <option value="Months">Months</option>
                 <option value="Years">Years</option>
@@ -120,6 +148,7 @@
             </div>
           </div>
         </div>
+
         <div class="form-footer">
           <button type="button" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
           <button type="submit" class="btn btn-primary px-4">Save</button>
@@ -133,21 +162,22 @@
   function addInvestor() {
     const investorList = document.getElementById("investorList");
     const investorInput = document.createElement('div');
-    investorInput.classList.add('input-group');
-    
+    investorInput.classList.add('input-group', 'mt-2');
+
     const newInput = document.createElement('input');
     newInput.type = 'text';
     newInput.classList.add('form-control');
     newInput.name = 'investor[]';
     newInput.placeholder = "Enter another investigator's name";
-    
-    const removeButton = document.createElement('span');
-    removeButton.innerHTML = '×';
-    removeButton.classList.add('remove-investor');
+    newInput.required = true;
+
+    const removeButton = document.createElement('button');
+    removeButton.classList.add('remove-investor', 'btn');
+    removeButton.innerHTML = '<i class="fas fa-times"></i>';
     removeButton.onclick = function() {
       investorInput.remove();
     };
-    
+
     investorInput.appendChild(newInput);
     investorInput.appendChild(removeButton);
     investorList.appendChild(investorInput);

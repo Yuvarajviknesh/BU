@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .card-container {
+    max-width: 700px;
+    margin: 50px auto;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 100px;
+  }
+  .card-header {
+    background-color: #002d6b;
+    color: white;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 15px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+  .form-container {
+    padding: 20px;
+  }
+  .form-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+</style>
+
+<div class="container">
+  <div class="card-container">
+    <div class="card-header">
+      Add Award
+    </div>
+    <div class="card-body form-container">
+      <form method="POST" action="" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row">
+          {% if user.is_superuser %}
+          <div class="col-md-6 mb-3">
+            <label for="department_code" class="form-label fw-bold">Select Department</label>
+            <select class="form-control" id="department_code" name="department_code" required>
+                <option value="">-- Select --</option>
+                {% for dept in departments %}
+                    <option value="{{ dept.department_code }}">{{ dept.department_name }}</option>
+                {% endfor %}
+            </select>
+        </div>        
+          {% endif %}
+
+          <div class="col-md-6 mb-3">
+            <label for="innovationTitle" class="form-label fw-bold">Title of the Innovation</label>
+            <input type="text" class="form-control" id="innovationTitle" name="innovation_title" placeholder="Enter Innovation Title" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="awardeeName" class="form-label fw-bold">Name of the Awardee</label>
+            <input type="text" class="form-control" id="awardeeName" name="awardee_name" placeholder="Enter Awardee Name" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="awardingAgency" class="form-label fw-bold">Awarding Agency (with Contact)</label>
+            <input type="text" class="form-control" id="awardingAgency" name="awarding_agency" placeholder="Enter Awarding Agency" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="awardYear" class="form-label fw-bold">Year of Award</label>
+            <input type="number" class="form-control" id="awardYear" name="award_year" placeholder="Enter Year (e.g., 2024)" min="1900" max="2100" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="category" class="form-label fw-bold">Category</label>
+            <select class="form-control" id="category" name="category" required>
+              <option value="" disabled selected>Select Category</option>
+              <option value="Institution">Institution</option>
+              <option value="Teacher">Teacher</option>
+              <option value="Research Scholar">Research Scholar</option>
+              <option value="Student">Student</option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="document" class="form-label fw-bold">Upload Supporting Document</label>
+            <input type="file" class="form-control" id="document" name="document" accept=".pdf,.jpg,.png,.jpeg" required>
+          </div>
+        </div>
+
+        <div class="form-footer">
+          <button type="button" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+          <button type="submit" class="btn btn-primary px-4">Save</button>
+        </div>
+      </form>
+
+      <hr>
+
+      <!-- Excel Upload Form -->
+      <form method="POST" action="" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label class="form-label fw-bold">Upload Excel File</label>
+        <input type="file" class="form-control mb-3" name="excel_file" accept=".xls,.xlsx" required>
+        <button type="submit" class="btn btn-success">Upload & Add</button>
+      </form>
+
+      <p class="text-muted mt-2">Download <a href="/static/sample.xlsx" download>Sample Excel Template</a></p>
+      
+    </div>
+  </div>
+</div>
+
+{% endblock %}

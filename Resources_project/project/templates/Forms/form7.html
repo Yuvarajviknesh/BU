@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block content %}
+  <style>
+    .btn-document {
+      background-color: #ff6f00;
+      color: #fff;
+    }
+
+    .table-responsive {
+      margin-top: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      margin-bottom: 20px;
+    }
+
+    table thead {
+      background-color: #002d6b;
+      color: white;
+    }
+
+    table thead th, table tbody td {
+      padding: 12px;
+      text-align: center;
+      border: 1px solid #ddd;
+      vertical-align: middle;
+    }
+
+    .btn-delete, .btn-edit {
+      padding: 6px 15px;
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .btn-delete {
+      background-color: rgb(237, 27, 27);
+      color: #fff;
+    }
+    .btn-delete::before {
+      content: "\1F5D1"; 
+      margin-right: 3px;
+    }
+    .btn-edit {
+      background-color: #007bff;
+      color: #fff;
+    }
+    .btn-edit::before {
+      content: "\270F"; 
+      margin-right: 3px;
+    }
+
+    .btn-add {
+      background-color: #f4a641;
+      color: #fff;
+      padding: 6px 15px;
+      text-transform: uppercase;
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    .btn-add:hover, .btn-delete:hover, .btn-edit:hover, .btn-document:hover {
+      border-color: #000;
+    }
+
+    .action-cell {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      align-items: center;
+    }
+  </style>
+
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="section-title m-0">Books and Chapters Published</h2>
+      <a href="{% url 'adddata7' %}" class="btn btn-add">+ Add</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover">
+        <thead>
+          <tr>
+            <th>Sl. No.</th>
+            <th>Name of the Teacher</th>
+            <th>Title of the Book/Chapter</th>
+            <th>Title of the Paper</th>
+            <th>Title of the Proceedings</th>
+            <th>Name of the Conference</th>
+            <th>National / International</th>
+            <th>Year of Publication</th>
+            <th>ISBN/ISSN</th>
+            <th>Affiliating Institute</th>
+            <th>Publisher</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for book in books %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ book.teacher_name }}</td>
+            <td>{{ book.book_title }}</td>
+            <td>{{ book.paper_title }}</td>
+            <td>{{ book.proceedings_title }}</td>
+            <td>{{ book.conference_name }}</td>
+            <td>{{ book.national_international }}</td>
+            <td>{{ book.publication_year }}</td>
+            <td>{{ book.isbn_issn }}</td>
+            <td>{{ book.affiliating_institute }}</td>
+            <td>{{ book.publisher }}</td>
+            <td class="action-cell">
+              <button class="btn btn-sm btn-edit" data-bs-toggle="modal" data-bs-target="#editModal"
+                data-id="{{ book.id }}"
+                data-teacher_name="{{ book.teacher_name }}"
+                data-book_title="{{ book.book_title }}"
+                data-paper_title="{{ book.paper_title }}"
+                data-proceedings_title="{{ book.proceedings_title }}"
+                data-conference_name="{{ book.conference_name }}"
+                data-national_international="{{ book.national_international }}"
+                data-publication_year="{{ book.publication_year }}"
+                data-isbn_issn="{{ book.isbn_issn }}"
+                data-affiliating_institute="{{ book.affiliating_institute }}"
+                data-publisher="{{ book.publisher }}"
+                data-update-url="{% url 'update_book_chapter' book.id %}">
+                Edit
+              </button>
+              <a href="#" class="btn btn-sm btn-delete" onclick="confirmDelete(event, '{% url 'delete_book_chapter' book.id %}')">
+                Delete
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editModalLabel">Edit Book/Chapter Record</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form method="POST" id="editForm">
+          {% csrf_token %}
+          <div class="modal-body">
+            <input type="hidden" name="id" id="editBookId">
+
+            <div class="mb-3">
+              <label class="form-label">Name of the Teacher</label>
+              <input type="text" class="form-control" name="teacher_name" id="editTeacherName" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Title of the Book/Chapter</label>
+              <input type="text" class="form-control" name="book_title" id="editBookTitle" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Title of the Paper</label>
+              <input type="text" class="form-control" name="paper_title" id="editPaperTitle" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Publication Year</label>
+              <input type="number" class="form-control" name="publication_year" id="editPublicationYear" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">ISBN/ISSN</label>
+              <input type="text" class="form-control" name="isbn_issn" id="editIsbnIssn" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Publisher</label>
+              <input type="text" class="form-control" name="publisher" id="editPublisher" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      let editModal = document.getElementById("editModal");
+
+      editModal.addEventListener("show.bs.modal", function (event) {
+        let button = event.relatedTarget;
+        let form = document.getElementById("editForm");
+
+        document.getElementById("editBookId").value = button.getAttribute("data-id");
+        document.getElementById("editTeacherName").value = button.getAttribute("data-teacher_name");
+        document.getElementById("editBookTitle").value = button.getAttribute("data-book_title");
+        form.action = button.getAttribute("data-update-url");
+      });
+    });
+  </script>
+{% endblock %}

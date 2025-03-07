@@ -34,8 +34,38 @@ urlpatterns = [
     path("expenditure/delete/<int:record_id>/", views.delete_expenditure, name="delete_expenditure"),
 
     # 📝 Forms
-    path("form1/", views.form1_view, name="form1"),
-    path("adddata1/", views.adddata1, name="adddata1"),
-    path("form2/", views.form2_view, name="form2"),
-    path("adddata2/", views.adddata2, name="adddata2"),
+    path("form5/", views.form5_view, name="form5"),
+    path("adddata5/", views.adddata5, name="adddata5"),     
+     path("form6/", views.form6_view, name="form6"),
+    path("adddata6/", views.adddata6, name="adddata6"),        
+     path("form7/", views.form7_view, name="form7"),
+    path("adddata7/", views.adddata7, name="adddata7"),    
+
+    #awards
+    path('teacher-awards/', views.teacher_awards_list, name='teacher_awards_list'),
+    path('teacher-awards/update/<int:award_id>/', views.update_teacher_award, name='update_teacher_award'),
+    path('teacher-awards/delete/<int:award_id>/', views.delete_teacher_award, name='delete_teacher_award'),    
+    path('add-teacher-award/', views.add_teacher_award, name='add_teacher_award'),     
+
+    #research_grands
+    path('research-grants/', views.research_grants_list, name='research_grants_list'),
+     path("add-research-grant/", views.add_research_grant, name="add_research_grant"),
+     path('research-grants/update/<int:grant_id>/', views.update_grant, name='update_grant'),
+     path("grant/delete/<int:grant_id>/", views.delete_grant, name="delete_grant"),
+
+     #awards
+     path('awards/', views.award_list, name='award_list'),
+     path('awards/update/<int:award_id>/', views.update_award, name='update_award'),
+     path('awards/delete/<int:award_id>/', views.award_delete, name='award_delete'),
+     path('awards/add/', views.add_award, name='add_award'),
+
+     #patents
+       path('patents/', views.patent_list, name='patent_list'),
+       path('patents/edit/<int:patent_id>/', views.edit_patent, name='edit_patent'),
+       path('patents/delete/<int:patent_id>/', views.delete_patent, name='delete_patent'),
+       path('patents/add/', views.add_patent, name='add_patent'),
+     #phds
+      path("phds/", views.phd_list, name="phd_list"),
+      path("phds/add/", views.add_phd, name="add_phd"),
+                                       
 ]

@@ -80,7 +80,7 @@
 <div class="container mt-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="section-title m-0">Teachers Receiving Fellowship/Financial Support</h2>
-    <a href="{% url 'adddata1' %}" class="btn btn-add">+ Add</a>
+    <a href="{% url 'add_teacher_award' %}" class="btn btn-add">+ Add</a>
   </div>
   
   <div class="table-responsive">
@@ -98,7 +98,7 @@
       <tbody>
         {% for award in awards %}
         <tr>
-          <td>{{ award.teacher_name }}</td>
+          <td>{{  award.teacher.user_profile.user.username }}</td>
           <td>{{ award.award_name }}</td>
           <td>{{ award.recognition_level }}</td>
           <td>{{ award.year_of_award }}</td>
@@ -106,7 +106,7 @@
           <td class="action-cell">
             <button class="btn btn-sm btn-edit" data-bs-toggle="modal" data-bs-target="#editModal"
               data-id="{{ award.id }}" 
-              data-teacher_name="{{ award.teacher_name }}"
+              data-teacher_name="{{award.teacher.user_profile.user.username}}"
               data-award_name="{{ award.award_name }}"
               data-recognition_level="{{ award.recognition_level }}"
               data-year_of_award="{{ award.year_of_award }}"
@@ -173,44 +173,21 @@
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     let editModal = document.getElementById("editModal");
-
+  
     editModal.addEventListener("show.bs.modal", function (event) {
       let button = event.relatedTarget;
       let form = document.getElementById("editForm");
-
+  
       document.getElementById("editAwardId").value = button.getAttribute("data-id");
       document.getElementById("editTeacherName").value = button.getAttribute("data-teacher_name");
       document.getElementById("editAwardName").value = button.getAttribute("data-award_name");
       document.getElementById("editRecognitionLevel").value = button.getAttribute("data-recognition_level");
       document.getElementById("editYearOfAward").value = button.getAttribute("data-year_of_award");
       document.getElementById("editAwardingAgency").value = button.getAttribute("data-awarding_agency");
-
+  
       form.action = button.getAttribute("data-update-url");
     });
-
-    document.getElementById("editForm").addEventListener("submit", function (event) {
-      event.preventDefault();
-
-      let form = event.target;
-      let formData = new FormData(form);
-
-      fetch(form.action, {
-          method: "POST",
-          body: formData,
-      })
-      .then(response => response.json())
-      .then(data => {
-          if (data.success) {
-              alert("Teacher award updated successfully!");
-              location.reload();
-          } else {
-              alert("Error: " + data.error);
-          }
-      })
-      .catch(error => console.error("Error:", error));
-    });
   });
-
   function confirmDelete(event, deleteUrl) {
     event.preventDefault();
 
@@ -218,6 +195,7 @@
       window.location.href = deleteUrl;
     }
   }
+  
 </script>
 
 {% endblock %}

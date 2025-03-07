@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .card-container {
+    max-width: 700px;
+    margin: 50px auto;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 100px;
+  }
+  .card-header {
+    background-color: #002d6b;
+    color: white;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 15px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+  .form-container {
+    padding: 20px;
+  }
+  .form-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+</style>
+
+<div class="container">
+  <div class="card-container">
+    <div class="card-header">
+      Add Research Paper
+    </div>
+    <div class="card-body form-container">
+      <form method="POST" action="" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="paperTitle" class="form-label fw-bold">Title of the Paper</label>
+            <input type="text" class="form-control" id="paperTitle" name="paper_title" placeholder="Enter Paper Title" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="authorName" class="form-label fw-bold">Name of the Author(s)</label>
+            <input type="text" class="form-control" id="authorName" name="author_name" placeholder="Enter Author Name(s)" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="department" class="form-label fw-bold">Department of the Teacher</label>
+            <input type="text" class="form-control" id="department" name="department" placeholder="Enter Department Name" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="journalName" class="form-label fw-bold">Name of the Journal</label>
+            <input type="text" class="form-control" id="journalName" name="journal_name" placeholder="Enter Journal Name" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="publicationYear" class="form-label fw-bold">Year of Publication</label>
+            <input type="number" class="form-control" id="publicationYear" name="publication_year" placeholder="Enter Year (e.g., 2024)" min="1900" max="2100" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="issnNumber" class="form-label fw-bold">ISSN Number</label>
+            <input type="text" class="form-control" id="issnNumber" name="issn_number" placeholder="Enter ISSN Number" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="ugcLink" class="form-label fw-bold">UGC Enlistment Link</label>
+            <input type="url" class="form-control" id="ugcLink" name="ugc_link" placeholder="Enter UGC Enlistment Link" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="document" class="form-label fw-bold">Upload Supporting Document</label>
+            <input type="file" class="form-control" id="document" name="document" accept=".pdf,.jpg,.png,.jpeg" required>
+          </div>
+        </div>
+
+        <div class="form-footer">
+          <button type="button" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+          <button type="submit" class="btn btn-primary px-4">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

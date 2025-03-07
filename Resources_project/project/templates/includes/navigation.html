@@ -1,7 +1,9 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
 <style>
     .breadcrumb {
         background-color: transparent;
-        padding: 0;
+        padding: 10px 20px;
         margin: 0;
         display: flex;
         flex-wrap: wrap;
@@ -9,7 +11,6 @@
         align-items: center;
     }
 
-    /* Breadcrumb Items */
     .breadcrumb-item {
         font-size: 16px;
         display: flex;
@@ -18,35 +19,28 @@
         position: relative;
     }
 
-    /* Separator Using Pseudo-Element */
     .breadcrumb-item + .breadcrumb-item::before {
         content: '>';
-        margin: 0 8px;
+        margin: 0 10px;
         color: #6c757d;
         font-weight: bold;
     }
 
-    /* Breadcrumb Links */
     .breadcrumb-item a {
         text-decoration: none;
         color: #6c757d;
         font-weight: bold;
-        margin-left: 5px;
     }
 
-    /* Hover Effect on Links */
     .breadcrumb-item a:hover {
-        text-decoration: none;
         color: #5a6268;
     }
 
-    /* Active Breadcrumb */
     .breadcrumb-item.active {
         color: #343a40;
         font-weight: bold;
     }
 
-    /* Icon Styling */
     .breadcrumb i {
         margin-right: 5px;
         color: #6c757d;
@@ -54,68 +48,91 @@
 </style>
 
 <!-- ✅ Breadcrumb Navigation -->
-<nav aria-label="breadcrumb" style="padding: 10px 20px;">
-    <ol class="breadcrumb" style="background-color: transparent; padding: 0; margin: 0;">
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
         <li class="breadcrumb-item">
             <i class="fas fa-home"></i>
             <a href="{% url 'home' %}">Home</a>
         </li>
 
-        {% if 'library-resource' in request.path %}
-            <li class="breadcrumb-separator"> &gt; </li>
-            <li class="breadcrumb-item">
-                <i class="fas fa-book"></i>
-                <a href="{% url 'library_resources' %}">Library Resources</a>
-            </li>
-            {% if 'add' in request.path %}
-                <li class="breadcrumb-separator"> &gt; </li>
-                <li class="breadcrumb-item active"><i class="fas fa-plus-circle"></i> Add Resource</li>
-            {% elif 'edit' in request.path %}
-                <li class="breadcrumb-separator"> &gt; </li>
-                <li class="breadcrumb-item active"><i class="fas fa-edit"></i> Edit Resource</li>
-            {% endif %}
+        {% with url_name=request.resolver_match.url_name %}
+            {% if url_name == "library_resources" or "library-resource" in request.path %}
+                <li class="breadcrumb-item">
+                    <i class="fas fa-book"></i>
+                    <a href="{% url 'library_resources' %}">Library Resources</a>
+                </li>
+                {% if url_name == "add_library_resource" %}
+                    <li class="breadcrumb-item active"><i class="fas fa-plus-circle"></i> Add Resource</li>
+                {% elif url_name == "update_library_resource" %}
+                    <li class="breadcrumb-item active"><i class="fas fa-edit"></i> Edit Resource</li>
+                {% endif %}
 
-        {% elif 'facilities' in request.path %}
-            <li class="breadcrumb-separator"> &gt; </li>
-            <li class="breadcrumb-item">
-                <i class="fas fa-laptop-house"></i>
-                <a href="{% url 'ict_facility_list' %}">ICT Facilities</a>
-            </li>
-            {% if 'add' in request.path %}
-                <li class="breadcrumb-separator"> &gt; </li>
-                <li class="breadcrumb-item active"><i class="fas fa-plus-circle"></i> Add Facility</li>
-            {% elif 'edit' in request.path %}
-                <li class="breadcrumb-separator"> &gt; </li>
-                <li class="breadcrumb-item active"><i class="fas fa-edit"></i> Edit Facility</li>
-            {% endif %}
+            {% elif url_name == "ict_facility_list" or "facilities" in request.path %}
+                <li class="breadcrumb-item">
+                    <i class="fas fa-laptop-house"></i>
+                    <a href="{% url 'ict_facility_list' %}">ICT Facilities</a>
+                </li>
+                {% if url_name == "add_ict_facility" %}
+                    <li class="breadcrumb-item active"><i class="fas fa-plus-circle"></i> Add Facility</li>
+                {% elif url_name == "update_facility" %}
+                    <li class="breadcrumb-item active"><i class="fas fa-edit"></i> Edit Facility</li>
+                {% endif %}
 
-        {% elif 'econtent' in request.path %}
-            <li class="breadcrumb-separator"> &gt; </li>
-            <li class="breadcrumb-item">
-                <i class="fas fa-file-alt"></i>
-                <a href="{% url 'show_econtent' %}">E-Content</a>
-            </li>
-            {% if 'add' in request.path %}
-                <li class="breadcrumb-separator"> &gt; </li>
-                <li class="breadcrumb-item active"><i class="fas fa-plus-circle"></i> Add E-Content</li>
-            {% elif 'edit' in request.path %}
-                <li class="breadcrumb-separator"> &gt; </li>
-                <li class="breadcrumb-item active"><i class="fas fa-edit"></i> Edit E-Content</li>
-            {% endif %}
+            {% elif url_name == "show_econtent" or "econtent" in request.path %}
+                <li class="breadcrumb-item">
+                    <i class="fas fa-file-alt"></i>
+                    <a href="{% url 'show_econtent' %}">E-Content</a>
+                </li>
+                {% if url_name == "add_econtent" %}
+                    <li class="breadcrumb-item active"><i class="fas fa-plus-circle"></i> Add E-Content</li>
+                {% elif url_name == "edit_econtent" %}
+                    <li class="breadcrumb-item active"><i class="fas fa-edit"></i> Edit E-Content</li>
+                {% endif %}
 
-        {% elif 'expenditure' in request.path %}
-            <li class="breadcrumb-separator"> &gt; </li>
-            <li class="breadcrumb-item">
-                <i class="fas fa-money-bill-wave"></i>
-                <a href="{% url 'expenditure_list' %}">Expenditure</a>
-            </li>
-            {% if 'add' in request.path %}
-                <li class="breadcrumb-separator"> &gt; </li>
-                <li class="breadcrumb-item active"><i class="fas fa-plus-circle"></i> Add Expenditure</li>
-            {% elif 'edit' in request.path %}
-                <li class="breadcrumb-separator"> &gt; </li>
-                <li class="breadcrumb-item active"><i class="fas fa-edit"></i> Edit Expenditure</li>
+            {% elif url_name == "expenditure_list" or "expenditure" in request.path %}
+                <li class="breadcrumb-item">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <a href="{% url 'expenditure_list' %}">Expenditure</a>
+                </li>
+                {% if url_name == "add_expenditure" %}
+                    <li class="breadcrumb-item active"><i class="fas fa-plus-circle"></i> Add Expenditure</li>
+                {% elif url_name == "update_expenditure" %}
+                    <li class="breadcrumb-item active"><i class="fas fa-edit"></i> Edit Expenditure</li>
+                {% endif %}
+
+            {% elif url_name == "teacher_awards_list" or "teacher-awards" in request.path %}
+                <li class="breadcrumb-item">
+                    <i class="fas fa-award"></i>
+                    <a href="{% url 'teacher_awards_list' %}">Teacher Awards</a>
+                </li>
+                {% if url_name == "add_teacher_award" %}
+                    <li class="breadcrumb-item active"><i class="fas fa-plus-circle"></i> Add Award</li>
+                {% elif url_name == "update_teacher_award" %}
+                    <li class="breadcrumb-item active"><i class="fas fa-edit"></i> Edit Award</li>
+                {% endif %}
+
+            {% elif url_name == "research_grants_list" or "research-grants" in request.path %}
+                <li class="breadcrumb-item">
+                    <i class="fas fa-flask"></i>
+                    <a href="{% url 'research_grants_list' %}">Research Grants</a>
+                </li>
+                {% if url_name == "add_research_grant" %}
+                    <li class="breadcrumb-item active"><i class="fas fa-plus-circle"></i> Add Grant</li>
+                {% elif url_name == "update_grant" %}
+                    <li class="breadcrumb-item active"><i class="fas fa-edit"></i> Edit Grant</li>
+                {% endif %}
+
+            {% elif url_name == "patent_list" or "patents" in request.path %}
+                <li class="breadcrumb-item">
+                    <i class="fas fa-lightbulb"></i>
+                    <a href="{% url 'patent_list' %}">Patents</a>
+                </li>
+                {% if url_name == "add_patent" %}
+                    <li class="breadcrumb-item active"><i class="fas fa-plus-circle"></i> Add Patent</li>
+                {% elif url_name == "edit_patent" %}
+                    <li class="breadcrumb-item active"><i class="fas fa-edit"></i> Edit Patent</li>
+                {% endif %}
             {% endif %}
-        {% endif %}
+        {% endwith %}
     </ol>
 </nav>

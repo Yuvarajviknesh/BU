@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block content %}
+  <style>
+    .btn-document {
+      background-color: #ff6f00;
+      color: #fff;
+    }
+
+    .table-responsive {
+      margin-top: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      margin-bottom: 20px;
+    }
+
+    table thead {
+      background-color: #002d6b;
+      color: white;
+    }
+
+    table thead th, table tbody td {
+      padding: 12px;
+      text-align: center;
+      border: 1px solid #ddd;
+      vertical-align: middle;
+    }
+
+    .btn-delete, .btn-edit {
+      padding: 6px 15px;
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .btn-delete {
+      background-color: rgb(237, 27, 27);
+      color: #fff;
+    }
+    .btn-delete::before {
+      content: "\1F5D1"; 
+      margin-right: 3px;
+    }
+    .btn-edit {
+      background-color: #007bff;
+      color: #fff;
+    }
+    .btn-edit::before {
+      content: "\270F"; 
+      margin-right: 3px;
+    }
+
+    .btn-add {
+      background-color: #f4a641;
+      color: #fff;
+      padding: 6px 15px;
+      text-transform: uppercase;
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    .btn-add:hover, .btn-delete:hover, .btn-edit:hover, .btn-document:hover {
+      border-color: #000;
+    }
+
+    .action-cell {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      align-items: center;
+    }
+  </style>
+
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="section-title m-0">Research Papers in UGC Journals</h2>
+      <a href="{% url 'adddata6' %}" class="btn btn-add">+ Add</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover">
+        <thead>
+          <tr>
+            <th>Title of Paper</th>
+            <th>Name of the Author(s)</th>
+            <th>Department</th>
+            <th>Name of Journal</th>
+            <th>Year of Publication</th>
+            <th>ISSN Number</th>
+            <th>UGC Recognition Link</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for paper in papers %}
+          <tr>
+            <td>{{ paper.title }}</td>
+            <td>{{ paper.authors }}</td>
+            <td>{{ paper.department }}</td>
+            <td>{{ paper.journal }}</td>
+            <td>{{ paper.year }}</td>
+            <td>{{ paper.issn }}</td>
+            <td><a href="{{ paper.ugc_link }}" target="_blank">View</a></td>
+            <td class="action-cell">
+              <button class="btn btn-sm btn-edit" data-bs-toggle="modal" data-bs-target="#editModal"
+                data-id="{{ paper.id }}"
+                data-title="{{ paper.title }}"
+                data-authors="{{ paper.authors }}"
+                data-department="{{ paper.department }}"
+                data-journal="{{ paper.journal }}"
+                data-year="{{ paper.year }}"
+                data-issn="{{ paper.issn }}"
+                data-ugc_link="{{ paper.ugc_link }}"
+                data-update-url="{% url 'update_paper' paper.id %}">
+                Edit
+              </button>
+              <a href="#" class="btn btn-sm btn-delete" onclick="confirmDelete(event, '{% url 'delete_paper' paper.id %}')">
+                Delete
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editModalLabel">Edit Research Paper Record</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form method="POST" id="editForm">
+          {% csrf_token %}
+          <div class="modal-body">
+            <input type="hidden" name="id" id="editPaperId">
+
+            <div class="mb-3">
+              <label class="form-label">Title of Paper</label>
+              <input type="text" class="form-control" name="title" id="editTitle" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Name of the Author(s)</label>
+              <input type="text" class="form-control" name="authors" id="editAuthors" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Department</label>
+              <input type="text" class="form-control" name="department" id="editDepartment" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Name of Journal</label>
+              <input type="text" class="form-control" name="journal" id="editJournal" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Year of Publication</label>
+              <input type="text" class="form-control" name="year" id="editYear" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">ISSN Number</label>
+              <input type="text" class="form-control" name="issn" id="editIssn" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">UGC Recognition Link</label>
+              <input type="url" class="form-control" name="ugc_link" id="editUgcLink" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

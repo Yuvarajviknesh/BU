@@ -104,3 +104,100 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     instance.userprofile.save()
+
+class TeacherAward(models.Model):
+    RECOGNITION_LEVELS = [
+        ('International', 'International'),
+        ('National', 'National'),
+        ('State', 'State'),
+        ('Institutional', 'Institutional')
+    ]
+
+    teacher = models.ForeignKey('Teacher', on_delete=models.CASCADE)
+    award_name = models.CharField(max_length=255)
+    recognition_level = models.CharField(max_length=50, choices=RECOGNITION_LEVELS)
+    year_of_award = models.PositiveIntegerField()
+    awarding_agency = models.CharField(max_length=255)
+    
+    def __str__(self):
+        return f"{self.teacher.user_profile.name} - {self.award_name} ({self.year_of_award})"
+    
+class GrantType(models.TextChoices):
+    GOVERNMENT = 'Government', 'Government'
+    NON_GOVERNMENT = 'Non-Government', 'Non-Government'
+
+class DurationUnit(models.TextChoices):
+    MONTHS = 'Months', 'Months'
+    YEARS = 'Years', 'Years'
+
+from django.db import models
+
+class ResearchGrant(models.Model):
+    scheme_name = models.CharField(max_length=255)
+    funding_agency = models.CharField(max_length=255)
+    grant_type = models.CharField(max_length=20, choices=GrantType.choices)  # Renamed from "type"
+    department = models.ForeignKey(Department, on_delete=models.CASCADE) 
+    year_of_award = models.PositiveIntegerField()  # Ensures no negative values
+    funds_provided = models.DecimalField(max_digits=15, decimal_places=2)  # Increased max_digits
+    duration = models.PositiveIntegerField()  # Ensures no negative values
+    duration_unit = models.CharField(max_length=10, choices=DurationUnit.choices)
+
+    # Many-to-Many relationship for investigators
+    investigators = models.ManyToManyField("Investigator", related_name="grants")
+
+    def __str__(self):
+        return f"{self.scheme_name} ({self.year_of_award})"
+
+class Investigator(models.Model):
+    name = models.CharField(max_length=255, unique=True)  # Ensures unique names
+
+    def __str__(self):
+        return self.name
+    
+class AwardRecognition(models.Model):
+    CATEGORY_CHOICES = [
+        ('Institution', 'Institution'),
+        ('Teacher', 'Teacher'),
+        ('Research Scholar', 'Research Scholar'),
+        ('Student', 'Student'),
+    ]
+
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="awards")
+    innovation_title = models.CharField(max_length=255)
+    awardee_name = models.CharField(max_length=255)
+    awarding_agency = models.CharField(max_length=255)
+    award_year = models.PositiveIntegerField()
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    document = models.FileField(
+        upload_to='awards/', 
+        validators=[validate_file_size, validate_file_extension], 
+        blank=True, 
+        null=True
+    )
+
+    def __str__(self):
+        return f"{self.innovation_title} - {self.awardee_name} ({self.award_year})"
+
+class Patent(models.Model):
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="patents")
+    patenter_name = models.CharField(max_length=255)
+    patent_number = models.CharField(max_length=100, unique=True)
+    title = models.CharField(max_length=255)
+    award_year = models.PositiveIntegerField()
+    document = models.FileField(upload_to='patents/', blank=True, null=True)
+    
+    def __str__(self):
+        return f"{self.title} ({self.patent_number})"
+    
+
+class PhDAward(models.Model):
+    scholar_name = models.CharField(max_length=255)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="phds")
+    guides = models.CharField(max_length=255)
+    title = models.TextField()
+    registration_year = models.PositiveIntegerField()
+    award_year = models.PositiveIntegerField()
+    document = models.FileField(upload_to='phdaward/', blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.scholar_name} - {self.title} ({self.award_year})"

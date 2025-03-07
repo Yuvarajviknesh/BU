@@ -20,9 +20,11 @@ import project
 import project.urls
 from django.conf import settings
 from django.conf.urls.static import static
+from django.shortcuts import redirect
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', lambda request: redirect('resource_management/', permanent=True)), 
     path('resource_management/',include(project.urls),)
 ]
 

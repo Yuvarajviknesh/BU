@@ -30,11 +30,11 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            position: relative;
+            position:sticky;
             top: 0;
             left: 0;
             width: 100%;
-            z-index: 999;
+            z-index: 1011;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
         /* Main Content */
@@ -174,8 +174,8 @@
 
     <!-- Header -->
     {% include 'includes/header.html' %}
-    {% if request.resolver_match.url_name != 'home' %}
-         {% include 'includes/filter.html' %}
+    {% if not disable_filter %}
+      {% include 'includes/filter.html' %}
     {% endif %}
     <!-- Toast Notifications -->
     {% if messages %}

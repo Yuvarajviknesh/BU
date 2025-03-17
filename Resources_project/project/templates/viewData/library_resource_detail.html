@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Library Resource Details</h2>
+    
+    <table class="table table-bordered">
+        <tr><th>Academic Year</th><td>{{ resource.academic_year }}</td></tr>
+        <tr><th>Resource Name</th><td>{{ resource.resource_name }}</td></tr>
+        <tr><th>Expenditure on e-Journals/Books</th><td>₹{{ resource.expenditure_journals }}</td></tr>
+        <tr><th>Expenditure on Other e-Resources</th><td>₹{{ resource.expenditure_other_resources }}</td></tr>
+        <tr><th>Total Library Expenditure</th><td>₹{{ resource.total_expenditure }}</td></tr>
+        <tr><th>Department</th><td>{{ resource.department.department_name }}</td></tr>
+        <tr>
+            <th>Document</th>
+            <td>
+                {% if resource.document %}
+                    <a href="{{ resource.document.url }}" target="_blank">View Document</a>
+                {% else %}
+                    <span class="text-danger">No Document Available</span>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <a href="{% url 'download_library_resource_pdf' resource.id %}" class="btn btn-primary">📄 Download PDF</a>
+    <a href="{% url 'library_resources' %}" class="btn btn-secondary">⬅ Back to List</a>
+</div>
+{% endblock %}

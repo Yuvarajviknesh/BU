@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% block content %}
+    <style>
+        /* Table Design */
+        .table-responsive {
+            margin-top: 20px;
+        }
+        
+        table.ict-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        table.ict-table thead {
+            background-color: #002d6b;
+            color: white;
+        }
+        
+        table.ict-table thead th,
+        table.ict-table tbody td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        
+        table.ict-table tbody tr:hover {
+            background-color: #fffcf7;
+        }
+        
+        /* Base Button Styles */
+        .btn {
+            padding: 6px 15px;
+            text-transform: uppercase;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            color: #fff;
+            cursor: pointer;
+        }
+        
+        /* Button Variants */
+        .btn-add {
+            background-color: #f4a641; /* Orange for Add */
+        }
+        
+        .btn-delete {
+            background-color: #ed1b1b; /* Red for Delete */
+        }
+        
+        .btn-edit {
+            background-color: #007bff; /* Blue for Edit */
+        }
+        
+        .btn-view {
+            background-color: #17a2b8; /* Light Blue for View */
+        }
+        
+        /* Hover Effects */
+        .btn:hover {
+            border-color: #000; /* Uniform hover effect for all buttons */
+        }
+        
+        /* Action Cell - Aligns buttons */
+        .action-cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: nowrap; /* Ensure buttons stay in one row */
+        }
+    </style>
+
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-4 md-3">
+        <h2 class="section-title m-0">Full Time Teachers Against Sanctioned Posts</h2>
+        <div class="d-flex align-items-center gap-2 ms-auto">
+            <a href="" class="btn btn-success">⬇️ Download Excel</a>
+            <a href="{% url 'add_against_sanctioned_post' %}" class="btn btn-add">+ Add</a>
+        </div>
+    </div>
+    <form method="POST" action="">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <input type="text" name="teacher_name" class="form-control" placeholder="Enter Teacher Name">
+            </div>
+            <div class="col-md-3 mb-3">
+                <input type="text" name="department" class="form-control" placeholder="Enter Department">   
+            </div>
+            <div class="col-md-3 mb-3">
+                <input type="text" name="designation" class="form-control" placeholder="Enter Designation">
+            </div>
+            <div class="col-md-3 mb-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Apply Filter</button>
+                <a href="{% url 'teacher_serving_post_list' %}" class="btn btn-secondary w-100 ms-2">Reset</a>
+            </div>
+        </div>
+    </form>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover ict-table">
+            <thead>
+                <tr>
+                    <th>Name of the Full-time teacher</th>
+                    <th>PAN</th>
+                    <th>Designation</th>
+                    <th>Year of appointment</th>
+                    <th class="highlight">Nature of appointment (Against Sanctioned post, temporary, permanent)</th>
+                    <th>Name of the Department</th>
+                    <th>Total years of Experience in the same institution</th>
+                    <th>Is the teacher still serving the institution/If not last year of the service of Faculty to the Institution</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for teacher in teachers %}
+                <tr>
+                    <td>{{ teacher.name }}</td>
+                    <td>{{ teacher.pan }}</td>
+                    <td>{{ teacher.designation }}</td>
+                    <td>{{ teacher.year_of_appointment }}</td>
+                    <td>{{ teacher.nature_of_appointment }}</td>
+                    <td>{{ teacher.department }}</td>
+                    <td>{{ teacher.years_of_experience }}</td>
+                    <td>{{ teacher.still_serving }}</td>
+                    <td class="action-cell">
+                        <button class="btn btn-sm btn-edit" data-bs-toggle="modal" data-bs-target="#editModal"
+                            data-id="{{ teacher.id }}" 
+                            data-name="{{ teacher.name }}"
+                            data-pan="{{ teacher.pan }}"
+                            data-designation="{{ teacher.designation }}"
+                            data-year-of-appointment="{{ teacher.year_of_appointment }}"
+                            data-nature-of-appointment="{{ teacher.nature_of_appointment }}"
+                            data-department="{{ teacher.department }}"
+                            data-years-of-experience="{{ teacher.years_of_experience }}"
+                            data-still-serving="{{ teacher.still_serving }}"
+                            data-update-url="">
+                            ✏️ Edit
+                        </button>
+                        <a href="#" class="btn btn-sm btn-delete" onclick="confirmDelete(event, '')">🗑️ Delete</a>  
+                        <a href="" class="btn btn-sm btn-info">🔍 View</a>  
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Teacher</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm" method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" id="teacherId" name="teacher_id">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Name of the Full-time teacher</label>
+                            <input type="text" class="form-control" id="teacherName" name="name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">PAN</label>
+                            <input type="text" class="form-control" id="teacherPan" name="pan" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Designation</label>
+                            <input type="text" class="form-control" id="teacherDesignation" name="designation" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Year of appointment</label>
+                            <input type="text" class="form-control" id="teacherYearOfAppointment" name="year_of_appointment" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Nature of appointment</label>
+                            <input type="text" class="form-control" id="teacherNatureOfAppointment" name="nature_of_appointment" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Name of the Department</label>
+                            <input type="text" class="form-control" id="teacherDepartment" name="department" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Total years of Experience in the same institution</label>
+                            <input type="text" class="form-control" id="teacherYearsOfExperience" name="years_of_experience" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Is the teacher still serving the institution/If not last year of the service of Faculty to the Institution</label>
+                            <input type="text" class="form-control" id="teacherStillServing" name="still_serving" required>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var editModal = document.getElementById("editModal");
+        
+            editModal.addEventListener("show.bs.modal", function (event) {
+                var button = event.relatedTarget;
+                
+                document.getElementById("teacherId").value = button.getAttribute("data-id");
+                document.getElementById("teacherName").value = button.getAttribute("data-name");
+                document.getElementById("teacherPan").value = button.getAttribute("data-pan");
+                document.getElementById("teacherDesignation").value = button.getAttribute("data-designation");
+                document.getElementById("teacherYearOfAppointment").value = button.getAttribute("data-year-of-appointment");
+                document.getElementById("teacherNatureOfAppointment").value = button.getAttribute("data-nature-of-appointment");
+                document.getElementById("teacherDepartment").value = button.getAttribute("data-department");
+                document.getElementById("teacherYearsOfExperience").value = button.getAttribute("data-years-of-experience");
+                document.getElementById("teacherStillServing").value = button.getAttribute("data-still-serving");
+        
+                document.getElementById("editForm").action = button.getAttribute("data-update-url");
+            });
+        
+            window.confirmDelete = function (event, deleteUrl) {
+                event.preventDefault();
+                if (confirm("Are you sure?")) window.location.href = deleteUrl;
+            };
+        });
+    </script>
+{% endblock %}

@@ -9,39 +9,123 @@ import pandas as pd
 from datetime import datetime
 from django.core.exceptions import PermissionDenied
 from django.core.files.storage import default_storage
-from .models import LibraryResource, UserProfile,Department,ICTFacility,EContentDevelopment,Teacher,Expenditure,TeacherAward,ResearchGrant,Investigator,AwardRecognition,Patent,PhDAward
+from .models import LibraryResource, UserProfile,Department,ICTFacility,EContentDevelopment,Teacher,Expenditure,TeacherAward,ResearchGrant,Investigator,AwardRecognition,Patent,PhDAward,DemandRatio
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect
+from django.http import HttpResponse
+from django.contrib.staticfiles import finders
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle, SimpleDocTemplate
 
-def login_view(request):
+def user_login(request):
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
-
-        # Validate email and password fields
-        if not email or not password:
-            messages.error(request, "Please fill in all fields.")
-            return render(request, "login.html")
 
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             messages.error(request, "Invalid email address!")
-            return render(request, "login.html")
+            return redirect("user_login")
 
-        # Authenticate using username (since Django uses username internally)
+        # Authenticate user
         auth_user = authenticate(request, username=user.username, password=password)
 
-        if auth_user is not None:
+        if auth_user is not None and auth_user.is_active:
             login(request, auth_user)
             messages.success(request, "Login successful!")
-            return redirect("home")
+
+            # Check if UserProfile exists
+            user_profile = UserProfile.objects.filter(user=user).first()
+            if not user_profile:
+                messages.error(request, "User profile not found. Contact Admin.")
+                logout(request)
+                return redirect("user_login")
+
+            # Redirect based on role
+            if user_profile.is_department_staff:
+                return redirect("department_dashboard")
+            elif user_profile.is_scholar:
+                return redirect("scholar_dashboard")
+            elif user_profile.is_teacher:
+                return redirect("staff_dashboard")  # Teachers -> Staff Dashboard
+
+            # If no role is assigned, logout user
+            messages.error(request, "You are not authorized to access this system.")
+            logout(request)
+            return redirect("user_login")
+
         else:
-            messages.error(request, "Invalid password!")
+            messages.error(request, "Invalid credentials!")
+            return redirect("user_login")
 
     return render(request, "login.html")
+
+
+@login_required
+def department_dashboard(request):
+    try:
+        profile = request.user.userprofile
+        if not profile.is_department_staff:
+            messages.error(request, "You are not authorized to access this page.")
+            return redirect("login")
+    except UserProfile.DoesNotExist:
+        messages.error(request, "User profile not found.")
+        return redirect("login")
+
+    return render(request, "department_dashboard.html")
+
+@login_required
+def staff_dashboard(request):
+    try:
+        profile = request.user.userprofile
+        if not profile.is_teacher:
+            messages.error(request, "You are not authorized to access this page.")
+            return redirect("login")
+    except UserProfile.DoesNotExist:
+        messages.error(request, "User profile not found.")
+        return redirect("login")
+
+    return render(request, "staff_dashboard.html")
+
+@login_required
+def scholar_dashboard(request):
+    try:
+        profile = request.user.userprofile
+        if not profile.is_scholar:
+            messages.error(request, "You are not authorized to access this page.")
+            return redirect("login")
+    except UserProfile.DoesNotExist:
+        messages.error(request, "User profile not found.")
+        return redirect("login")
+
+    return render(request, "scholar_dashboard.html")
+
+
+
+@login_required
+def department_dashboard(request):
+    # Ensure UserProfile exists and check `is_department_staff`
+    if not hasattr(request.user, "userprofile") or not request.user.userprofile.is_department_staff:
+        messages.error(request, "You are not authorized to access this page.")
+        return redirect("home")
+    
+    return render(request, "department_dashboard.html")
+
+
+@login_required
+def scholar_dashboard(request):
+    # Ensure UserProfile exists and check `is_scholar`
+    if not hasattr(request.user, "userprofile") or not request.user.userprofile.is_scholar:
+        messages.error(request, "You are not authorized to access this page.")
+        return redirect("home")
+    
+    return render(request, "scholar_dashboard.html")
 
 def logout_view(request):
     logout(request)
@@ -65,42 +149,260 @@ def user_is_library_or_superuser(user):
     except UserProfile.DoesNotExist:
         return False
 
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import HttpResponse
+from django.core.paginator import Paginator
+import openpyxl
+from .models import LibraryResource, Department
+
 @login_required
 def library_resources(request):
+    """
+    List, filter, and export Library Resources:
+    - Superusers see all resources.
+    - Library department staff see only their department’s resources.
+    - Teachers and unauthorized users are restricted.
+    """
+    current_year = datetime.now().year
+    years = list(range(2000, current_year + 1))
+    # Fetch the user and their profile
     user = request.user
-    user_profile = user.userprofile 
+    user_profile = getattr(user, 'userprofile', None)
 
-    # # Debugging Output
-    # print("User:", user)
-    # print("Is Superuser:", user.is_superuser)
-    # print("User Department:", user_profile.department.department_name)
-
-    selected_department = request.GET.get('department', None)
-    selected_criterion = request.GET.get('criterion', None)
-    selected_criterion_title = request.GET.get('criterion_title', None)
-    criterion_id = request.session.get('criterion_id')
+    # Access Control
     if user.is_superuser:
-        departments = Department.objects.all()
+        # Superusers see all data
         resources = LibraryResource.objects.all()
-    elif user_profile.department.department_name == "Library & Information Science":
-        # ✅ Direct department match
+        departments = Department.objects.all()
+    elif user_profile and user_profile.department and user_profile.department.department_name == "Library":
+        # Library staff see their department's resources
+        resources = LibraryResource.objects.filter(department=user_profile.department)
         departments = Department.objects.filter(department_code=user_profile.department.department_code)
-        resources = LibraryResource.objects.filter(department__department_name="Library & Information Science")
     else:
+        # Unauthorized users are redirected
         messages.error(request, "You are not authorized to view this page.")
         return redirect("home")
 
+    # Apply Filters
+    selected_department = request.GET.get('department')
+    year_from = request.GET.get('year_from')
+    year_to = request.GET.get('year_to')
+    resource_name = request.GET.get('resource_name')
+
+    if selected_department:
+        resources = resources.filter(department__id=selected_department)
+    if year_from and year_to:
+        resources = resources.filter(academic_year__range=(year_from, year_to))
+    elif year_from:
+        resources = resources.filter(academic_year__gte=year_from)
+    elif year_to:
+        resources = resources.filter(academic_year__lte=year_to)
+    if resource_name:
+        resources = resources.filter(resource_name=resource_name)
+
+    # Export to Excel
+    if 'export_excel' in request.GET:
+        # Create an Excel workbook
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        sheet.title = "Library Resources"
+
+        # Add headers
+        sheet.append(['Academic Year', 'Resource Name', 'Expenditure on e-Journals/Books',
+                      'Expenditure on Other e-Resources', 'Total Expenditure', 'Department'])
+
+        # Add data rows
+        for resource in resources:
+            sheet.append([
+                resource.academic_year,
+                resource.resource_name,
+                resource.expenditure_journals,
+                resource.expenditure_other_resources,
+                resource.total_expenditure,
+                resource.department.department_name,
+            ])
+
+        # Return response as an Excel file
+        response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        response['Content-Disposition'] = 'attachment; filename=LibraryResources.xlsx'
+        workbook.save(response)
+        return response
+
+    # Pagination
+    paginator = Paginator(resources, 10)  # Show 10 resources per page
+    page_number = request.GET.get('page')
+    resources = paginator.get_page(page_number)
+
+    # Context for rendering
     context = {
+        "resources": resources,
         "departments": departments,
         "selected_department": selected_department,
-        "selected_criterion": selected_criterion,
-        "selected_criterion_title": selected_criterion_title,
-        "resources": resources,
-        'is_homepage': False ,
-        'criterion_id':criterion_id
+        "year_from": year_from,
+        "year_to": year_to,
+        "resource_name": resource_name,
+        "years": years,
     }
 
     return render(request, 'Forms/library_resources.html', context)
+
+@login_required
+def download_library_resources_excel(request):
+    """Export Library Resources data to an Excel file with authorization checks."""
+
+    user = request.user
+
+    # **Check if user has a UserProfile**
+    try:
+        user_profile = user.userprofile
+    except UserProfile.DoesNotExist:
+        return HttpResponse("Unauthorized: No user profile found", status=403)
+
+    # **Authorization Logic**
+    if user.is_superuser:
+        resources = LibraryResource.objects.all()
+    elif user_profile.is_department_staff:
+        if user_profile.department:
+            resources = LibraryResource.objects.filter(department=user_profile.department)
+        else:
+            return HttpResponse("Unauthorized: No department assigned", status=403)
+    else:
+        return HttpResponse("Unauthorized: Insufficient permissions", status=403)
+
+    # **Filtering Logic**
+    year_from = request.GET.get("year_from")
+    year_to = request.GET.get("year_to")
+    resource_name = request.GET.get("resource_name")
+
+    if year_from and year_to:
+        resources = resources.filter(academic_year__range=(year_from, year_to))
+    elif year_from:
+        resources = resources.filter(academic_year__gte=year_from)
+    elif year_to:
+        resources = resources.filter(academic_year__lte=year_to)
+    if resource_name:
+        resources = resources.filter(resource_name=resource_name)
+
+    # **Create an Excel Workbook**
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = "Library Resources"
+
+    # **Header Row**
+    headers = ["Academic Year", "Resource Name", "Expenditure on e-Journals/Books",
+               "Expenditure on Other e-Resources", "Total Expenditure", "Department", "Downloaded By"]
+    sheet.append(headers)
+
+    # **Add Data Rows**
+    for resource in resources:
+        sheet.append([
+            resource.academic_year,
+            resource.resource_name,
+            resource.expenditure_journals,
+            resource.expenditure_other_resources,
+            resource.total_expenditure,
+            resource.department.department_name if resource.department else "N/A",
+            f"{user.username} ({getattr(user_profile, 'position', 'N/A')})",  # Capture username & position
+        ])
+
+    # **Prepare HTTP Response**
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = 'attachment; filename="LibraryResources.xlsx"'
+    workbook.save(response)
+    
+    return response
+
+
+@login_required
+def download_library_resource_pdf(request, resource_id):
+    """
+    Generate and download a PDF for Library Resource details.
+    """
+    resource = get_object_or_404(LibraryResource, id=resource_id)
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="library_resource_{resource.id}.pdf"'
+
+    pdf = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    # Background Color
+    pdf.setFillColorRGB(0.95, 0.95, 0.95)  # Light Gray
+    pdf.rect(0, 0, width, height, fill=True, stroke=False)
+
+    # Logo
+    logo_path = finders.find("images/logo2.png")  # Replace with your logo path
+    if not logo_path:
+        raise OSError("Logo file not found in static directory!")
+    logo = ImageReader(logo_path)
+
+    # Header with Blue Background
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, height - 100, width - 40, 80, 10, fill=True, stroke=False)
+
+    # Header Text
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawCentredString(width / 2, height - 60, "Library Resource Details")
+    pdf.drawImage(logo, 50, height - 85, width=140, height=50, mask="auto")
+
+    # Table Data
+    data = [
+        ["Academic Year", resource.academic_year],
+        ["Resource Name", resource.resource_name],
+        ["Expenditure on e-Journals/Books", f"₹{resource.expenditure_journals}"],
+        ["Expenditure on Other e-Resources", f"₹{resource.expenditure_other_resources}"],
+        ["Total Library Expenditure", f"₹{resource.total_expenditure}"],
+        ["Department", resource.department.department_name],
+    ]
+
+    table = Table(data, colWidths=[200, 280])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.lightgrey),
+        ("GRID", (0, 0), (-1, -1), 1, colors.blue),
+        ("BOX", (0, 0), (-1, -1), 2, colors.blue),
+    ]))
+
+    # Draw Table in Center
+    table_x = (width - 480) / 2
+    table_y = height - 280
+    table.wrapOn(pdf, width, height)
+    table.drawOn(pdf, table_x, table_y)
+
+    # Footer with Blue Background
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, 20, width - 40, 50, 10, fill=True, stroke=False)
+
+    # Footer Text
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica", 10)
+    pdf.drawCentredString(width / 2, 45, "© 2025 Bharathiar University. All Rights Reserved.")
+
+    # Curved Double Line Border
+    pdf.setStrokeColor(colors.blue)
+    pdf.setLineWidth(2)
+    pdf.roundRect(10, 10, width - 20, height - 20, 15, stroke=True, fill=False)
+    pdf.roundRect(15, 15, width - 30, height - 30, 12, stroke=True, fill=False)
+
+    pdf.showPage()
+    pdf.save()
+
+    return response
+
+@login_required
+def library_resource_detail(request, resource_id):
+    """
+    Show details for a specific Library Resource.
+    """
+    resource = get_object_or_404(LibraryResource, id=resource_id)
+    return render(request, 'viewData/library_resource_detail.html', {'resource': resource})
 
 @login_required
 def update_library_resource(request, resource_id):
@@ -163,7 +465,7 @@ def add_library_resource(request):
 
         # Get the Library department instance
         try:
-            library_department = Department.objects.get(department_name="Library & Information Science")
+            library_department = Department.objects.get(department_name="Library")
         except Department.DoesNotExist:
             messages.error(request, "Library department not found.")
             return redirect("add_library_resource")
@@ -199,40 +501,202 @@ def delete_library_resource(request, resource_id):
     return redirect('library_resources')  # Redirect to the main page after deletion
 @login_required
 def ict_facility_list(request):
-    """ View all ICT facilities (admin sees all, department sees their own) """
+    """
+    List and filter ICT Facilities:
+    - Superusers see all data.
+    - Department staff see data related to their department.
+    - Teachers see only their related department data.
+    """
 
-    # ✅ Get filter parameters from the request
-    selected_department = request.GET.get('department', None)
-    selected_criterion = request.GET.get('criterion', None)
-    selected_criterion_title = request.GET.get('criterion_title', None)
-    criterion_id = request.session.get('criterion_id')
-    # ✅ Admin sees all facilities; normal users see their department's facilities
-    if request.user.is_superuser:
+    # Fetch the user and their profile
+    user = request.user
+    user_profile = getattr(user, 'userprofile', None)
+
+    # Fetch filter values from GET request
+    department_id = request.GET.get('department', '')
+    room_type = request.GET.get('room_type', '')
+    ict_facility = request.GET.get('ict_facility', '')
+
+    # Initialize the facilities queryset and restrict access based on roles
+    if user.is_superuser:
+        # Superusers see all facilities
         facilities = ICTFacility.objects.all()
-        departments = Department.objects.all()  # Admin can filter all departments
+        departments = Department.objects.all()
+    elif user_profile and user_profile.is_department_staff:
+        # Department staff see only their department's facilities
+        facilities = ICTFacility.objects.filter(department=user_profile.department)
+        departments = Department.objects.filter(department_code=user_profile.department.department_code)
+    elif user_profile and user_profile.is_teacher:
+        # Teachers see only their department's facilities
+        if user_profile.department:
+            facilities = ICTFacility.objects.filter(department=user_profile.department)
+            departments = Department.objects.filter(department_code=user_profile.department.department_code)
+        else:
+            facilities = ICTFacility.objects.none()
+            departments = Department.objects.none()
     else:
-        user_department = request.user.userprofile.department
-        departments = Department.objects.filter(department_code=user_department.department_code)
-        facilities = ICTFacility.objects.filter(department=user_department)
+        # For users without a proper profile, return no data
+        facilities = ICTFacility.objects.none()
+        departments = Department.objects.none()
 
-    # ✅ Apply Department Filter if selected
-    if selected_department:
-        facilities = facilities.filter(department__department_code=selected_department)
+    # Apply additional filters if provided in the GET request
+    if department_id:
+        facilities = facilities.filter(department_id=department_id)
+    if room_type:
+        facilities = facilities.filter(room_type__icontains=room_type)  # Case-insensitive matching
+    if ict_facility:
+        facilities = facilities.filter(ict_facility__icontains=ict_facility)
 
-    # ✅ Build context
+    # Add pagination for scalability
+    from django.core.paginator import Paginator
+    paginator = Paginator(facilities, 10)  # Show 10 facilities per page
+    page_number = request.GET.get('page')
+    facilities = paginator.get_page(page_number)
+
+    # Context for rendering the template
     context = {
-        "departments": departments,
-        "selected_department": selected_department,
-        "selected_criterion": selected_criterion,
-        "selected_criterion_title": selected_criterion_title,
-        "facilities": facilities,
-        'is_homepage': False,
-        'criterion_id':criterion_id
+        'facilities': facilities,
+        'departments': departments,
+        'selected_department': department_id,
+        'selected_room_type': room_type,
+        'selected_ict_facility': ict_facility,
     }
 
     return render(request, 'Forms/ict_facility_list.html', context)
 
+@login_required
+def download_ict_facilities(request):
+    """Generate and download an Excel file containing ICT facilities details based on user role."""
 
+    user = request.user
+
+    # **Check if user has a UserProfile**
+    try:
+        user_profile = user.userprofile
+    except UserProfile.DoesNotExist:
+        return HttpResponse("Unauthorized: No user profile found", status=403)
+
+    # **Authorization Logic**
+    if user.is_superuser:
+        facilities = ICTFacility.objects.all()
+    elif user_profile.is_department_staff:
+        if user_profile.department:
+            facilities = ICTFacility.objects.filter(department=user_profile.department)
+        else:
+            return HttpResponse("Unauthorized: No department assigned", status=403)
+    else:
+        return HttpResponse("Unauthorized: Insufficient permissions", status=403)
+
+    # **Prepare Data**
+    data = []
+    for facility in facilities:
+        data.append({
+            "Department Code": facility.department.department_code,
+            "Department Name": facility.department.department_name,
+            "Room Type": facility.room_type,
+            "Room No": facility.room_no,
+            "Type of ICT Facility": facility.ict_facility,
+            "Geo-Tagged Photo": facility.geo_tagged_photo.url if facility.geo_tagged_photo else "No Image",
+            "Master Time Table": facility.master_timetable.url if facility.master_timetable else "No Timetable",
+            "Downloaded By": f"{user.username} ({getattr(user_profile, 'position', 'N/A')})",  # Capture username & position
+        })
+
+    # **Convert to DataFrame**
+    df = pd.DataFrame(data)
+
+    # **Create HTTP response with Excel file**
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="ICT_Facilities.xlsx"'
+
+    # **Write to Excel file**
+    with pd.ExcelWriter(response, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='ICT Facilities')
+
+    return response
+
+from reportlab.pdfgen import canvas
+
+def facility_detail(request, facility_id):
+    facility = get_object_or_404(ICTFacility, id=facility_id)
+    return render(request, "viewData/facility_detail.html", {"facility": facility})
+
+def download_facility_pdf(request, facility_id):
+    facility = get_object_or_404(ICTFacility, id=facility_id)
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="facility_{facility.id}.pdf"'
+
+    pdf = canvas.Canvas(response, pagesize=A4)
+    width, height = A4  
+
+    # **Background Color for Entire Page**
+    pdf.setFillColorRGB(0.95, 0.95, 0.95)  # Light Gray Background
+    pdf.rect(0, 0, width, height, fill=True, stroke=False)
+
+    # ✅ Find Logo File
+    logo_path = finders.find("images/logo2.png")
+    if not logo_path:
+        raise OSError("Logo file not found in static directory!")
+
+    logo = ImageReader(logo_path)
+
+    # **Header Section with Blue Background**
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, height - 100, width - 40, 80, 10, fill=True, stroke=False)  # ✅ Rounded Header
+
+    # **Header Text**
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawCentredString(width / 2, height - 60, "ICT Facility Details")
+
+    pdf.drawImage(logo, 50, height - 85, width=140, height=50, mask="auto")
+
+    # **Table Data**
+    data = [
+        ["Department Code", facility.department.department_code],
+        ["Department Name", facility.department.department_name],
+        ["Room Type", facility.room_type],
+        ["Room No", facility.room_no],
+        ["Type of ICT Facility", facility.ict_facility]
+    ]
+
+    table = Table(data, colWidths=[200, 280])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.lightgrey),
+        ("GRID", (0, 0), (-1, -1), 1, colors.blue),  # ✅ Blue Borders
+        ("BOX", (0, 0), (-1, -1), 2, colors.blue),   # ✅ Outer Blue Border
+    ]))
+
+    # **Draw Table in Center**
+    table_x = (width - 480) / 2  
+    table_y = height - 280  
+    table.wrapOn(pdf, width, height)
+    table.drawOn(pdf, table_x, table_y)
+
+    # **Footer Section with Blue Background**
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, 20, width - 40, 50, 10, fill=True, stroke=False)  # ✅ Rounded Footer
+
+    # **Footer Text Without Logo**
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica", 10)
+    pdf.drawCentredString(width / 2, 45, "© 2025 Bharathiar University. All Rights Reserved.")
+
+    # **Curved Double Line Border for A4 Page**
+    pdf.setStrokeColor(colors.blue)
+    pdf.setLineWidth(2)
+    pdf.roundRect(10, 10, width - 20, height - 20, 15, stroke=True, fill=False)  # ✅ Outer Border
+    pdf.roundRect(15, 15, width - 30, height - 30, 12, stroke=True, fill=False)  # ✅ Inner Border
+
+    pdf.showPage()
+    pdf.save()
+    
+    return response
 
 @login_required
 def add_ict_facility(request):
@@ -302,6 +766,68 @@ def update_facility(request, facility_id):
 
     return render(request, "Forms/ict_facility_list.html", {"facility": facility})
 
+@login_required
+def view_econtent_detail(request, record_id):
+    econtent = get_object_or_404(EContentDevelopment, id=record_id)
+    return render(request, "viewData/econtent_detail.html", {"econtent": econtent})
+@login_required
+def download_econtent_excel(request):
+    """Generate and download an Excel file for the logged-in user's E-Content records."""
+
+    user = request.user
+
+    # **Check if the user has a UserProfile**
+    try:
+        user_profile = user.userprofile
+    except UserProfile.DoesNotExist:
+        return HttpResponse("Unauthorized: No user profile found", status=403)
+
+    # **Determine access level**
+    if user.is_superuser:
+        records = EContentDevelopment.objects.all()
+    elif user_profile.is_teacher:
+        records = EContentDevelopment.objects.filter(teacher__user_profile=user_profile)
+    elif user_profile.is_department_staff:
+        if user_profile.department:
+            records = EContentDevelopment.objects.filter(teacher__user_profile__department=user_profile.department)
+        else:
+            return HttpResponse("Unauthorized: No department assigned", status=403)
+    else:
+        return HttpResponse("Unauthorized: Insufficient permissions", status=403)
+
+    # **Create Excel file**
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "E-Content Records"
+
+    # **Headers**
+    headers = ["Module Name", "Platform", "Launch Date", "Teacher (Position)", "Department", "Facilities", "Document Available", "Video Link"]
+    ws.append(headers)
+
+    # **Populate rows**
+    for record in records:
+        teacher = record.teacher
+        teacher_name = teacher.user_profile.user.username if teacher else "N/A"
+        teacher_position = f" ({teacher.position})" if teacher and teacher.position else ""
+        teacher_full_name = f"{teacher_name}{teacher_position}"
+
+        ws.append([
+            record.module_name,
+            record.platform,
+            record.launch_date.strftime("%Y-%m-%d") if record.launch_date else "N/A",
+            teacher_full_name,
+            teacher.user_profile.department.department_name if teacher and teacher.user_profile.department else "N/A",
+            record.facility_available,
+            "Yes" if record.document_link else "No",
+            record.video_link if record.video_link else "N/A",
+        ])
+
+    # **Prepare HTTP response**
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = 'attachment; filename="E_Content_Records.xlsx"'
+
+    wb.save(response)
+    return response
 
 @login_required
 def delete_ict_facility(request, facility_id):
@@ -369,52 +895,161 @@ def add_econtent(request):
         'disable_filter': True
     })
 
-
-
 @login_required
 def show_econtent(request):
-    """Show E-Content records with filters (Admins see all, teachers see their own)."""
+    """Display E-Content records based on user roles with filters."""
+    
+    user = request.user
+    current_year = datetime.now().year
+    year_range = range(2000, current_year + 1)  # Generate years from 2000 to current year
+    is_superuser = user.is_superuser
+    user_profile = get_object_or_404(UserProfile, user=user) if not is_superuser else None
 
-    # ✅ Get filter parameters from the request
-    selected_department = request.GET.get('department', None)
-    selected_criterion = request.GET.get('criterion', None)
-    selected_criterion_title = request.GET.get('criterion_title', None)
-    criterion_id = request.session.get('criterion_id')
+    # Initialize filters
+    selected_teacher = request.GET.get('teacher')
+    selected_department = request.GET.get('department')
+    from_year = request.GET.get('from_year')
+    to_year = request.GET.get('to_year')
 
-    # ✅ Determine records based on user role
-    if request.user.is_superuser:  
+    # Superuser: See all records, departments, and teachers
+    if is_superuser:
         records = EContentDevelopment.objects.all()
-
-        # ✅ Apply department filter for superusers
-        if selected_department:
-            records = records.filter(teacher__user_profile__department__department_code=selected_department)
-
-    else:
-        # ✅ Fetch UserProfile and Teacher
-        user_profile = get_object_or_404(UserProfile, user=request.user)
-        teacher = get_object_or_404(Teacher, user_profile=user_profile)
-
-        # ✅ Filter records to show only teacher-specific data
-        records = EContentDevelopment.objects.filter(teacher=teacher)
-
-    # ✅ Fetch departments for dropdown (superusers see all, others see their own)
-    if request.user.is_superuser:
         departments = Department.objects.all()
-    else:
-        departments = Department.objects.filter(department_code=request.user.userprofile.department.department_code)
+        teachers = Teacher.objects.all()
 
-    # ✅ Build context for template
+    # Department Staff: View all teachers in their department
+    elif user_profile.is_department_staff and user_profile.department:
+        department = user_profile.department
+        records = EContentDevelopment.objects.filter(teacher__user_profile__department=department)
+        departments = Department.objects.filter(department_code=department.department_code)
+        teachers = Teacher.objects.filter(user_profile__department=department)
+
+    # Teachers: See only their own records
+    elif user_profile.is_teacher:
+        teacher = get_object_or_404(Teacher, user_profile=user_profile)
+        records = EContentDevelopment.objects.filter(teacher=teacher)
+        departments = Department.objects.filter(department_code=user_profile.department.department_code)
+        teachers = None  # No teacher dropdown needed
+
+    # Unauthorized users: No access
+    else:
+        records = EContentDevelopment.objects.none()
+        departments = Department.objects.none()
+        teachers = None
+
+    # Apply Filters
+    if from_year:
+        records = records.filter(launch_date__year__gte=from_year)
+    if to_year:
+        records = records.filter(launch_date__year__lte=to_year)
+    if selected_teacher and teachers:
+        records = records.filter(teacher_id=selected_teacher)
+    if selected_department and departments:
+        records = records.filter(teacher__user_profile__department__department_code=selected_department)
+
     context = {
-        "departments": departments,
+        "records": records,  
+        "departments": departments,  
+        "teachers": teachers,  
+        "year_range": year_range,
+        "selected_teacher": selected_teacher,
         "selected_department": selected_department,
-        "selected_criterion": selected_criterion,
-        "selected_criterion_title": selected_criterion_title,
-        "records": records,  # Pass filtered records to the template
-        'criterion_id':criterion_id,
-        'is_homepage': False 
+        "from_year": from_year,
+        "to_year": to_year,
+        "is_superuser": is_superuser,
+        "is_department_staff": getattr(user_profile, 'is_department_staff', False),
     }
 
     return render(request, 'Forms/econtent_list.html', context)
+def download_econtent_pdf(request, econtent_id):
+    """Generate and download a PDF for a single viewed E-Content Development record."""
+    
+    econtent = get_object_or_404(EContentDevelopment, id=econtent_id)
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="econtent_{econtent.id}.pdf"'
+
+    pdf = canvas.Canvas(response, pagesize=A4)
+    width, height = A4  
+
+    # **Background Color**
+    pdf.setFillColorRGB(0.95, 0.95, 0.95)
+    pdf.rect(0, 0, width, height, fill=True, stroke=False)
+
+    # **Find Logo File**
+    try:
+        logo_path = finders.find("images/logo2.png")
+        if logo_path:
+            logo = ImageReader(logo_path)
+            pdf.drawImage(logo, 50, height - 85, width=140, height=50, mask="auto")
+    except Exception as e:
+        print(f"Error loading logo: {e}")
+
+    # **Header Section**
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, height - 100, width - 40, 80, 10, fill=True, stroke=False)
+
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawCentredString(width / 2, height - 60, "E-Content Development Details")
+
+    # **Retrieve Safe Data**
+    teacher_name = econtent.teacher.user_profile.user.username  if econtent.teacher else "N/A"
+    position= econtent.teacher.position if econtent.teacher else "N/A"
+    department_name = econtent.teacher.user_profile.department.department_name if econtent.teacher and econtent.teacher.user_profile.department else "N/A"
+    document_status = "Available" if econtent.document_link else "Not Available"
+    video_status = econtent.video_link if econtent.video_link else "N/A"
+
+    # **Table Data**
+    data = [
+        ["Module Name", econtent.module_name],
+        ["Platform", econtent.platform],
+        ["Launch Date", econtent.launch_date.strftime("%d-%m-%Y") if econtent.launch_date else "N/A"],
+        ["Teacher", teacher_name + " (" + position + ")"],
+        ["Department", department_name],
+        ["Facilities", econtent.facility_available],
+        ["Document", document_status],
+        ["Video Link", video_status]
+    ]
+
+    table = Table(data, colWidths=[200, 280])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.lightgrey),
+        ("GRID", (0, 0), (-1, -1), 1, colors.blue),
+        ("BOX", (0, 0), (-1, -1), 2, colors.blue),
+    ]))
+
+    table_x = (width - 480) / 2  
+    table_y = height - 280  
+    table.wrapOn(pdf, width, height)
+    table.drawOn(pdf, table_x, table_y)
+
+    # **Footer Section**
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, 20, width - 40, 50, 10, fill=True, stroke=False)
+
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica", 10)
+    pdf.drawCentredString(width / 2, 45, "© 2025 Bharathiar University. All Rights Reserved.")
+
+    # **Curved Double Line Border**
+    pdf.setStrokeColor(colors.blue)
+    pdf.setLineWidth(2)
+    pdf.roundRect(10, 10, width - 20, height - 20, 15, stroke=True, fill=False)
+    pdf.roundRect(15, 15, width - 30, height - 30, 12, stroke=True, fill=False)
+
+    pdf.showPage()
+    pdf.save()
+    
+    return response
+
+
+
 @login_required
 def edit_econtent(request, record_id):
     """Edit E-Content: Only the associated teacher or an admin can edit."""
@@ -459,45 +1094,189 @@ def delete_econtent(request, record_id):
 
 @login_required
 def expenditure_list(request):
-    """Show Expenditure records with filters (Admins see all, department users see their own)."""
+    """Show Expenditure records with filters based on user roles (Admins see all, department users see their own)."""
 
     # ✅ Get filter parameters from the request
-    selected_department = request.GET.get('department', None)
-    selected_criterion = request.GET.get('criterion', None)
-    selected_criterion_title = request.GET.get('criterion_title', None)
-    criterion_id = request.session.get('criterion_id')
+    selected_department = request.GET.get('department', None)  # For department filtering
+    year_from = request.GET.get('year_from', None)  # Year From Filter
+    year_to = request.GET.get('year_to', None)      # Year To Filter
 
-    # ✅ Determine records based on user role
+    # Determine the records based on the user's role
     if request.user.is_superuser:
+        # Superuser can access all expenditure records
         records = Expenditure.objects.all()
 
-        # ✅ Apply department filter for superusers
+        # Apply department filter if provided
         if selected_department:
             records = records.filter(department__department_code=selected_department)
     else:
-        # ✅ Fetch UserProfile for department users
+        # Non-superuser (department users) can only access their department's data
         user_profile = get_object_or_404(UserProfile, user=request.user)
-        records = Expenditure.objects.filter(department=user_profile.department)
+        if user_profile.department:
+            records = Expenditure.objects.filter(department=user_profile.department)
+        else:
+            # No department assigned, no access to expenditure data
+            records = Expenditure.objects.none()
 
-    # ✅ Fetch departments for dropdown (superusers see all, others see their own)
+    # Apply year filters (if provided)
+    if year_from and year_to:
+        records = records.filter(year__gte=year_from, year__lte=year_to)
+    elif year_from:
+        records = records.filter(year__gte=year_from)
+    elif year_to:
+        records = records.filter(year__lte=year_to)
+
+    # Fetch departments for filtering dropdown
     if request.user.is_superuser:
+        # Superuser sees all departments
         departments = Department.objects.all()
     else:
-        departments = Department.objects.filter(department_code=request.user.userprofile.department.department_code)
+        # Department users see their own department only
+        departments = Department.objects.filter(department_code=user_profile.department.department_code)
 
-    # ✅ Build context for the template
+    # ✅ Context for the template
     context = {
         "departments": departments,
         "selected_department": selected_department,
-        "selected_criterion": selected_criterion,
-        "selected_criterion_title": selected_criterion_title,
-        "expenditures": records,  # Pass filtered records to the template
-        'is_homepage': False,
-        'criterion_id':criterion_id 
+        "year_from": year_from,
+        "year_to": year_to,
+        "expenditures": records,  # Pass the filtered expenditure records
     }
 
     return render(request, 'Forms/expenditure_list.html', context)
+@login_required
+def download_expenditure_excel(request):
+    """Export expenditure data to an Excel file."""
+    # Create an Excel workbook and sheet
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = "Expenditures"
 
+    # Add headers
+    headers = [
+        "Year", "Department", "Budget Allocated",
+        "Expenditure on Infrastructure", "Expenditure on Maintenance of Academic Facilities",
+        "Expenditure on Maintenance of Physical Facilities", "Total Expenditure Excluding Salary"
+    ]
+    sheet.append(headers)
+
+    # Add data rows
+    expenditures = Expenditure.objects.all()
+    for expenditure in expenditures:
+        sheet.append([
+            expenditure.year,
+            expenditure.department.department_name,
+            expenditure.budget_allocated,
+            expenditure.expenditure_infra,
+            expenditure.academic_facilities,
+            expenditure.physical_facilities,
+            expenditure.total_expenditure
+        ])
+
+    # Set up the response for downloading
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="Expenditures.xlsx"'
+    workbook.save(response)
+
+    return response
+
+@login_required
+def view_expenditure_detail(request, expenditure_id):
+    """
+    Display the details of a specific expenditure record.
+    """
+    expenditure = get_object_or_404(Expenditure, id=expenditure_id)  # Get the record or return 404
+    context = {'expenditure': expenditure }
+    return render(request, 'viewData/expenditure_detail.html', context)
+@login_required
+def download_expenditure_pdf(request, expenditure_id):
+    """
+    Generate and download a PDF for a specific Expenditure record.
+    """
+    # Get the expenditure record
+    expenditure = get_object_or_404(Expenditure, id=expenditure_id)
+
+    # Set up the HTTP response for a PDF file
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="expenditure_{expenditure.year}.pdf"'
+
+    pdf = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    # **Background Color**
+    pdf.setFillColorRGB(0.95, 0.95, 0.95)
+    pdf.rect(0, 0, width, height, fill=True, stroke=False)
+
+    # **Add Logo**
+    try:
+        logo_path = finders.find("images/logo2.png")  # Ensure the path is correct in static files
+        if logo_path:
+            logo = ImageReader(logo_path)
+            pdf.drawImage(logo, 50, height - 85, 140, 50, mask="auto")
+        else:
+            print("Logo file not found.")
+    except Exception as e:
+        print(f"Error loading logo: {e}")
+
+    # **Header Section**
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, height - 100, width - 40, 80, 10, fill=True, stroke=False)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawCentredString(width / 2, height - 60, "Expenditure Details")
+
+    # **Table Data**
+    department_name = expenditure.department.department_name if expenditure.department else "N/A"
+    data = [
+        ["Year", expenditure.year],
+        ["Department", department_name],
+        ["Budget Allocated", f"₹ {expenditure.budget_allocated:,}"],
+        ["Expenditure on Infrastructure", f"₹ {expenditure.expenditure_infra:,}"],
+        ["Expenditure on Academic Facilities", f"₹ {expenditure.academic_facilities:,}"],
+        ["Expenditure on Physical Facilities", f"₹ {expenditure.physical_facilities:,}"],
+        ["Total Expenditure Excluding Salary", f"₹ {expenditure.total_expenditure:,}"],
+    ]
+
+    # **Style Table**
+    table = Table(data, colWidths=[250, 250])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.lightgrey),
+        ("GRID", (0, 0), (-1, -1), 1, colors.blue),
+        ("BOX", (0, 0), (-1, -1), 2, colors.blue),
+    ]))
+
+    # **Draw Table**
+    table_x = (width - 500) / 2
+    table_y = height - 300
+    table.wrapOn(pdf, width, height)
+    table.drawOn(pdf, table_x, table_y)
+
+    # **Footer Section**
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, 20, width - 40, 50, 10, fill=True, stroke=False)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica", 10)
+    pdf.drawCentredString(width / 2, 45, f"Generated on {datetime.now().strftime('%d-%m-%Y %H:%M:%S')}")
+    pdf.drawCentredString(width / 2, 30, "© 2025 Bharathiar University. All Rights Reserved.")
+
+    # **Curved Double Line Border**
+    pdf.setStrokeColor(colors.blue)
+    pdf.setLineWidth(2)
+    pdf.roundRect(10, 10, width - 20, height - 20, 15, stroke=True, fill=False)
+    pdf.roundRect(15, 15, width - 30, height - 30, 12, stroke=True, fill=False)
+
+    pdf.showPage()
+    pdf.save()
+
+    return response
+ 
 @login_required
 def edit_expenditure(request, record_id):
     """Edit Expenditure: Only the associated department user or an admin can edit."""
@@ -1151,7 +1930,7 @@ def phd_list(request):
     if request.user.is_superuser:
         phds = PhDAward.objects.all()
     else:
-        phds = PhDAward.objects.filter(department=request.user.department)
+        phds = PhDAward.objects.filter(department=request.user.userprofile.department)
     
     return render(request, "Forms/phd_list.html", {"phds": phds,'criterion_id':criterion_id})
 
@@ -1171,7 +1950,7 @@ def add_phd(request):
         if request.user.is_superuser:
             department_code = request.POST.get("department")  # Admin selects department
         else:
-            department_code = request.user.department.department_code  # Auto-assign for users
+            department_code = request.user.userprofile.department.department_code  # Auto-assign for users
 
         # ✅ Convert department name to a Department instance
         department = get_object_or_404(Department, department_code=department_code)
@@ -1191,3 +1970,110 @@ def add_phd(request):
 
     return render(request, "AddData/phd_form.html", {"departments": departments})
 
+@login_required
+def add_demand_ratio(request):
+    if request.method == "POST":
+        academic_year = request.POST.get("academic_year")
+        programme_name = request.POST.get("programme_name")
+        programme_code = request.POST.get("programme_code")
+        num_seats = request.POST.get("num_seats")
+        num_applications = request.POST.get("num_applications")
+        num_students_admitted = request.POST.get("num_students_admitted")
+        department_code = request.POST.get("department")
+
+        # Convert numeric fields
+        try:
+            num_seats = int(num_seats)
+            num_applications = int(num_applications)
+            num_students_admitted = int(num_students_admitted)
+        except ValueError:
+            return render(request, "AddData/add_demand_ratio.html", {"error": "Invalid input values!"})
+
+        # Restrict department selection for department users
+        if not request.user.is_superuser:
+            department = request.user.userprofile.department
+        else:
+            department = Department.objects.get(department_code=department_code)
+
+        # Save the data
+        DemandRatio.objects.create(
+            academic_year=academic_year,
+            programme_name=programme_name,
+            programme_code=programme_code,
+            num_seats=num_seats,
+            num_applications=num_applications,
+            num_students_admitted=num_students_admitted,
+            department=department
+        )
+
+        return redirect("demand_ratio_list")  # Redirect to the list page after saving
+
+    # Generate academic year options in yyyy-yyyy format
+    from datetime import datetime
+    current_year = datetime.now().year
+    academic_years = [f"{y}-{y+1}" for y in range(2000, current_year + 1)]
+
+    departments = Department.objects.all() if request.user.is_superuser else [request.user.userprofile.department]
+
+    return render(request, "AddData/add_demand_ratio.html", {"academic_years": academic_years, "departments": departments})
+
+@login_required
+def demand_ratio_list(request):
+    """
+    Display a list of Demand Ratio records with department-level restrictions.
+    Superusers can view all records, while department users see only their department's data.
+    """
+    # Check if the user is a superuser
+    if request.user.is_superuser:
+        # Superusers can view all data
+        records = DemandRatio.objects.all()
+    else:
+        # Department users can only view their department's data
+        if hasattr(request.user, "userprofile") and hasattr(request.user.userprofile, "department"):
+            user_department = request.user.userprofile.department
+            records = DemandRatio.objects.filter(department=user_department)
+        else:
+            # If the user has no associated department, return an empty queryset
+            records = DemandRatio.objects.none()
+
+    # Apply filters if provided
+    programme_name = request.GET.get('programme_name', '').strip()
+    programme_code = request.GET.get('programme_code', '').strip()
+    year_from = request.GET.get('year_from', '').strip()
+    year_to = request.GET.get('year_to', '').strip()
+
+    if programme_name:
+        records = records.filter(programme_name__icontains=programme_name)
+
+    if programme_code:
+        records = records.filter(programme_code__icontains=programme_code)
+
+    if year_from and year_to:
+        records = records.filter(academic_year__gte=year_from, academic_year__lte=year_to)
+    elif year_from:
+        records = records.filter(academic_year__gte=year_from)
+    elif year_to:
+        records = records.filter(academic_year__lte=year_to)
+
+    context = {
+        'records': records,
+    }
+
+    return render(request, 'Forms/demand_ratio_list.html', context)
+
+def admitted_student_list(request):
+    return render(request,'Forms/admited_students.html')
+def add_admitted_student(request):
+    return render(request,'AddData/add_admitted_student.html')
+def teacher_serving_post_list(request):
+    return render(request,'Forms/teacher_post.html')
+def add_teacher_serving_post(request):
+    return render(request,'AddData/add_teacher_post.html')
+def teacher(request):
+    return render(request,'Forms/teacher.html')
+def add_teacher(request):
+    return render(request,'AddData/add_teacher.html')
+def against_sanctioned_post(request):
+    return render(request,'Forms/against_sanctioned_post.html')
+def add_against_sanctioned_post(request):
+    return render(request,'AddData/add_against_sanctioned_post.html')

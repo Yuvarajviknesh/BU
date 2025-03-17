@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">ICT Facility Details</h2>
+    
+    <table class="table table-bordered">
+        <tr><th>Department Code</th><td>{{ facility.department.department_code }}</td></tr>
+        <tr><th>Department Name</th><td>{{ facility.department.department_name }}</td></tr>
+        <tr><th>Room Type</th><td>{{ facility.room_type }}</td></tr>
+        <tr><th>Room No</th><td>{{ facility.room_no }}</td></tr>
+        <tr><th>Type of ICT Facility</th><td>{{ facility.ict_facility }}</td></tr>
+        <tr>
+            <th>Geo-Tagged Photo</th>
+            <td>
+                {% if facility.geo_tagged_photo %}
+                    <img src="{{ facility.geo_tagged_photo.url }}" alt="Geo-Tagged Photo" style="max-width: 300px;">
+                {% else %}
+                    <span class="text-danger">No Image Available</span>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <th>Master Time Table</th>
+            <td>
+                {% if facility.master_timetable %}
+                    <a href="{{ facility.master_timetable.url }}" target="_blank">View Timetable</a>
+                {% else %}
+                    <span class="text-danger">No Timetable Available</span>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <a href="{% url 'download_facility_pdf' facility.id %}" class="btn btn-primary">📄 Download PDF</a>
+    <a href="{% url 'ict_facility_list' %}" class="btn btn-secondary">⬅ Back to List</a>
+</div>
+{% endblock %}

@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .table-responsive { margin-top: 20px; }
+    table.teacher-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        margin-bottom: 20px;
+    }
+    table.teacher-table thead {
+        background-color: #002d6b;
+        color: white;
+        text-align: center;
+    }
+    table.teacher-table th, table.teacher-table td {
+        padding: 12px;
+        text-align: center;
+        border: 1px solid #ddd;
+    }
+    table tbody tr:hover { background-color: #fffcf7; }
+
+    .btn {
+        padding: 6px 15px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border-radius: 4px;
+        text-transform: uppercase;
+    }
+    .btn-add { background-color: #f4a641; color: white; }
+    .btn-primary { background-color: #007bff; color: white; }
+    .btn-primary:hover { background-color: #0056b3; }
+    .btn-secondary { background-color: #6c757d; color: white; }
+    .btn-secondary:hover { background-color: #545b62; }
+    .btn-success { background-color: #28a745; color: white; }
+    .btn-edit { background-color: #17a2b8; color: white; }
+    .btn-delete { background-color: #dc3545; color: white; }
+    .btn-view { background-color: #ffc107; color: black; }
+    .btn:hover { background-color: white; border-color: #000; color: #000; }
+
+    .action-cell { display: flex; justify-content: center; gap: 10px; }
+</style>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="section-title m-0">Full-Time Teacher Records</h2>
+        <div>
+            <a href="" class="btn btn-success">📥 Download Excel</a>
+            <a href="{% url 'add_teacher_serving_post' %}" class="btn btn-add">+ Add</a>
+        </div>
+    </div>
+    <form method="POST" action="">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <input type="text" name="teacher_name" class="form-control" placeholder="Enter Teacher Name">
+            </div>
+            <div class="col-md-3 mb-3">
+                <input type="text" name="department" class="form-control" placeholder="Enter Department">   
+            </div>
+            <div class="col-md-3 mb-3">
+                <input type="text" name="designation" class="form-control" placeholder="Enter Designation">
+            </div>
+            <div class="col-md-3 mb-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Apply Filter</button>
+                <a href="{% url 'teacher_serving_post_list' %}" class="btn btn-secondary w-100 ms-2">Reset</a>
+            </div>
+        </div>
+    </form>
+    <!-- Records Table -->
+    <div class="table-responsive">
+        <table class="table teacher-table">
+            <thead>
+                <tr>
+                    <th>Name of full time teacher with Ph.D./D.M/M.Ch./D.N.B Superspeciality/D.Sc./D’Lit.</th>
+                    <th>Qualification (Ph.D./D.M/M.Ch./D.N.B Superspeciality/D.Sc./D’Lit. ) and Year of obtaining</th>
+                    <th>Whether recognised as research Guide for Ph.D./D.M/M.Ch./D.N.B Superspeciality/D.Sc./D’Lit.</th>
+                    <th>Year of Recognition as Research Guide</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record.teacher_name }}</td>
+                    <td>{{ record.qualification_year }}</td>
+                    <td>{{ record.is_research_guide }}</td>
+                    <td>{{ record.year_of_recognition }}</td>
+                    <td class="action-cell">
+                        <a href="" class="btn btn-view">👁 View</a>
+                        <button class="btn btn-edit edit-btn" data-bs-toggle="modal" data-bs-target="#editModal"
+                            data-id="{{ record.id }}"
+                            data-teacher_name="{{ record.teacher_name }}"
+                            data-qualification_year="{{ record.qualification_year }}"
+                            data-is_research_guide="{{ record.is_research_guide }}"
+                            data-year_of_recognition="{{ record.year_of_recognition }}"
+                            data-update-url="">
+                            ✏️ Edit
+                        </button>
+                        <form method="POST" action="" class="delete-form d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-delete">🗑️ Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" id="editForm">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Teacher Record</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editId">
+                    <div class="form-group">
+                        <label>Teacher Name</label>
+                        <input type="text" name="teacher_name" id="editTeacherName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Qualification and Year of obtaining</label>
+                        <input type="text" name="qualification_year" id="editQualificationYear" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Whether recognised as research Guide</label>
+                        <input type="text" name="is_research_guide" id="editIsResearchGuide" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Year of Recognition as Research Guide</label>
+                        <input type="number" name="year_of_recognition" id="editYearOfRecognition" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('editId').value = btn.getAttribute('data-id');
+            document.getElementById('editTeacherName').value = btn.getAttribute('data-teacher_name');
+            document.getElementById('editQualificationYear').value = btn.getAttribute('data-qualification_year');
+            document.getElementById('editIsResearchGuide').value = btn.getAttribute('data-is_research_guide');
+            document.getElementById('editYearOfRecognition').value = btn.getAttribute('data-year_of_recognition');
+            document.getElementById('editForm').action = btn.getAttribute('data-update-url');
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Expenditure Details</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <tbody>
+                <tr>
+                    <th>Year</th>
+                    <td>{{ expenditure.year }}</td>
+                </tr>
+                <tr>
+                    <th>Department</th>
+                    <td>{{ expenditure.department.department_name }}</td>
+                </tr>
+                <tr>
+                    <th>Budget Allocated</th>
+                    <td>{{ expenditure.budget_allocated }}</td>
+                </tr>
+                <tr>
+                    <th>Expenditure on Infrastructure</th>
+                    <td>{{ expenditure.expenditure_infra }}</td>
+                </tr>
+                <tr>
+                    <th>Expenditure on Maintenance of Academic Facilities</th>
+                    <td>{{ expenditure.academic_facilities }}</td>
+                </tr>
+                <tr>
+                    <th>Expenditure on Maintenance of Physical Facilities</th>
+                    <td>{{ expenditure.physical_facilities }}</td>
+                </tr>
+                <tr>
+                    <th>Total Expenditure Excluding Salary</th>
+                    <td>{{ expenditure.total_expenditure }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Buttons Section -->
+    <div class="mt-3">
+        <a href="{% url 'download_expenditure_pdf' expenditure.id %}" class="btn btn-primary">
+            📄 Download PDF
+        </a>
+        <a href="{% url 'expenditure_list' %}" class="btn btn-secondary">
+            ⬅ Back to List
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .card-container {
+    max-width: 700px;
+    margin: 50px auto;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 100px;
+  }
+  .card-header {
+    background-color: #002d6b;
+    color: white;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 15px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+  .form-container {
+    padding: 20px;
+  }
+  .form-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+</style>
+
+<div class="container">
+  <div class="card-container">
+    <div class="card-header">
+      Add Teacher Record
+    </div>
+    <div class="card-body form-container">
+      <form method="POST" action="{% url 'add_teacher_serving_post' %}">
+        {% csrf_token %}
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Teacher Name</label>
+            <input type="text" class="form-control" name="teacher_name" placeholder="Enter Teacher Name" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">PAN</label>
+            <input type="text" class="form-control" name="pan" placeholder="Enter PAN" maxlength="10" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Designation</label>
+            <input type="text" class="form-control" name="designation" placeholder="Enter Designation" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Department</label>
+            <input type="text" class="form-control" name="department" placeholder="Enter Department" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Appointment Year</label>
+            <input type="number" class="form-control" name="appointment_year" placeholder="Enter Appointment Year" min="1900" max="2100" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Nature of Appointment</label>
+            <input type="text" class="form-control" name="nature_of_appointment" placeholder="Enter Nature of Appointment" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Years of Experience</label>
+            <input type="number" class="form-control" name="experience_years" placeholder="Enter Years of Experience" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Is Still Serving?</label>
+            <select class="form-control" name="is_serving" required>
+              <option value="">Select Status</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Last Year of Service (if applicable)</label>
+            <input type="number" class="form-control" name="last_year_service" placeholder="Enter Last Year of Service">
+          </div>
+        </div>
+
+        <div class="form-footer">
+          <button type="button" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+          <button type="submit" class="btn btn-primary px-4">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

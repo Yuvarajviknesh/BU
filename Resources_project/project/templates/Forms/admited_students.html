@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .table-responsive { margin-top: 20px; }
+    table.admitted-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        margin-bottom: 20px;
+    }
+    table.admitted-table thead {
+        background-color: #002d6b;
+        color: white;
+        text-align: center;
+    }
+    table.admitted-table th, table.admitted-table td {
+        padding: 10px;
+        text-align: center;
+        border: 1px solid #ddd;
+    }
+    .table tbody tr:hover { background-color: #fffcf7; }
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 15px;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        gap: 6px; /* Space between icon and text */
+    }
+    .btn-primary { background-color: #007bff; color: white; }
+    .btn-primary:hover { background-color: #0056b3; }
+    .btn-secondary { background-color: #6c757d; color: white; }
+    .btn-secondary:hover { background-color: #545b62; }
+    .btn-edit { background-color: #17a2b8; color: white; }
+    .btn-delete { background-color: #dc3545; color: white; }
+    .btn:hover { background-color: white; border-color: #000; }
+    .btn-excel { background-color: #28a745; color: white; }
+    .btn-add { background-color: #007bff; color: white; }
+    .btn-add:hover { background-color: #0056b3; }
+    .section-title { color: #002855; font-size: 24px; font-weight: bold; }
+    .action-cell { display: flex; justify-content: center; gap: 10px; }
+</style>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="section-title m-0">Number of Actual Students Admitted (Reserved Categories)</h2>
+        <div class="d-flex gap-3">
+            <a href="" class="btn btn-excel">⬇️ Download Excel</a>
+            <a href="{% url 'add_admitted_student' %}" class="btn btn-add">+ Add</a>
+        </div>
+    </div>
+
+    <!-- Filter Form -->
+    <form method="GET" action="" class="mb-4">
+        <div class="row">
+            <!-- Year Filter -->
+            <div class="col-md-3">
+                <select name="year" class="form-control">
+                    <option value="">Select Year</option>
+                    {% for year in year_range %}
+                    <option value="{{ year }}" {% if request.GET.year == year|stringformat:"s" %}selected{% endif %}>
+                        {{ year }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Programme Name Filter -->
+            <div class="col-md-3">
+                <input type="text" name="programme_name" class="form-control" placeholder="Programme Name" value="{{ request.GET.programme_name }}">
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    Apply Filters
+                </button>
+                <a href="{% url 'add_admitted_student' %}" class="btn btn-secondary">
+                    Reset
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Data Table -->
+    <div class="table-responsive">
+        <table class="table admitted-table">
+            <thead>
+                <tr>
+                    <th>Year</th>
+                    <th>Programme Name</th>
+                    <th>SC (Earmarked)</th>
+                    <th>ST (Earmarked)</th>
+                    <th>OBC (Earmarked)</th>
+                    <th>GEN (Earmarked)</th>
+                    <th>Others (Earmarked)</th>
+                    <th>SC (Admitted)</th>
+                    <th>ST (Admitted)</th>
+                    <th>OBC (Admitted)</th>
+                    <th>GEN (Admitted)</th>
+                    <th>Others (Admitted)</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record.year }}</td>
+                    <td>{{ record.programme_name }}</td>
+                    <td>{{ record.sc_earmarked }}</td>
+                    <td>{{ record.st_earmarked }}</td>
+                    <td>{{ record.obc_earmarked }}</td>
+                    <td>{{ record.gen_earmarked }}</td>
+                    <td>{{ record.others_earmarked }}</td>
+                    <td>{{ record.sc_admitted }}</td>
+                    <td>{{ record.st_admitted }}</td>
+                    <td>{{ record.obc_admitted }}</td>
+                    <td>{{ record.gen_admitted }}</td>
+                    <td>{{ record.others_admitted }}</td>
+                    <td class="action-cell">
+                        <!-- View Button-->
+                        <a href="" class="btn btn-primary">👁️ View</a>
+                        <!-- Edit Button -->
+                                                <button class="btn btn-edit edit-btn" data-bs-toggle="modal" data-bs-target="#editModal"
+                            data-id="{{ record.id }}"
+                            data-programme="{{ record.programme_name }}"
+                            data-year="{{ record.year }}"
+                            data-sc_earmarked="{{ record.sc_earmarked }}"
+                            data-st_earmarked="{{ record.st_earmarked }}"
+                            data-obc_earmarked="{{ record.obc_earmarked }}"
+                            data-gen_earmarked="{{ record.gen_earmarked }}"
+                            data-others_earmarked="{{ record.others_earmarked }}"
+                            data-sc_admitted="{{ record.sc_admitted }}"
+                            data-st_admitted="{{ record.st_admitted }}"
+                            data-obc_admitted="{{ record.obc_admitted }}"
+                            data-gen_admitted="{{ record.gen_admitted }}"
+                            data-others_admitted="{{ record.others_admitted }}"
+                            data-update-url="">
+                            ✏️ Edit
+                        </button>
+                        <!-- Delete Button -->
+                        <form method="POST" action="}" class="delete-form">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-delete">
+                                🗑️ Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form method="POST" id="editForm">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Record</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="editId">
+                    <div class="form-group">
+                        <label>Programme Name</label>
+                        <input type="text" class="form-control" name="programme_name" id="editProgramme" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Year</label>
+                        <input type="number" class="form-control" name="year" id="editYear" required>
+                    </div>
+                    <div class="form-group">
+                        <label>SC (Earmarked)</label>
+                        <input type="number" class="form-control" name="sc_earmarked" id="editScEarmarked" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ST (Earmarked)</label>
+                        <input type="number" class="form-control" name="st_earmarked" id="editStEarmarked" required>
+                    </div>
+                    <div class="form-group">
+                        <label>OBC (Earmarked)</label>
+                        <input type="number" class="form-control" name="obc_earmarked" id="editObcEarmarked" required>
+                    </div>
+                    <div class="form-group">
+                        <label>General (Earmarked)</label>
+                        <input type="number" class="form-control" name="gen_earmarked" id="editGenEarmarked" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Others (Earmarked)</label>
+                        <input type="number" class="form-control" name="others_earmarked" id="editOthersEarmarked" required>
+                    </div>
+                    <div class="form-group">
+                        <label>SC (Admitted)</label>
+                        <input type="number" class="form-control" name="sc_admitted" id="editScAdmitted" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ST (Admitted)</label>
+                        <input type="number" class="form-control" name="st_admitted" id="editStAdmitted" required>
+                    </div>
+                    <div class="form-group">
+                        <label>OBC (Admitted)</label>
+                        <input type="number" class="form-control" name="obc_admitted" id="editObcAdmitted" required>
+                    </div>
+                    <div class="form-group">
+                        <label>General (Admitted)</label>
+                        <input type="number" class="form-control" name="gen_admitted" id="editGenAdmitted" required>
+                    </div>
+                    <div class="form-group" >
+                        <label>Others (Admitted)</label>
+                        <input type="number" class="form-control" name="others_admitted" id="editOthersAdmitted" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    var editModal = document.getElementById('editModal');
+    editModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+    
+        // Extract data attributes
+        var id = button.getAttribute('data-id');
+        var programme = button.getAttribute('data-programme');
+        var year = button.getAttribute('data-year');
+        var sc_earmarked = button.getAttribute('data-sc_earmarked');
+        var st_earmarked = button.getAttribute('data-st_earmarked');
+        var obc_earmarked = button.getAttribute('data-obc_earmarked');
+        var gen_earmarked = button.getAttribute('data-gen_earmarked');
+        var others_earmarked = button.getAttribute('data-others_earmarked');
+        var sc_admitted = button.getAttribute('data-sc_admitted');
+        var st_admitted = button.getAttribute('data-st_admitted');
+        var obc_admitted = button.getAttribute('data-obc_admitted');
+        var gen_admitted = button.getAttribute('data-gen_admitted');
+        var others_admitted = button.getAttribute('data-others_admitted');
+        var updateUrl = button.getAttribute('data-update-url');
+    
+        // Populate modal form fields
+        editModal.querySelector('#editId').value = id;
+        editModal.querySelector('#editProgramme').value = programme;
+        editModal.querySelector('#editYear').value = year;
+        editModal.querySelector('#editScEarmarked').value = sc_earmarked;
+        editModal.querySelector('#editStEarmarked').value = st_earmarked;
+        editModal.querySelector('#editObcEarmarked').value = obc_earmarked;
+        editModal.querySelector('#editGenEarmarked').value = gen_earmarked;
+        editModal.querySelector('#editOthersEarmarked').value = others_earmarked;
+        editModal.querySelector('#editScAdmitted').value = sc_admitted;
+        editModal.querySelector('#editStAdmitted').value = st_admitted;
+        editModal.querySelector('#editObcAdmitted').value = obc_admitted;
+        editModal.querySelector('#editGenAdmitted').value = gen_admitted;
+        editModal.querySelector('#editOthersAdmitted').value = others_admitted;
+    
+        // Update form action
+        editModal.querySelector('#editForm').setAttribute('action', updateUrl);
+    });
+    
+
+    // Delete Form
+    var deleteForms = document.querySelectorAll('.delete-form');
+    deleteForms.forEach(form => {
+        form.addEventListener('submit', function (event) {
+            event
+            if (!confirm('Are you sure you want to delete this record?')) {
+                event.preventDefault();
+            }
+        });
+    });
+</script>
+{% endblock %}  <!-- End of content block -->

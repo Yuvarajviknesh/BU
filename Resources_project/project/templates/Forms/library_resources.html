@@ -1,11 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
-  <style>
-    .btn-document {
-      background-color: #ff6f00;
-      color: #fff;
-    }
-   /* Toast Notification */
+<style>
+  .btn-document {
+    background-color: #ff6f00;
+    color: #fff;
+  }
+
+  /* Toast Notification */
   .toast-container {
     position: fixed;
     top: 20px;
@@ -49,12 +50,21 @@
     border: 1px solid #ddd;
     vertical-align: middle;
   }
-
+  .btn {
+      padding: 6px 15px;
+      text-transform: uppercase;
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      color: #fff;
+      cursor: pointer;
+  }
   /* Action Buttons */
   .btn-delete, .btn-edit {
     padding: 6px 15px;
     text-transform: uppercase;
-    border: 2px solid transparent;
+    border: 2px solid transparent; /* Set transparent border for default */
     transition: all 0.3s ease;
     white-space: nowrap;
     font-size: 0.9rem;
@@ -75,24 +85,65 @@
     content: "✏️ ";
     margin-right: 3px;
   }
-  .btn-delete:hover, .btn-edit:hover,.btn-document:hover {
-    border-color: #000;
+  .btn-view {
+      background-color: #17a2b8;
+      display: inline; /* Light Blue for View */
+    }
+  .btn-view::before {
+    content: "🔍 ";
+    margin-right: 3px;
+  }
+  .btn-delete:hover, .btn-edit:hover, .btn-document:hover, .btn-view:hover {
+    border-color: #000; /* Black border on hover */
   }
   .btn-add {
     background-color: #f4a641;
     color: #fff;
     padding: 6px 15px;
     text-transform: uppercase;
-    border: 2px solid transparent;
+    border: 2px solid transparent; /* Set transparent border for default */
     transition: all 0.3s ease;
     white-space: nowrap;
     font-size: 0.9rem;
   }
   .btn-add:hover {
-    border-color: #000;
+    border-color: #000; /* Black border on hover */
     background-color: white;
   }
 
+  .btn-excel {
+    background-color: #28a745;
+    color: #fff;
+    border: 2px solid transparent; /* Set transparent border for default */
+  }
+
+  .btn-filter {
+    background-color: #007bff;
+    color: #fff;
+    border: 2px solid transparent; /* Set transparent border for default */
+  }
+
+  .btn-reset {
+    background-color: #dc3545;
+    color: #fff;
+    border: 2px solid transparent; /* Set transparent border for default */
+  }
+
+  /* Hover Effects */
+  .btn-excel:hover {
+    border-color: #000; /* Black border on hover */
+    background-color: white;
+  }
+  .btn-filter:hover {
+    border-color: #000; /* Black border on hover */
+    background-color: white;
+  }
+  .btn-reset:hover {
+    border-color: #000; /* Black border on hover */
+    background-color: white;
+  }
+
+  /* Action Cell Styling */
   .action-cell {
     display: flex;
     justify-content: center;
@@ -110,14 +161,60 @@
       padding: 4px 10px;
     }
   }
-  </style>
+</style>
 
   <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2 class="section-title m-0">e-Library Resources</h2>
-      <a href="{% url 'add_library_resource' %}" class="btn btn-add">+ Add</a>
+      <div class="d-flex gap-3">
+        <a href="{% url 'download_library_resources_excel' %}" class="btn btn-excel">⬇️ Download Excel</a>
+        <a href="{% url 'add_library_resource' %}" class="btn btn-add">+ Add</a>
+      </div>
     </div>
+    <!-- Filter Section -->
+    <form method="GET" class="row g-3 mb-4">
+      <!-- Academic Year Range Filter -->
+      <!-- Academic Year Range Filter -->
+<div class="col-md-3 col-sm-6">
+  <select name="year_from" class="form-control">
+    <option value="" selected>Year From</option>
+    {% for year in years %}
+      <option value="{{ year }}" {% if request.GET.year_from == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+    {% endfor %}
+  </select>
+</div>
+<div class="col-md-3 col-sm-6">
+  <select name="year_to" class="form-control">
+    <option value="" selected>Year To</option>
+    {% for year in years %}
+      <option value="{{ year }}" {% if request.GET.year_to == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+    {% endfor %}
+  </select>
+</div>
+
     
+      <!-- Library Resource Filter -->
+      <div class="col-md-3 col-sm-6">
+        <select name="resource_name" class="form-control">
+          <option value="" selected>Filter by Resource Type</option>
+          <option value="Books" {% if request.GET.resource_name == "Books" %}selected{% endif %}>Books</option>
+          <option value="Journals" {% if request.GET.resource_name == "Journals" %}selected{% endif %}>Journals</option>
+          <option value="e-Journals" {% if request.GET.resource_name == "e-Journals" %}selected{% endif %}>e-Journals</option>
+          <option value="e-Books" {% if request.GET.resource_name == "e-Books" %}selected{% endif %}>e-Books</option>
+          <option value="e-ShodhSindhu" {% if request.GET.resource_name == "e-ShodhSindhu" %}selected{% endif %}>e-ShodhSindhu</option>
+          <option value="Shodhganga" {% if request.GET.resource_name == "Shodhganga" %}selected{% endif %}>Shodhganga</option>
+          <option value="Databases" {% if request.GET.resource_name == "Databases" %}selected{% endif %}>Databases</option>
+        </select>
+      </div>
+    
+      <!-- Filter Buttons -->
+      <div class="col-md-3 col-sm-6 d-flex gap-2">
+        <button type="submit" class="btn btn-filter w-100">Apply Filters</button>
+        <a href="{% url 'library_resources' %}" class="btn btn-reset w-100">Reset</a>
+      </div>
+    </form>
+    
+    <!-- Table Section -->
     <div class="table-responsive">
       <table class="table table-bordered table-hover library-table">
         <thead>
@@ -160,7 +257,8 @@
               <a href="#" class="btn btn-sm btn-delete"
               onclick="confirmDelete(event, '{% url 'delete_library_resource' resource.id  %}')">
               Delete
-           </a>               
+           </a>   
+           <a href="{% url 'library_resource_detail' resource.id  %}" class="btn btn-sm btn-view"> View</a>            
             </td>
           </tr>
           {% endfor %}

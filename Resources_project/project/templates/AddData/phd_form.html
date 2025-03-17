@@ -54,7 +54,7 @@
                 {% endfor %}
               </select>
             {% else %}
-              <input type="text" class="form-control" id="department" name="department" value="{{ user.department }}" readonly>
+              <input type="text" class="form-control" id="department" name="department" value="{{ user.userprofile.department.department_name }}" readonly>
             {% endif %}
           </div>
           <div class="col-md-6 mb-3">

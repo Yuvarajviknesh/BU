@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .card-container {
+        max-width: 700px;
+        margin: 50px auto;
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 100px;
+    }
+    .card-header {
+        background-color: #002d6b;
+        color: white;
+        text-align: center;
+        font-size: 20px;
+        font-weight: bold;
+        padding: 15px;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+    .form-container {
+        padding: 20px;
+    }
+</style>
+
+<div class="container">
+    <div class="card-container">
+        <div class="card-header">
+            Add Data - Against Sanctioned Post
+        </div>
+        <div class="card-body form-container">
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form id="addSanctionedPostForm" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Name of the Full-time Teacher</label>
+                        <input type="text" class="form-control" name="nameTeacher" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">PAN</label>
+                        <input type="text" class="form-control" name="pan" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Designation</label>
+                        <input type="text" class="form-control" name="designation" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Year of Appointment</label>
+                        <input type="number" class="form-control" name="yearOfAppointment" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Nature of Appointment</label>
+                        <select class="form-control" name="natureOfAppointment" required>
+                            <option value="Against Sanctioned post">Against Sanctioned post</option>
+                            <option value="Temporary">Temporary</option>
+                            <option value="Permanent">Permanent</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Name of the Department</label>
+                        <input type="text" class="form-control" name="department" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Total Years of Experience in the Same Institution</label>
+                        <input type="number" class="form-control" name="experience" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Is the Teacher Still Serving the Institution?</label>
+                        <select class="form-control" name="isServing" required>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3" id="lastYearService" style="display: none;">
+                        <label class="form-label fw-bold">If Not, Last Year of the Service</label>
+                        <input type="number" class="form-control" name="lastYearOfService">
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button type="reset" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelector('select[name="isServing"]').addEventListener('change', function() {
+        var lastYearService = document.getElementById('lastYearService');
+        if (this.value === 'No') {
+            lastYearService.style.display = 'block';
+        } else {
+            lastYearService.style.display = 'none';
+        }
+    });
+</script>
+
+{% endblock %}

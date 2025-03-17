@@ -6,7 +6,7 @@
 
   <!-- Desktop View: Username & Logout -->
   <div class="user-info d-none d-md-flex align-items-center">
-      <span class="username">Hello, {{ user.username }}!</span>
+      <span class="username">Welcome, {{ user.username }}!</span>
       <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
   </div>
 
@@ -19,7 +19,7 @@
 <!-- Mobile Dropdown Menu -->
 <div class="collapse fullwidth-menu" id="mobileNav">
   <div class="menu-content">
-      <span class="username">Hello, {{ user.username }}!</span>
+      <span class="username">Welcome, {{ user.username }}!</span>
       <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
   </div>
 </div>

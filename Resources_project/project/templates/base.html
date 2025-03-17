@@ -174,9 +174,6 @@
 
     <!-- Header -->
     {% include 'includes/header.html' %}
-    {% if not disable_filter %}
-      {% include 'includes/filter.html' %}
-    {% endif %}
     <!-- Toast Notifications -->
     {% if messages %}
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
@@ -193,8 +190,6 @@
     </div>
     {% endif %}
 
-    <!-- Navigation -->
-    {% include "includes/navigation.html" %}
     <!-- Main Content -->
     <div class="container">
         {% block content %}

@@ -5,6 +5,8 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+from django.contrib.auth.models import AbstractUser
+from django.db import models
 def validate_file_size(value):
     max_size = 5 * 1024 * 1024  # 5MB
     if value.size > max_size:
@@ -26,12 +28,28 @@ class Department(models.Model):
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
+    is_teacher = models.BooleanField(default=False)
+    is_scholar = models.BooleanField(default=False)
+    is_department_staff = models.BooleanField(default=False)  # New field added
 
     def is_library_user(self):
         return self.department and self.department.department_name.lower() == "library"
 
     def __str__(self):
         return f"{self.user.username} - {self.department.department_name if self.department else 'No Department'}"
+
+class DemandRatio(models.Model):
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="demand_ratios")
+    programme_name = models.CharField(max_length=255)
+    programme_code = models.CharField(max_length=20)
+    num_seats = models.PositiveIntegerField()
+    num_applications = models.PositiveIntegerField()
+    num_students_admitted = models.PositiveIntegerField()
+    academic_year = models.CharField(max_length=10)
+
+    def __str__(self):
+        return f"{self.programme_name} - {self.academic_year}"
+
 
 class Teacher(models.Model):
     user_profile = models.OneToOneField(UserProfile, on_delete=models.CASCADE) 
@@ -129,8 +147,6 @@ class GrantType(models.TextChoices):
 class DurationUnit(models.TextChoices):
     MONTHS = 'Months', 'Months'
     YEARS = 'Years', 'Years'
-
-from django.db import models
 
 class ResearchGrant(models.Model):
     scheme_name = models.CharField(max_length=255)

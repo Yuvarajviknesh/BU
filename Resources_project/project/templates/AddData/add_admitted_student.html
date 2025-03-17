@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .card-container {
+    max-width: 700px;
+    margin: 50px auto;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 100px;
+  }
+  .card-header {
+    background-color: #002d6b;
+    color: white;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 15px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+  .form-container {
+    padding: 20px;
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 20px;
+    color: #002d6b;
+  }
+</style>
+
+<div class="container">
+  <div class="card-container">
+    <div class="card-header">Admitted Student Form</div>
+    <div class="card-body form-container">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+      <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Programme Name</label>
+            <input type="text" class="form-control" name="programme_name" placeholder="Enter programme name" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Year</label>
+            <input type="number" class="form-control" name="year" placeholder="Enter year" required>
+          </div>
+          
+          <div class="section-title">Earmarked Seats</div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">SC (Earmarked)</label>
+            <input type="number" class="form-control" name="sc_earmarked" placeholder="Enter SC earmarked seats" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">ST (Earmarked)</label>
+            <input type="number" class="form-control" name="st_earmarked" placeholder="Enter ST earmarked seats" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">OBC (Earmarked)</label>
+            <input type="number" class="form-control" name="obc_earmarked" placeholder="Enter OBC earmarked seats" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">General (Earmarked)</label>
+            <input type="number" class="form-control" name="gen_earmarked" placeholder="Enter General earmarked seats" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Others (Earmarked)</label>
+            <input type="number" class="form-control" name="others_earmarked" placeholder="Enter Others earmarked seats" required>
+          </div>
+          
+          <div class="section-title">Admitted Students</div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">SC (Admitted)</label>
+            <input type="number" class="form-control" name="sc_admitted" placeholder="Enter SC admitted students" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">ST (Admitted)</label>
+            <input type="number" class="form-control" name="st_admitted" placeholder="Enter ST admitted students" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">OBC (Admitted)</label>
+            <input type="number" class="form-control" name="obc_admitted" placeholder="Enter OBC admitted students" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">General (Admitted)</label>
+            <input type="number" class="form-control" name="gen_admitted" placeholder="Enter General admitted students" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Others (Admitted)</label>
+            <input type="number" class="form-control" name="others_admitted" placeholder="Enter Others admitted students" required>
+          </div>
+        </div>
+        <div class="text-center">
+          <button type="reset" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+          <button type="submit" class="btn btn-primary px-4">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

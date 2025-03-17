@@ -23,81 +23,209 @@
     table.library-table tbody tr:hover {
         background-color: #fffcf7;
     }
-    .btn-edit, .btn-delete, .btn-document, .btn-add {
-        padding: 5px 15px;
+
+    /* Base Button Styles */
+    .btn {
+        padding: 6px 15px;
         text-transform: uppercase;
+        font-size: 0.9rem;
+        white-space: nowrap;
         border: 2px solid transparent;
         transition: all 0.3s ease;
-        white-space: nowrap;
-        font-size: 0.9rem;
-        position: relative;
+        cursor: pointer;
     }
-    .btn-edit::before {
-        content: "✏️";
-        margin-right: 3px;
+
+    /* Button for Viewing */
+    .btn-view {
+        background-color: #17a2b8; /* Light Blue */
+        color: white;
     }
-    .btn-delete::before {
-        content: "🗑";
-        margin-right: 3px;
+    .btn-view:hover {
+        background-color: #117a8b; /* Darker Blue */
     }
-    .btn-document::before {
-        content: "📎";
-        margin-right: 3px;
-    }
+
+    /* Button for Editing */
     .btn-edit {
-        background-color: #007bff;
-        color: #fff;
+        background-color: #f4a641; /* Orange */
+        color: white;
     }
     .btn-edit:hover {
-        background-color: #0056b3;
+        background-color: #d3922b; /* Darker Orange */
     }
-    .btn-delete {
-        background-color: #dc3545;
-        color: #fff;
-    }
-    .btn-delete:hover {
-        background-color: #a71d2a;
-    }
+
+    /* Button for Document Actions */
     .btn-document {
-        background-color: #ff6f00;
-        color: #fff;
-        text-decoration: none;
+        background-color: #f4a641; /* Orange */
+        color: white;
     }
     .btn-document:hover {
-        background-color: #d45a00;
+        background-color: #d3922b; /* Darker Orange */
     }
+
+    /* Button for Deleting */
+    .btn-delete {
+        background-color: #dc3545; /* Red */
+        color: white;
+    }
+    .btn-delete:hover {
+        background-color: #a71d2a; /* Darker Red */
+    }
+
+    /* Button for Adding */
     .btn-add {
-        background-color: #f4a641;
-        color: #000;
+        background-color: #f4a641; /* Orange */
+        color: white; /* Ensure button text is white */
     }
     .btn-add:hover {
-        background-color: white;
+        background-color: white; /* Hover effect */
         border-color: #000;
     }
+
+    /* Button for Download */
+    .btn-download {
+        background-color: #28a745; /* Green */
+        color: white;
+    }
+    .btn-download:hover {
+        background-color: #218838; /* Darker Green */
+    }
+
+    /* Button for Applying Filters */
+    .btn-filter {
+        background-color: #007bff; /* Blue */
+        color: white;
+    }
+    .btn-filter:hover {
+        background-color: #0056b3; /* Darker Blue */
+    }
+
+    /* Button for Resetting Filters */
+    .btn-reset {
+        background-color: #dc3545; /* Red */
+        color: white;
+    }
+    .btn-reset:hover {
+        background-color: #a71d2a; /* Darker Red */
+    }
+    .btn-excel {
+        background-color: #28a745;
+        color: #fff;
+        border: 2px solid transparent; /* Set transparent border for default */
+      }
+      .btn-filter {
+        background-color: #007bff;
+        color: #fff;
+        border: 2px solid transparent; /* Set transparent border for default */
+      }
+    
+      .btn-reset {
+        background-color: #dc3545;
+        color: #fff;
+        border: 2px solid transparent; /* Set transparent border for default */
+      }
+      /* Hover Effects */
+    /* Button Hover Effects */
+    .btn:hover {
+        border-color: #000; /* Black border on hover */
+        background-color: white;
+    }
+
+    /* Action Buttons Container */
     .action-cell {
         display: flex;
         justify-content: center;
-        gap: 10px;
+        gap: 10px; /* Space between buttons */
     }
 </style>
+
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="section-title m-0">E-Content Development</h2>
-        <a href="{% url 'add_econtent' %}" class="btn btn-add">+ Add</a>
+        <div class="d-flex gap-3">
+            <a href="{% url 'download_econtent_excel' %}" class="btn btn-excel">⬇️ Download Excel</a>
+            <a href="{% url 'add_econtent' %}" class="btn btn-add">+ Add</a>
+        </div>
     </div>
+    <!-- Filter Section -->
+<form method="GET" action="" class="mb-4">
+    <div class="row">
+        <!-- From Year Dropdown -->
+        <div class="col-md-3">
+            <select name="from_year" class="form-control">
+                <option value="">From Year</option>
+                {% for year in year_range %}
+                    <option value="{{ year }}" {% if request.GET.from_year == year|stringformat:"s" %}selected{% endif %}>
+                        {{ year }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- To Year Dropdown -->
+        <div class="col-md-3">
+            <select name="to_year" class="form-control">
+                <option value="">To Year</option>
+                {% for year in year_range %}
+                    <option value="{{ year }}" {% if request.GET.to_year == year|stringformat:"s" %}selected{% endif %}>
+                        {{ year }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Teacher Filter -->
+        <div class="col-md-3">
+            {% if is_superuser or is_department_staff %}
+                <select name="teacher" class="form-control">
+                    <option value="">All Teachers</option>
+                    {% for teacher in teachers %}
+                        <option value="{{ teacher.id }}" {% if request.GET.teacher == teacher.id|stringformat:"s" %}selected{% endif %}>
+                            {{ teacher.user_profile.user.username }}
+                        </option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                <!-- User can see their own name only -->
+                <input type="text" class="form-control" value="{{ request.user.username }}" readonly>
+                <input type="hidden" name="teacher" value="{{ request.user.teacher.id }}">
+            {% endif %}
+        </div>
+
+        <!-- Department Filter -->
+        {% comment %} {% if is_superuser or is_department_staff %}
+        <div class="col-md-3">
+            <select name="department" class="form-control">
+                <option value="">All Departments</option>
+                {% for department in departments %}
+                    <option value="{{ department.department_code }}" {% if request.GET.department == department.department_code|stringformat:"s" %}selected{% endif %}>
+                        {{ department.department_name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %} {% endcomment %}
+
+        <!-- Filter Buttons -->
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-filter w-100">Apply Filter</button>
+            <a href="{% url 'show_econtent' %}" class="btn btn-reset w-100">Reset</a>
+        </div>
+    </div>
+</form>
+
     <div class="table-responsive">
         <table class="table library-table">
             <thead>
                 <tr>
-                    <th>Name of the Teacher</th>
+                    <th>Teacher</th>
                     <th>Department</th>
-                    <th>Name of the Module Developed</th>
+                    <th>Module Name</th>
                     <th>Platform</th>
-                    <th>Date of Launch</th>
+                    <th>Launch Date</th>
                     <th>Document</th>
-                    <th>Facilities Available</th>
-                    <th>Video Link</th>
+                    <th>Facilities</th>
+                    <th>Video</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -105,86 +233,203 @@
                 {% for record in records %}
                 <tr>
                     <td>{{ record.teacher.user_profile.user.username }}</td>
-                    <td>{{record.teacher.user_profile.department.department_name }}</td>
+                    <td>{{ record.teacher.user_profile.department.department_name }}</td>
                     <td>{{ record.module_name }}</td>
                     <td>{{ record.platform }}</td>
                     <td>{{ record.launch_date }}</td>
                     <td>
                         {% if record.document_link %}
-                        <a href="{{ record.document_link.url }}" class="btn btn-sm btn-document" target="_blank">View PDF</a>
+                        <a href="{{ record.document_link.url }}" class="btn btn-document" target="_blank">📄 View PDF</a>
                         {% else %} No Document {% endif %}
                     </td>
                     <td>{{ record.facility_available }}</td>
                     <td>
                         {% if record.video_link %}
-                        <a href="{{ record.video_link }}" class="btn btn-sm btn-document" target="_blank">Watch Video</a>
+                        <a href="{{ record.video_link }}" class="btn btn-document" target="_blank">🎥 Watch Video</a>
                         {% else %} No Video {% endif %}
                     </td>
                     <td class="action-cell">
-                        {% if request.user.is_superuser or request.user == record.teacher.user_profile.user %}
-                        <a href="#" class="btn btn-sm btn-edit" data-bs-toggle="modal" data-bs-target="#editModal{{ record.id }}">Edit</a>
-                        <form method="POST" action="{% url 'delete_econtent' record.id %}" style="display:inline-block;"> 
+                        <!-- View Button -->
+                        <a href="{% url "econtent_detail" record.id %}" class="btn btn-view">🔍 View</a>
+
+                        <!-- Edit Button -->
+                    <button class="btn btn-edit" data-bs-toggle="modal" data-bs-target="#editModal"
+                            data-id="{{ record.id }}"
+                            data-teacher-id="{{ record.teacher.id }}"
+                            data-teacher-name="{{ record.teacher.user_profile.user.username }}"
+                            data-department="{{ record.teacher.user_profile.department.department_code }}"
+                            data-module="{{ record.module_name }}"
+                            data-platform="{{ record.platform }}"
+                            data-launch_date="{{ record.launch_date|date:'Y-m-d' }}"
+                            data-facility="{{ record.facility_available }}"
+                            data-video="{{ record.video_link }}"
+                            data-document="{{ record.document_link.url }}"
+                            data-update-url="{% url 'edit_econtent' record.id %}">
+                        ✏️ Edit
+                    </button>
+                        <!-- Delete Button -->
+                        <form method="POST" action="{% url 'delete_econtent' record.id %}" style="display:inline-block;">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-delete" onclick="return confirm('Are you sure you want to delete this record?');">Delete</button>
+                            <button type="submit" class="btn btn-delete" onclick="return confirm('Are you sure you want to delete this record?');">
+                                🗑️ Delete
+                            </button>
                         </form>
-                        {% endif %}
                     </td>
                 </tr>
-
-                <!-- Edit Modal -->
-                <div class="modal fade" id="editModal{{ record.id }}" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Edit E-Content Record</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <form method="POST" action="{% url 'edit_econtent' record.id %}" enctype="multipart/form-data">
-                                {% csrf_token %}
-                                <div class="modal-body">
-                                    <div class="mb-3">
-                                        <label class="form-label">Name of the Teacher</label>
-                                        <input type="text" name="teacher_name" class="form-control" value="{{record.teacher.user_profile.user.username  }}" readonly>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Module Developed</label>
-                                        <input type="text" name="module_name" class="form-control" value="{{ record.module_name }}" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Platform</label>
-                                        <input type="text" name="platform" class="form-control" value="{{ record.platform }}" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Date of Launch</label>
-                                        <input type="date" name="launch_date" class="form-control" value="{{ record.launch_date|date:'Y-m-d' }}" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Upload Document</label>
-                                        <input type="file" name="document_link" class="form-control">
-                                        {% if record.document_link %} 
-                                        <small>Current File: <a href="{{ record.document_link.url }}" target="_blank">View File</a></small>
-                                        {% endif %}
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Facilities Available</label>
-                                        <input type="text" name="facility_available" class="form-control" value="{{ record.facility_available }}" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Video Link</label>
-                                        <input type="url" name="video_link" class="form-control" value="{{ record.video_link }}">
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
-{% endblock %}
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="" id="editForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit E-Content Record</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="record_id" id="editRecordId">
+                   <!-- Teacher Field -->
+                    <div class="mb-3">
+                        <label for="editTeacher" class="form-label">Teacher</label>
+                        {% if is_department_staff %}
+                            <!-- Dropdown for Staff -->
+                            <select name="teacher" id="editTeacher" class="form-control" required>
+                                {% for teacher in teachers %}
+                                    <option value="{{ teacher.id }}">{{ teacher.user_profile.user.username }}</option>
+                                {% endfor %}
+                            </select>
+                        {% else %}
+                            <!-- Non-editable Field for Non-Staff -->
+                            <input type="text" id="editTeacherName" class="form-control" readonly>
+                            <input type="hidden" name="teacher" id="editTeacherId">
+                        {% endif %}
+                    </div>
+                    <!-- Department Dropdown -->
+                    <div class="mb-3">
+                        <label for="editDepartment" class="form-label">Department</label>
+                        <select name="department" id="editDepartment" class="form-control" required>
+                            {% for department in departments %}
+                            <option value="{{ department.department_code }}">{{ department.department_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Module Name -->
+                    <div class="mb-3">
+                        <label for="editModuleName" class="form-label">Module Name</label>
+                        <input type="text" name="module_name" id="editModuleName" class="form-control" required>
+                    </div>
+
+                    <!-- Platform -->
+                    <div class="mb-3">
+                        <label for="editPlatform" class="form-label">Platform</label>
+                        <input type="text" name="platform" id="editPlatform" class="form-control" required>
+                    </div>
+
+                    <!-- Launch Date -->
+                    <div class="mb-3">
+                        <label for="editLaunchDate" class="form-label">Launch Date</label>
+                        <input type="date" name="launch_date" id="editLaunchDate" class="form-control" required>
+                    </div>
+
+                    <!-- Facilities -->
+                    <div class="mb-3">
+                        <label for="editFacility" class="form-label">Facilities Available</label>
+                        <input type="text" name="facility_available" id="editFacility" class="form-control" required>
+                    </div>
+
+                    <!-- Video Link -->
+                    <div class="mb-3">
+                        <label for="editVideoLink" class="form-label">Video Link</label>
+                        <input type="url" name="video_link" id="editVideoLink" class="form-control">
+                    </div>
+
+                    <!-- Document -->
+                    <div class="mb-3">
+                        <label for="editDocument" class="form-label">Upload Document</label>
+                        <input type="file" name="document_link" id="editDocument" class="form-control">
+                        <small id="editDocumentLabel" class="form-text"></small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const editModal = document.getElementById("editModal");
+    
+        editModal.addEventListener("show.bs.modal", function (event) {
+            const button = event.relatedTarget;
+    
+            // Ensure button is present before extracting attributes
+            if (!button) return;
+    
+            // Extract data-* attributes
+            const recordId = button.getAttribute("data-id");
+            const teacherId = button.getAttribute("data-teacher-id");
+            const teacherName = button.getAttribute("data-teacher-name");
+            const departmentId = button.getAttribute("data-department");
+            const moduleName = button.getAttribute("data-module");
+            const platform = button.getAttribute("data-platform");
+            const launchDate = button.getAttribute("data-launch_date");
+            const facility = button.getAttribute("data-facility");
+            const video = button.getAttribute("data-video");
+            const documentLink = button.getAttribute("data-document");
+    
+            // Populate hidden record ID field
+            document.getElementById("editRecordId").value = recordId;
+    
+            // Handle Teacher dropdown/text field
+            const teacherDropdown = document.getElementById("editTeacher");
+            const teacherText = document.getElementById("editTeacherName");
+            const teacherHidden = document.getElementById("editTeacherId");
+    
+            if (teacherDropdown) {
+                teacherDropdown.value = teacherId;
+            } else if (teacherText && teacherHidden) {
+                teacherText.value = teacherName;
+                teacherHidden.value = teacherId;
+            }
+    
+            // Populate other fields
+            document.getElementById("editDepartment").value = departmentId;
+            document.getElementById("editModuleName").value = moduleName;
+            document.getElementById("editPlatform").value = platform;
+            document.getElementById("editLaunchDate").value = launchDate;
+            document.getElementById("editFacility").value = facility;
+            document.getElementById("editVideoLink").value = video;
+    
+            // Handle document link
+            const documentLabel = document.getElementById("editDocumentLabel");
+            if (documentLabel) {
+                documentLabel.innerHTML = documentLink
+                    ? `Current File: <a href="${documentLink}" target="_blank">View Document</a>`
+                    : "No file uploaded.";
+            }
+    
+            document.getElementById("editForm").action = button.getAttribute("data-update-url");
+        });
+    
+        // Clear modal on close
+        editModal.addEventListener("hidden.bs.modal", function () {
+            document.getElementById("editForm").reset();
+            const documentLabel = document.getElementById("editDocumentLabel");
+            if (documentLabel) {
+                documentLabel.innerHTML = "";
+            }
+        });
+    });    
+    </script>    
+    {% endblock %}

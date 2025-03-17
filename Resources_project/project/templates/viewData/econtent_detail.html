@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">E-Content Details</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <tbody>
+                <tr>
+                    <th>Teacher</th>
+                    <td>{{ econtent.teacher }}</td>
+                </tr>
+                <tr>
+                    <th>Module Name</th>
+                    <td>{{ econtent.module_name }}</td>
+                </tr>
+                <tr>
+                    <th>Platform</th>
+                    <td>{{ econtent.platform }}</td>
+                </tr>
+                <tr>
+                    <th>Launch Date</th>
+                    <td>{{ econtent.launch_date|date:"d M Y" }}</td>
+                </tr>
+                <tr>
+                    <th>Supporting Document</th>
+                    <td>
+                        {% if econtent.document_link %}
+                            <a href="{{ econtent.document_link.url }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                📂 View Document
+                            </a>
+                        {% else %}
+                            <span class="text-danger">No Document Available</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Facilities</th>
+                    <td>{{ econtent.facility_available }}</td>
+                </tr>
+                <tr>
+                    <th>Video Link</th>
+                    <td>
+                        {% if econtent.video_link %}
+                            <a href="{{ econtent.video_link }}" class="btn btn-outline-danger btn-sm" target="_blank">
+                                🎥 Watch Video
+                            </a>
+                        {% else %}
+                            <span class="text-danger">No Video Available</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Buttons Section -->
+    <div class="mt-3">
+        <a href="{% url 'download_econtent_pdf' econtent.id %}" class="btn btn-primary">
+            📄 Download PDF
+        </a>
+        <a href="{% url 'show_econtent' %}" class="btn btn-secondary">
+            ⬅ Back to List
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -153,8 +153,18 @@
                 { text: "Expenditure on Facilities", url: "{% url 'expenditure_list' %}" },
                 { text: "E-Content Development", url: "{% url 'show_econtent' %}" }
             ],
-            5: ["Title 1", "Title 2", "Title 3", "Title 4"],
-            6: ["Title 1", "Title 2", "Title 3", "Title 4"]
+            5: [
+               {text : "Students Benefited By Scholarships And Free Ships " , url : "{% url "scholarship_list" %}"},
+               {text : " Career Counseling and Guidance Activity " , url : " {% url "career_counseling_list" %}"}
+            ],
+            6: [
+               { text : "e-governance is implemented covering " , url : " {% url "e_governance_list" %} "},
+               { text : " teachers provided with financial support to attend conferences / workshops and towards membership fee of professional bodies during  the year " , url : " {% url "conference_list" %} "},
+               { text : " professional development / administrative training  Programmes organized by the institution for teaching and non teaching staff during the year " , url : " {% url "training_record_list" %} "},
+               { text : "  teachers undergoing online/ face-to-face  Faculty Development Programmes (FDP)during  the year " , url : " {% url "faculty_development_list" %} "},
+               { text : "   Funds / Grants received  " , url : " {% url "grant_record" %} "},
+               { text : "   Quality Assurance Initiative  " , url : " {% url "quality_assurance_list" %} "},
+            ]
         };
     
         function showCriterion(criterion) {

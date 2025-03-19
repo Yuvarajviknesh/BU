@@ -104,4 +104,22 @@ urlpatterns = [
      # aganist santioned post
      path('against-sanctioned-post/', views.against_sanctioned_post, name='against_sanctioned_post_list'),
       path('against-sanctioned-post/add/', views.add_against_sanctioned_post, name='add_against_sanctioned_post'),
+
+    #conference
+    path('e-governance/', views.e_governance, name='e_governance_list'),
+    path('e-governance/add/', views.add_e_governance, name='add_e_governance'),
+    path('conference/', views.conference, name='conference_list'),
+    path('conference/add/', views.add_conference, name='add_conference'),
+    path('training_record/', views.training_record, name='training_record_list'),
+    path('training_record/add/', views.add_training_record, name='add_training_record'),
+    path('faculty_development/', views.faculty_development_program, name='faculty_development_list'),
+    path('faculty_development/add/', views.add_faculty_development_program, name='add_faculty_development'),
+    path('grant/',views.grant_record,name='grant_record'),
+    path('grant/add/',views.add_grant_record,name='add_grant_record'),
+    path('quality_assurance/',views.quality_assurance,name='quality_assurance_list'),
+    path('quality_assurance/add/',views.add_quality_assurance,name='add_quality_assurance'),
+    path('scholarship/',views.scholarship_list,name='scholarship_list'),
+    path('scholarship/add/',views.add_scholarship,name='add_scholarship'),
+    path('career_counseling/',views.career_counseling,name='career_counseling_list'),
+    path('career_counseling/add/',views.add_career_counseling,name='add_career_counseling'),
 ]

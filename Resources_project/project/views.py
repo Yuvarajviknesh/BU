@@ -2077,3 +2077,35 @@ def against_sanctioned_post(request):
     return render(request,'Forms/against_sanctioned_post.html')
 def add_against_sanctioned_post(request):
     return render(request,'AddData/add_against_sanctioned_post.html')
+def e_governance(request):
+    return render(request,"Forms/e_governance.html")
+def add_e_governance(request):
+    return render(request,"AddData/add_e_governance.html")
+def conference(request):
+    return render(request,"Forms/conference.html")
+def add_conference(request):
+    return render(request,"AddData/add_conference.html")
+def training_record(request):
+    return render(request,"Forms/training_record.html")
+def add_training_record(request):
+    return render(request,"AddData/add_training_record.html")
+def faculty_development_program(request):
+    return render(request,"Forms/faculty_development_program.html")
+def add_faculty_development_program(request):
+    return render(request,"AddData/add_faculty_development_program.html")
+def grant_record(request):
+    return render(request,"Forms/grant.html")
+def add_grant_record(request):
+    return render(request,"AddData/add_grand.html")
+def quality_assurance(request):
+    return render(request,"Forms/quality_assurance.html")
+def add_quality_assurance(request): 
+    return render(request,"AddData/add_quality_assurance.html")
+def scholarship_list(request):
+    return render(request,"Forms/scholarship.html")
+def add_scholarship(request):
+    return render(request,"AddData/add_scholarship.html")
+def career_counseling(request):
+    return render(request,"Forms/career_counseling.html")
+def add_career_counseling(request):
+    return render(request,"AddData/add_career_counseling.html")

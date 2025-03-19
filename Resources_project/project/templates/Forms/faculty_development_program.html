@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block content %}
+    <style>
+        /* Table Design */
+        .table-responsive {
+            margin-top: 20px;
+        }
+        
+        table.fdp-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        table.fdp-table thead {
+            background-color: #002d6b;
+            color: white;
+        }
+        
+        table.fdp-table thead th,
+        table.fdp-table tbody td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        
+        table.fdp-table tbody tr:hover {
+            background-color: #fffcf7;
+        }
+
+        /* Base Button Styles */
+        .btn {
+            padding: 6px 15px;
+            text-transform: uppercase;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            color: #fff;
+            cursor: pointer;
+        }
+        
+        /* Button Variants */
+        .btn-add {
+            background-color: #f4a641; /* Orange for Add */
+        }
+        
+        .btn-delete {
+            background-color: #ed1b1b; /* Red for Delete */
+        }
+        
+        .btn-edit {
+            background-color: #007bff; /* Blue for Edit */
+        }
+        
+        .btn-view {
+            background-color: #17a2b8; /* Light Blue for View */
+        }
+        
+        /* Hover Effects */
+        .btn:hover {
+            border-color: #000; /* Uniform hover effect for all buttons */
+        }
+        
+        /* Action Cell - Aligns buttons */
+        .action-cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: nowrap; /* Ensure buttons stay in one row */
+        }
+        </style>
+
+        <div class="d-flex justify-content-between align-items-center mb-4 mt-4 md-3">
+        <h2 class="section-title m-0">Faculty Development Programmes</h2>
+        <div class="d-flex align-items-center gap-2 ms-auto">
+            <a href="" class="btn btn-success">⬇️ Download Excel</a>
+            <a href="{% url 'add_faculty_development' %}" class="btn btn-add">+ Add</a>
+        </div>
+        </div>
+
+        <div class="table-responsive">
+        <table class="table table-bordered table-hover fdp-table">
+            <thead>
+            <tr>
+                <th>Name of teacher who attended</th>
+                <th>Title of the program</th>
+                <th>Duration (from – to) (DD-MM-YYYY)</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for program in programs %}
+            <tr>
+                <td>{{ program.teacher_name }}</td>
+                <td>{{ program.program_title }}</td>
+                <td>{{ program.duration }}</td>
+                <td class="action-cell">
+                <button class="btn btn-sm btn-edit" data-bs-toggle="modal" data-bs-target="#editModal"
+                    data-id="{{ program.id }}" 
+                    data-teacher-name="{{ program.teacher_name }}"
+                    data-program-title="{{ program.program_title }}"
+                    data-duration="{{ program.duration }}"
+                    data-update-url="{% url 'update_fdp_program' program.id %}">
+                    ✏️ Edit
+                </button>
+                <a href="#" class="btn btn-sm btn-delete" onclick="confirmDelete(event, '{% url 'delete_fdp_program' program.id  %}')">🗑️ Delete</a>  
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+
+        <!-- Edit Modal -->
+        <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit FDP Program</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" id="programId" name="program_id">
+                
+                <div class="mb-3">
+                    <label class="form-label">Name of teacher who attended</label>
+                    <input type="text" class="form-control" id="teacherName" name="teacher_name" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Title of the program</label>
+                    <input type="text" class="form-control" id="programTitle" name="program_title" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Duration (from – to) (DD-MM-YYYY)</label>
+                    <input type="text" class="form-control" id="duration" name="duration" required>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+                </form>
+            </div>
+            </div>
+        </div>
+        </div>
+
+        <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var editModal = document.getElementById("editModal");
+        
+            editModal.addEventListener("show.bs.modal", function (event) {
+            var button = event.relatedTarget;
+            
+            document.getElementById("programId").value = button.getAttribute("data-id");
+            document.getElementById("teacherName").value = button.getAttribute("data-teacher-name");
+            document.getElementById("programTitle").value = button.getAttribute("data-program-title");
+            document.getElementById("duration").value = button.getAttribute("data-duration");
+        
+            document.getElementById("editForm").action = button.getAttribute("data-update-url");
+            });
+        
+            window.confirmDelete = function (event, deleteUrl) {
+            event.preventDefault();
+            if (confirm("Are you sure?")) window.location.href = deleteUrl;
+            };
+        });
+        </script>
+{% endblock %}

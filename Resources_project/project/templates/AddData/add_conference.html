@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .card-container {
+        max-width: 700px;
+        margin: 50px auto;
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 100px;
+    }
+    .card-header {
+        background-color: #002d6b;
+        color: white;
+        text-align: center;
+        font-size: 20px;
+        font-weight: bold;
+        padding: 15px;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+    .form-container {
+        padding: 20px;
+    }
+</style>
+
+<div class="container">
+    <div class="card-container">
+        <div class="card-header">
+            Add New Financial Support Record
+        </div>
+        <div class="card-body form-container">
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form id="addFinancialSupportForm" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Year</label>
+                        <input type="number" class="form-control" name="year" placeholder="E.g., 2023" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Name of Teacher</label>
+                        <input type="text" class="form-control" name="teacher_name" placeholder="E.g., Dr. John Doe" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">PAN</label>
+                        <input type="text" class="form-control" name="pan" placeholder="E.g., ABCDE1234F" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Conference/Workshop Name</label>
+                        <input type="text" class="form-control" name="conference_name" placeholder="E.g., AI Workshop 2023" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Professional Body Name</label>
+                        <input type="text" class="form-control" name="professional_body_name" placeholder="E.g., ACM" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Amount of Support</label>
+                        <input type="number" class="form-control" name="amount" placeholder="E.g., 5000" required>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button type="reset" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

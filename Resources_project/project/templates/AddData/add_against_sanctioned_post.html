@@ -28,34 +28,59 @@
 <div class="container">
     <div class="card-container">
         <div class="card-header">
-            Add Data - Against Sanctioned Post
+            {% if is_teacher %} Add Your Record {% else %} Manage Teacher Against Sanctioned Post {% endif %}
         </div>
-        <div class="card-body form-container">
-            
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-
-            <form id="addSanctionedPostForm" method="POST" enctype="multipart/form-data">
+        <div class="card-body form-container">  
+            <form id="addSanctionedPostForm" method="POST">
                 {% csrf_token %}
                 <div class="row">
+
+                    <!-- Dropdown for Department Staff -->
+                    {% if not is_teacher %}
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Select Teacher</label>
+                        <select name="teacher_id" class="form-control" id="teacherDropdown" required>
+                            <option value="">-- Select Teacher --</option>
+                            {% for teacher in department_teachers %}
+                            <option value="{{ teacher.id }}"
+                                data-name="{{ teacher.user_profile.user.first_name }}"
+                                data-pan="{{ teacher.pan }}"
+                                data-designation="{{ teacher.position }}"
+                                data-department="{{ teacher.user_profile.department.department_name }}">
+                                {{ teacher.user_profile.user.first_name }} ({{ teacher.user_profile.user.last_name }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <!-- Pre-filled Fields for Teachers -->
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-bold">Name of the Full-time Teacher</label>
-                        <input type="text" class="form-control" name="nameTeacher" required>
+                        <input type="text" class="form-control" name="nameTeacher" id="nameField" 
+                               value="{% if is_teacher %}{{ teacher_data.name }}{% endif %}" 
+                               {% if is_teacher %}readonly{% endif %} required>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-bold">PAN</label>
-                        <input type="text" class="form-control" name="pan" required>
+                        <input type="text" class="form-control" name="pan" id="panField" 
+                               value="{% if is_teacher %}{{ teacher_data.pan }}{% endif %}" 
+                               {% if is_teacher %}readonly{% endif %} required>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-bold">Designation</label>
-                        <input type="text" class="form-control" name="designation" required>
+                        <input type="text" class="form-control" name="designation" id="designationField" 
+                               value="{% if is_teacher %}{{ teacher_data.designation }}{% endif %}" 
+                               {% if is_teacher %}readonly{% endif %} required>
                     </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Department</label>
+                        <input type="text" class="form-control" name="department" id="departmentField" 
+                               value="{% if is_teacher %}{{ teacher_data.department }}{% endif %}" 
+                               {% if is_teacher %}readonly{% endif %} required>
+                    </div>
+
+                    <!-- Editable Fields -->
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-bold">Year of Appointment</label>
                         <input type="number" class="form-control" name="yearOfAppointment" required>
@@ -69,22 +94,18 @@
                         </select>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Name of the Department</label>
-                        <input type="text" class="form-control" name="department" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Total Years of Experience in the Same Institution</label>
+                        <label class="form-label fw-bold">Total Years of Experience</label>
                         <input type="number" class="form-control" name="experience" required>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Is the Teacher Still Serving the Institution?</label>
+                        <label class="form-label fw-bold">Is the Teacher Still Serving?</label>
                         <select class="form-control" name="isServing" required>
                             <option value="Yes">Yes</option>
                             <option value="No">No</option>
                         </select>
                     </div>
                     <div class="col-md-6 mb-3" id="lastYearService" style="display: none;">
-                        <label class="form-label fw-bold">If Not, Last Year of the Service</label>
+                        <label class="form-label fw-bold">Last Year of Service</label>
                         <input type="number" class="form-control" name="lastYearOfService">
                     </div>
                 </div>
@@ -99,12 +120,24 @@
 </div>
 
 <script>
+    // Populate fields dynamically for department staff
+    document.getElementById('teacherDropdown')?.addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        document.getElementById('nameField').value = selectedOption.getAttribute('data-name');
+        document.getElementById('panField').value = selectedOption.getAttribute('data-pan');
+        document.getElementById('designationField').value = selectedOption.getAttribute('data-designation');
+        document.getElementById('departmentField').value = selectedOption.getAttribute('data-department');
+    });
+
+    // Show/hide the "Last Year of Service" field dynamically
     document.querySelector('select[name="isServing"]').addEventListener('change', function() {
         var lastYearService = document.getElementById('lastYearService');
         if (this.value === 'No') {
             lastYearService.style.display = 'block';
+            lastYearService.querySelector('input').setAttribute('required', 'required');
         } else {
             lastYearService.style.display = 'none';
+            lastYearService.querySelector('input').removeAttribute('required');
         }
     });
 </script>

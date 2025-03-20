@@ -89,10 +89,10 @@
             <tbody>
                 {% for record in records %}
                 <tr>
-                    <td>{{ record.teacher_name }}</td>
-                    <td>{{ record.pan }}</td>
-                    <td>{{ record.designation }}</td>
-                    <td>{{ record.department }}</td>
+                    <td>{{ record.teacher.user_profile.user.first_name }}({{record.teacher.position}})</td>
+                    <td>{{ record.teacher.pan }}</td>
+                    <td>{{ record.teacher.position }}</td>
+                    <td>{{ record.teacher.user_profile.department.department_name }}</td>
                     <td>{{ record.appointment_year }}</td>
                     <td>{{ record.nature_of_appointment }}</td>
                     <td>{{ record.experience_years }}</td>
@@ -102,19 +102,19 @@
                         <a href="" class="btn btn-view">👁 View</a>
                         <button class="btn btn-edit edit-btn" data-bs-toggle="modal" data-bs-target="#editModal"
                             data-id="{{ record.id }}"
-                            data-teacher_name="{{ record.teacher_name }}"
-                            data-pan="{{ record.pan }}"
-                            data-designation="{{ record.designation }}"
-                            data-department="{{ record.department }}"
+                            data-teacher_name="{{record.teacher.user_profile.user.first_name  }}"
+                            data-pan="{{ record.teacher.pan }}"
+                            data-designation="{{ record.teacher.position }}"
+                            data-department="{{record.teacher.user_profile.department.department_name }}"
                             data-appointment_year="{{ record.appointment_year }}"
                             data-nature_of_appointment="{{ record.nature_of_appointment }}"
                             data-experience_years="{{ record.experience_years }}"
                             data-is_serving="{{ record.is_serving }}"
                             data-last_year_service="{{ record.last_year_service }}"
-                            data-update-url="">
+                            data-update-url="{% url "edit_teacher_serving_post" record.id %}">
                             ✏️ Edit
                         </button>
-                        <form method="POST" action="" class="delete-form d-inline">
+                        <form method="POST" action="{% url "delete_teacher_serving_post" record.id %}" class="delete-form d-inline">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-delete">🗑️ Delete</button>
                         </form>
@@ -140,19 +140,19 @@
                     <input type="hidden" id="editId">
                     <div class="form-group">
                         <label>Teacher Name</label>
-                        <input type="text" name="teacher_name" id="editTeacherName" class="form-control" required>
+                        <input type="text" name="teacher_name" id="editTeacherName" class="form-control" required readonly>
                     </div>
                     <div class="form-group">
                         <label>PAN</label>
-                        <input type="text" name="pan" id="editPan" class="form-control" maxlength="10" required>
+                        <input type="text" name="pan" id="editPan" class="form-control" maxlength="10" required readonly>
                     </div>
                     <div class="form-group">
                         <label>Designation</label>
-                        <input type="text" name="designation" id="editDesignation" class="form-control" required>
+                        <input type="text" name="designation" id="editDesignation" class="form-control" required readonly>
                     </div>
                     <div class="form-group">
                         <label>Department</label>
-                        <input type="text" name="department" id="editDepartment" class="form-control" required>
+                        <input type="text" name="department" id="editDepartment" class="form-control" required readonly>
                     </div>
                     <div class="form-group">
                         <label>Appointment Year</label>

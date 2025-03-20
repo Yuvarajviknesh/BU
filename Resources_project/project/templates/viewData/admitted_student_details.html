@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4" style="margin-bottom:100px;">
+    <h2 class="mb-4">Admitted Student Details</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <tbody>
+                <tr>
+                    <th>Year</th>
+                    <td>{{ record.year }}</td>
+                </tr>
+                <tr>
+                    <th>Programme Name</th>
+                    <td>{{ record.programme_name }}</td>
+                </tr>
+                <tr>
+                    <th>SC (Earmarked)</th>
+                    <td>{{ record.sc_earmarked }}</td>
+                </tr>
+                <tr>
+                    <th>ST (Earmarked)</th>
+                    <td>{{ record.st_earmarked }}</td>
+                </tr>
+                <tr>
+                    <th>OBC (Earmarked)</th>
+                    <td>{{ record.obc_earmarked }}</td>
+                </tr>
+                <tr>
+                    <th>General (Earmarked)</th>
+                    <td>{{ record.gen_earmarked }}</td>
+                </tr>
+                <tr>
+                    <th>Others (Earmarked)</th>
+                    <td>{{ record.others_earmarked }}</td>
+                </tr>
+                <tr>
+                    <th>SC (Admitted)</th>
+                    <td>{{ record.sc_admitted }}</td>
+                </tr>
+                <tr>
+                    <th>ST (Admitted)</th>
+                    <td>{{ record.st_admitted }}</td>
+                </tr>
+                <tr>
+                    <th>OBC (Admitted)</th>
+                    <td>{{ record.obc_admitted }}</td>
+                </tr>
+                <tr>
+                    <th>General (Admitted)</th>
+                    <td>{{ record.gen_admitted }}</td>
+                </tr>
+                <tr>
+                    <th>Others (Admitted)</th>
+                    <td>{{ record.others_admitted }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Buttons Section -->
+    <div class="mt-3">
+        <a href="{% url 'download_admitted_student_pdf' record.id %}" class="btn btn-primary">
+            📄 Download PDF
+        </a>
+        <a href="{% url 'admitted_students_list' %}" class="btn btn-secondary">
+            ⬅ Back to List
+        </a>
+    </div>
+</div>
+{% endblock %}

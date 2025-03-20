@@ -41,10 +41,21 @@
                 {% csrf_token %}
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Name of full time teacher with Ph.D./D.M/M.Ch./D.N.B Superspeciality/D.Sc./D’Lit.</label>
-                        <input type="text" class="form-control" name="teacher_name" placeholder="Enter Teacher Name" required>
+                        <label class="form-label fw-bold">Name of the Teacher</label>
+                    
+                        {% if is_department_staff %}
+                        <select class="form-control" name="teacher" required>
+                            <option value="">Select Teacher</option>
+                            {% for teacher in teachers %}
+                            <option value="{{ teacher.id }}">{{ teacher.user_profile.user.first_name }} {{ teacher.user_profile.user.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                        {% else %}
+                        <input type="hidden" name="teacher" value="{{ user.id }}">
+                        <input type="text" class="form-control" value="{{ user.get_full_name }}" readonly>
+                        {% endif %}
                     </div>
-
+                    
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-bold">Qualification (Ph.D./D.M/M.Ch./D.N.B Superspeciality/D.Sc./D’Lit.) and Year of obtaining</label>
                         <input type="text" class="form-control" name="qualification" placeholder="Enter Qualification and Year" required>

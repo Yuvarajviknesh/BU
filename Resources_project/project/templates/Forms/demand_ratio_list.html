@@ -33,8 +33,8 @@
     }
     .btn-excel { background-color: #28a745; color: white; }
     .btn-add { background-color: #f4a641; color: white; }
-    .btn-view { background-color: #ffc107; color: black; }
-    .btn-edit { background-color: #17a2b8; color: white; }
+    .btn-view { background-color: #17a2b8; color: white; }
+    .btn-edit { background-color: #f4a641; color: white; }
     .btn-delete { background-color: #dc3545; color: white; }
     .btn:hover { background-color: white; border-color: #000; }
     .action-cell { display: flex; justify-content: center; gap: 10px; }
@@ -117,9 +117,9 @@
                     <td>{{ record.academic_year }}</td>
                     <td class="action-cell">
                         <!-- View Button -->
-                        <a href="" class="btn btn-view">
-                            <span>👁</span> View
-                        </a>
+                        <a href="{% url 'view_demand_ratio_details' record.id %}" class="btn btn-view">
+                            <span>🔍</span> View
+                        </a>                        
                         <!-- Edit Button -->
                         <button class="btn btn-edit edit-btn" data-bs-toggle="modal" data-bs-target="#editModal"
                             data-id="{{ record.id }}"
@@ -129,16 +129,16 @@
                             data-applications="{{ record.num_applications }}"
                             data-admitted="{{ record.num_students_admitted }}"
                             data-year="{{ record.academic_year }}"
-                            data-update-url="">
+                            data-update-url="{% url 'edit_demand_ratio' record.id %}">
                             <span>✏️</span> Edit
                         </button>
                         <!-- Delete Button -->
-                        <form method="POST" action="" class="delete-form">
+                        <form method="POST" action="{% url 'delete_demand_ratio' record.id %}" class="delete-form">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-delete">
                                 <span>🗑️</span> Delete
                             </button>
-                        </form>
+                        </form>                        
                     </td>
                 </tr>
                 {% endfor %}

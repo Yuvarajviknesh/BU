@@ -86,24 +86,68 @@ urlpatterns = [
      #phds
       path("phds/", views.phd_list, name="phd_list"),
       path("phds/add/", views.add_phd, name="add_phd"),
+      path('phd/edit/<int:phd_id>/', views.edit_phd, name='edit_phd'),  # Edit PhD record
+      path('phd/delete/<int:phd_id>/', views.delete_phd, name='delete_phd'),  
+      path('phd/view/<int:phd_id>/', views.view_phd, name='view_phd'),
+      path('phd/download-pdf/<int:phd_id>/', views.download_phd_pdf, name='download_phd_pdf'),
+      
+      # Research Paper
+      path('research-papers/', views.view_research_papers, name='view_research_papers'),
+      path('research-papers/add/', views.add_research_paper, name='add_research_paper'),
+      path('research-papers/edit/<int:paper_id>/', views.edit_research_paper, name='edit_research_paper'),
+      path('research-papers/delete/<int:paper_id>/', views.delete_research_paper, name='delete_research_paper'),
+      path('research-papers/view/<int:paper_id>/', views.view_research_paper, name='view_research_paper'),
+      path('research-papers/download-pdf/<int:paper_id>/', views.download_research_paper_pdf, name='download_research_paper_pdf'),
+    
+     #book 
+      
+      path('book-chapters/', views.view_book_chapters, name='view_book_chapters'),
 
+    # Add a new book/chapter
+      path('book-chapters/add/', views.add_book_chapter, name='add_book_chapter'),
+
+    # Edit an existing book/chapter
+      path('book-chapters/edit/<int:book_id>/', views.edit_book_chapter, name='edit_book_chapter'),
+
+    # Delete a book/chapter
+       path('book-chapters/delete/<int:book_id>/', views.delete_book_chapter, name='delete_book_chapter'),
+        path('book-chapters/view/<int:book_id>/', views.view_book_chapter_details, name='view_book_chapter_details'),
+        path('book-chapters/download-pdf/<int:book_id>/', views.download_book_chapter_pdf, name='download_book_chapter_pdf'),
       #demand ratio
        path('demand-ratio/', views.demand_ratio_list, name='demand_ratio_list'),
        path('demand-ratio/add/', views.add_demand_ratio, name='add_demand_ratio'),
+      path('demand-ratio/edit/<int:record_id>/', views.edit_demand_ratio, name='edit_demand_ratio'),
+       path('demand-ratio/delete/<int:record_id>/', views.delete_demand_ratio, name='delete_demand_ratio'),
+       path('demand-ratio/view/<int:record_id>/', views.view_demand_ratio_details, name='view_demand_ratio_details'),
+      path('demand-ratio/download-pdf/<int:record_id>/', views.download_demand_ratio_pdf, name='download_demand_ratio_pdf'),
 
       #admitted students
       path('admitted-students/', views.admitted_student_list, name='admitted_students_list'),
       path('admitted-students/add/', views.add_admitted_student, name='add_admitted_student'),
+     path('admitted-student/edit/<int:record_id>/', views.edit_admitted_student, name='edit_admitted_student'),
+      path('admitted-student/delete/<int:record_id>/', views.delete_admitted_student, name='delete_admitted_student'),
+      path('admitted-student/view/<int:record_id>/', views.view_admitted_student_details, name='view_admitted_student_details'),
+    path('admitted-student/download-pdf/<int:record_id>/', views.download_admitted_student_pdf, name='download_admitted_student_pdf'),
       #teacher serving post
       path('teacher-serving-post/', views.teacher_serving_post_list, name='teacher_serving_post_list'),
       path('teacher-serving-post/add/', views.add_teacher_serving_post, name='add_teacher_serving_post'),
+       path('teacher-serving-post/edit/<int:record_id>/', views.edit_teacher_serving_post, name='edit_teacher_serving_post'),
+      path('teacher-serving-post/delete/<int:record_id>/', views.delete_teacher_serving_post, name='delete_teacher_serving_post'),
 
       #teacher 
-      path('teachers/', views.teacher, name='teacher_list'),
+      path('full-time-teacher/list/', views.full_time_teacher_list, name='full_time_teacher_list'),
       path('teachers/add/', views.add_teacher, name='add_teacher'),
+      path('teachers/edit/<int:record_id>/', views.edit_teacher, name='edit_teacher'),
+       path('teachers/delete/<int:record_id>/', views.delete_teacher, name='delete_teacher'),
      # aganist santioned post
-     path('against-sanctioned-post/', views.against_sanctioned_post, name='against_sanctioned_post_list'),
+     path('teacher-sanctioned-post-list/', views.teacher_sanctioned_post_list, name='teacher_sanctioned_post_list'),
       path('against-sanctioned-post/add/', views.add_against_sanctioned_post, name='add_against_sanctioned_post'),
+          # Edit record route
+    path('edit-teacher/<int:post_id>/', views.edit_teacher_against_sanctioned_post, name='edit_teacher_against_sanctioned_post'),
+
+    # Delete record route
+    path('delete-teacher/<int:post_id>/', views.delete_teacher_against_sanctioned_post, name='delete_teacher_against_sanctioned_post'),
+
 
     #conference
     path('e-governance/', views.e_governance, name='e_governance_list'),

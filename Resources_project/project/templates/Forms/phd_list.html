@@ -37,6 +37,19 @@
       font-size: 0.9rem;
       white-space: nowrap;
     }
+    .btn {
+      padding: 6px 15px;
+      text-transform: uppercase;
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      color: #fff;
+      cursor: pointer;
+    }
+    .btn-view {
+      background-color: #17a2b8; /* Light Blue for View */
+    }
 
     .btn-delete {
         background-color: rgb(237, 27, 27);
@@ -69,7 +82,7 @@
       transition: all 0.3s ease;
     }
 
-    .btn-add:hover, .btn-delete:hover, .btn-edit:hover, .btn-document:hover {
+    .btn-add:hover, .btn-delete:hover, .btn-edit:hover, .btn-document:hover, .btn-view:hover {
       border-color: #000;
     }
 
@@ -122,18 +135,19 @@
             <td>{{ phd.registration_year }}</td>
             <td>{{ phd.award_year }}</td>
             <td class="action-cell">
+              <a href="{% url 'view_phd' phd.id %}" class="btn btn-sm btn-view">🔍 View</a>
               <button class="btn btn-sm btn-edit" data-bs-toggle="modal" data-bs-target="#editModal"
-                data-id="{{ phd.id }}"
-                data-scholar_name="{{ phd.scholar_name }}"
-                data-department="{{ phd.department }}"
-                data-guides="{{ phd.guides }}"
-                data-title="{{ phd.title }}"
-                data-registration_year="{{ phd.registration_year }}"
-                data-award_year="{{ phd.award_year }}"
-                data-update-url="">
-                Edit
+                  data-id="{{ phd.id }}"
+                  data-scholar_name="{{ phd.scholar_name }}"
+                  data-department="{{ phd.department.department_code }}" 
+                  data-guides="{{ phd.guides }}"
+                  data-title="{{ phd.title }}"
+                  data-registration_year="{{ phd.registration_year }}"
+                  data-award_year="{{ phd.award_year }}"
+                  data-update-url="{% url 'edit_phd' phd.id %}">
+                  Edit
               </button>
-              <a href="#" class="btn btn-sm btn-delete" onclick="confirmDelete(event, '')">
+              <a href="#" class="btn btn-sm btn-delete" onclick="confirmDelete(event, '{% url 'delete_phd' phd.id %}')">
                 Delete
               </a>
             </td>
@@ -162,9 +176,19 @@
               <input type="text" class="form-control" name="scholar_name" id="editScholarName" required>
             </div>
             <div class="mb-3">
-              <label class="form-label">Name of the Department</label>
-              <input type="text" class="form-control" name="department" id="editDepartment" required>
-            </div>
+              <label for="editDepartment" class="form-label fw-bold">Name of the Department</label>
+              {% if user.is_superuser %}
+              <select class="form-control" id="editDepartment" name="department" required>
+                {% for dept in departments %}
+                    <option value="{{ dept.department_code }}" {% if dept.department_code == phd.department.department_code %}selected{% endif %}>
+                        {{ dept.department_name }}
+                    </option>
+                {% endfor %}
+            </select>            
+              {% else %}
+                <input type="text" class="form-control" id="editDepartment" name="department" value="{{ user.userprofile.department.department_name }}" readonly>
+              {% endif %}
+            </div>            
             <div class="mb-3">
               <label class="form-label">Name of the Guide(s)</label>
               <input type="text" class="form-control" name="guides" id="editGuides" required>
@@ -192,13 +216,10 @@
   </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      let editModal = document.getElementById("editModal");
-
-      editModal.addEventListener("show.bs.modal", function (event) {
+    let editModal = document.getElementById("editModal");
+    editModal.addEventListener("show.bs.modal", function (event) {
         let button = event.relatedTarget;
-        let form = document.getElementById("editForm");
-
+    
         document.getElementById("editPhdId").value = button.getAttribute("data-id");
         document.getElementById("editScholarName").value = button.getAttribute("data-scholar_name");
         document.getElementById("editDepartment").value = button.getAttribute("data-department");
@@ -206,9 +227,30 @@
         document.getElementById("editTitle").value = button.getAttribute("data-title");
         document.getElementById("editRegistrationYear").value = button.getAttribute("data-registration_year");
         document.getElementById("editAwardYear").value = button.getAttribute("data-award_year");
-
+    
+        let form = document.getElementById("editForm");
         form.action = button.getAttribute("data-update-url");
-      });
     });
+    function confirmDelete(event, deleteUrl) {
+      event.preventDefault();
+  
+      if (confirm("Are you sure you want to delete this record?")) {
+          const form = document.createElement("form");
+          form.method = "POST";
+          form.action = deleteUrl;
+  
+          const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+          const csrfInput = document.createElement("input");
+          csrfInput.type = "hidden";
+          csrfInput.name = "csrfmiddlewaretoken";
+          csrfInput.value = csrfToken;
+  
+          form.appendChild(csrfInput);
+          document.body.appendChild(form);
+          form.submit();
+      }
+  }
+  
+    
   </script>
 {% endblock %}

@@ -52,8 +52,15 @@
 
           <div class="col-md-6 mb-3">
             <label for="department" class="form-label fw-bold">Department of the Teacher</label>
-            <input type="text" class="form-control" id="department" name="department" placeholder="Enter Department Name" required>
+            <input 
+              type="text" 
+              class="form-control" 
+              id="department" 
+              name="department" 
+              value="{{ user.userprofile.department.department_name }}" 
+              readonly>
           </div>
+          
 
           <div class="col-md-6 mb-3">
             <label for="journalName" class="form-label fw-bold">Name of the Journal</label>

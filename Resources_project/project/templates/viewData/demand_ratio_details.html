@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Demand Ratio Details</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <tbody>
+                <tr>
+                    <th>Programme Name</th>
+                    <td>{{ record.programme_name }}</td>
+                </tr>
+                <tr>
+                    <th>Programme Code</th>
+                    <td>{{ record.programme_code }}</td>
+                </tr>
+                <tr>
+                    <th>Seats Available</th>
+                    <td>{{ record.num_seats }}</td>
+                </tr>
+                <tr>
+                    <th>Eligible Applications</th>
+                    <td>{{ record.num_applications }}</td>
+                </tr>
+                <tr>
+                    <th>Students Admitted</th>
+                    <td>{{ record.num_students_admitted }}</td>
+                </tr>
+                <tr>
+                    <th>Academic Year</th>
+                    <td>{{ record.academic_year }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Buttons Section -->
+    <div class="mt-3 d-flex justify-content-start gap-2">
+        <a href="{% url 'download_demand_ratio_pdf' record.id %}" class="btn btn-primary">
+            📄 Download PDF
+        </a>
+        <a href="{% url 'demand_ratio_list' %}" class="btn btn-secondary">
+            ⬅ Back to List
+        </a>
+    </div>
+</div>
+{% endblock %}

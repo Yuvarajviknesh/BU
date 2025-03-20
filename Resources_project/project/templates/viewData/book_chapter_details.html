@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Book/Chapter Publication Details</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <tbody>
+                <tr>
+                    <th>Name of the Teacher</th>
+                    <td>{{ book.teacher_name.user_profile.user.username }}</td>
+                </tr>
+                <tr>
+                    <th>Title of the Book/Chapter</th>
+                    <td>{{ book.book_title }}</td>
+                </tr>
+                <tr>
+                    <th>Title of the Paper</th>
+                    <td>{{ book.paper_title }}</td>
+                </tr>
+                <tr>
+                    <th>Title of the Proceedings</th>
+                    <td>{{ book.proceedings_title }}</td>
+                </tr>
+                <tr>
+                    <th>Name of the Conference</th>
+                    <td>{{ book.conference_name }}</td>
+                </tr>
+                <tr>
+                    <th>National / International</th>
+                    <td>{{ book.national_international }}</td>
+                </tr>
+                <tr>
+                    <th>Year of Publication</th>
+                    <td>{{ book.publication_year }}</td>
+                </tr>
+                <tr>
+                    <th>ISBN/ISSN</th>
+                    <td>{{ book.isbn_issn }}</td>
+                </tr>
+                <tr>
+                    <th>Affiliating Institute</th>
+                    <td>{{ book.affiliating_institute }}</td>
+                </tr>
+                <tr>
+                    <th>Publisher</th>
+                    <td>{{ book.publisher }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Buttons Section -->
+    <div class="mt-3">
+        <a href="{% url 'download_book_chapter_pdf' book.id %}" class="btn btn-primary">
+            📄 Download PDF
+        </a>
+        <a href="{% url 'view_book_chapters' %}" class="btn btn-secondary">
+            ⬅ Back to List
+        </a>
+    </div>
+</div>
+{% endblock %}

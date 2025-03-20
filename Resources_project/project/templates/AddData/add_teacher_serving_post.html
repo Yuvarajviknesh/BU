@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .card-container {
+    max-width: 700px;
+    margin: 50px auto;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 100px;
+  }
+  .card-header {
+    background-color: #002d6b;
+    color: white;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 15px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+  .form-container {
+    padding: 20px;
+  }
+  .form-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+</style>
+
+<div class="container">
+  <div class="card-container">
+    <div class="card-header">
+      {% if is_staff %} Manage Teacher Records {% else %} Add Your Record {% endif %}
+    </div>
+    <div class="card-body form-container">
+      <form method="POST">
+        {% csrf_token %}
+
+        {% if is_staff %}
+        <!-- Dropdown for department staff to select a teacher -->
+        <div class="mb-3">
+          <label class="form-label fw-bold">Select Teacher</label>
+          <select name="teacher" class="form-control" id="teacherDropdown" required>
+            <option value="">-- Select Teacher --</option>
+            {% for teacher in teachers %}
+            <option value="{{ teacher.id }}"
+              data-pan="{{ teacher.pan }}"
+              data-position="{{ teacher.position }}"
+              data-department="{{ teacher.user_profile.department.department_name }}">
+              {{ teacher.user_profile.user.username }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">PAN</label>
+          <input type="text" class="form-control" name="pan" id="panField" readonly required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Position</label>
+          <input type="text" class="form-control" name="position" id="positionField" readonly required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Department</label>
+          <input type="text" class="form-control" name="department" id="departmentField" readonly required>
+        </div>
+
+        <!-- Editable fields -->
+        <div class="mb-3">
+          <label class="form-label fw-bold">Appointment Year</label>
+          <input type="number" class="form-control" name="appointment_year" placeholder="Enter Appointment Year" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Nature of Appointment</label>
+          <input type="text" class="form-control" name="nature_of_appointment" placeholder="Enter Nature of Appointment" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Years of Experience</label>
+          <input type="number" class="form-control" name="experience_years" placeholder="Enter Years of Experience" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Is Still Serving?</label>
+          <select name="is_serving" class="form-control" required>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Last Year of Service</label>
+          <input type="number" class="form-control" name="last_year_service" id="lastYearServiceField" placeholder="Enter Last Year of Service">
+        </div>
+        <div class="form-footer">
+          <button type="button" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+          <button type="submit" class="btn btn-primary px-4">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Populate fields dynamically when a teacher is selected
+  document.getElementById('teacherDropdown').addEventListener('change', function () {
+    const selectedOption = this.options[this.selectedIndex];
+    document.getElementById('panField').value = selectedOption.getAttribute('data-pan');
+    document.getElementById('positionField').value = selectedOption.getAttribute('data-position');
+    document.getElementById('departmentField').value = selectedOption.getAttribute('data-department');
+  });
+</script>
+
+
+
+{% endblock %}

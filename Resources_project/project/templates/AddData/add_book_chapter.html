@@ -37,61 +37,85 @@
       Add Book/Chapter Publication
     </div>
     <div class="card-body form-container">
-      <form method="POST" action="" enctype="multipart/form-data">
+      <form method="POST" action="{% url 'add_book_chapter' %}" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="row">
+          <!-- Teacher Name (Read-Only for Teachers/Scholars and Dropdown for Department Staff) -->
+          {% if user.userprofile.is_department_staff %}
           <div class="col-md-6 mb-3">
             <label for="teacherName" class="form-label fw-bold">Name of the Teacher</label>
-            <input type="text" class="form-control" id="teacherName" name="teacher_name" placeholder="Enter Teacher Name" required>
+            <select class="form-control" id="teacherName" name="teacher_name" required>
+              <option value="" disabled selected>Select a Teacher</option>
+              {% for teacher in teachers %}
+              <option value="{{ teacher.id }}">
+                {{ teacher.user_profile.user.username }} - {{ teacher.user_profile.department.department_name }}
+              </option>
+              {% endfor %}
+            </select>
           </div>
+          {% else %}
+          <div class="col-md-6 mb-3">
+            <label for="teacherName" class="form-label fw-bold">Name of the Teacher</label>
+            <input type="text" class="form-control" id="teacherName" name="teacher_name" value="{{ user.username }}" readonly>
+          </div>
+          {% endif %}
 
+          <!-- Book Title -->
           <div class="col-md-6 mb-3">
             <label for="bookTitle" class="form-label fw-bold">Title of the Book/Chapter</label>
             <input type="text" class="form-control" id="bookTitle" name="book_title" placeholder="Enter Book/Chapter Title" required>
           </div>
 
+          <!-- Paper Title -->
           <div class="col-md-6 mb-3">
             <label for="paperTitle" class="form-label fw-bold">Title of the Paper</label>
-            <input type="text" class="form-control" id="paperTitle" name="paper_title" placeholder="Enter Paper Title" required>
+            <input type="text" class="form-control" id="paperTitle" name="paper_title" placeholder="Enter Paper Title">
           </div>
 
+          <!-- Proceedings Title -->
           <div class="col-md-6 mb-3">
             <label for="proceedingsTitle" class="form-label fw-bold">Title of the Proceedings</label>
-            <input type="text" class="form-control" id="proceedingsTitle" name="proceedings_title" placeholder="Enter Proceedings Title" required>
+            <input type="text" class="form-control" id="proceedingsTitle" name="proceedings_title" placeholder="Enter Proceedings Title">
           </div>
 
+          <!-- Conference Name -->
           <div class="col-md-6 mb-3">
             <label for="conferenceName" class="form-label fw-bold">Name of the Conference</label>
-            <input type="text" class="form-control" id="conferenceName" name="conference_name" placeholder="Enter Conference Name" required>
+            <input type="text" class="form-control" id="conferenceName" name="conference_name" placeholder="Enter Conference Name">
           </div>
 
+          <!-- National / International -->
           <div class="col-md-6 mb-3">
             <label for="conferenceType" class="form-label fw-bold">National / International</label>
             <select class="form-control" id="conferenceType" name="conference_type" required>
-              <option value="">Select Type</option>
+              <option value="" disabled selected>Select Type</option>
               <option value="National">National</option>
               <option value="International">International</option>
             </select>
-          </div>
+          </div>          
 
+          <!-- Publication Year -->
           <div class="col-md-6 mb-3">
             <label for="publicationYear" class="form-label fw-bold">Year of Publication</label>
             <input type="number" class="form-control" id="publicationYear" name="publication_year" placeholder="Enter Year" min="1900" max="2100" required>
           </div>
 
+          <!-- ISBN/ISSN -->
           <div class="col-md-6 mb-3">
             <label for="isbn" class="form-label fw-bold">ISBN/ISSN</label>
-            <input type="text" class="form-control" id="isbn" name="isbn" placeholder="Enter ISBN/ISSN Number" required>
+            <input type="text" class="form-control" id="isbn" name="isbn" placeholder="Enter ISBN/ISSN Number">
           </div>
 
+          <!-- Affiliating Institute -->
           <div class="col-md-6 mb-3">
             <label for="affiliatingInstitute" class="form-label fw-bold">Affiliating Institute</label>
-            <input type="text" class="form-control" id="affiliatingInstitute" name="affiliating_institute" placeholder="Enter Institute Name" required>
+            <input type="text" class="form-control" id="affiliatingInstitute" name="affiliating_institute" placeholder="Enter Institute Name">
           </div>
 
+          <!-- Publisher -->
           <div class="col-md-6 mb-3">
             <label for="publisher" class="form-label fw-bold">Publisher</label>
-            <input type="text" class="form-control" id="publisher" name="publisher" placeholder="Enter Publisher Name" required>
+            <input type="text" class="form-control" id="publisher" name="publisher" placeholder="Enter Publisher Name">
           </div>
         </div>
 
@@ -103,4 +127,5 @@
     </div>
   </div>
 </div>
+
 {% endblock %}

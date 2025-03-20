@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Ph.D. Scholar Details</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <tbody>
+                <tr>
+                    <th>Scholar Name</th>
+                    <td>{{ phd.scholar_name }}</td>
+                </tr>
+                <tr>
+                    <th>Department</th>
+                    <td>{{ phd.department.department_name }}</td>
+                </tr>
+                <tr>
+                    <th>Guide(s)</th>
+                    <td>{{ phd.guides }}</td>
+                </tr>
+                <tr>
+                    <th>Title of the Thesis</th>
+                    <td>{{ phd.title }}</td>
+                </tr>
+                <tr>
+                    <th>Year of Registration</th>
+                    <td>{{ phd.registration_year }}</td>
+                </tr>
+                <tr>
+                    <th>Year of Award</th>
+                    <td>{{ phd.award_year }}</td>
+                </tr>
+                <tr>
+                    <th>Supporting Document</th>
+                    <td>
+                        {% if phd.document %}
+                            <a href="{{ phd.document.url }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                📂 View Document
+                            </a>
+                        {% else %}
+                            <span class="text-danger">No Document Available</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Buttons Section -->
+    <div class="mt-3">
+        <a href="{% url 'download_phd_pdf' phd.id %}" class="btn btn-primary">
+            📄 Download PDF
+        </a>
+        <a href="{% url 'phd_list' %}" class="btn btn-secondary">
+            ⬅ Back to List
+        </a>
+    </div>
+</div>
+{% endblock %}

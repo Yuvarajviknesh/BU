@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Research Paper Details</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <tbody>
+                <tr>
+                    <th>Title</th>
+                    <td>{{ paper.title }}</td>
+                </tr>
+                <tr>
+                    <th>Authors</th>
+                    <td>{{ paper.authors }}</td>
+                </tr>
+                <tr>
+                    <th>Department</th>
+                    <td>{{ paper.department.department_name }}</td>
+                </tr>
+                <tr>
+                    <th>Journal</th>
+                    <td>{{ paper.journal }}</td>
+                </tr>
+                <tr>
+                    <th>Year of Publication</th>
+                    <td>{{ paper.year }}</td>
+                </tr>
+                <tr>
+                    <th>ISSN</th>
+                    <td>{{ paper.issn }}</td>
+                </tr>
+                <tr>
+                    <th>UGC Recognition Link</th>
+                    <td>
+                        <a href="{{ paper.ugc_link }}" target="_blank" class="btn btn-outline-primary btn-sm">🔗 View UGC Link</a>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Supporting Document</th>
+                    <td>
+                        {% if paper.document %}
+                            <a href="{{ paper.document.url }}" class="btn btn-outline-primary btn-sm" target="_blank">📂 View Document</a>
+                        {% else %}
+                            <span class="text-danger">No Document Available</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Buttons Section -->
+    <div class="mt-3">
+        <a href="{% url 'download_research_paper_pdf' paper.id %}" class="btn btn-primary">
+            📄 Download PDF
+        </a>
+        <a href="{% url 'view_research_papers' %}" class="btn btn-secondary">
+            ⬅ Back to List
+        </a>
+    </div>
+</div>
+{% endblock %}

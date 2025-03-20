@@ -52,17 +52,22 @@ class DemandRatio(models.Model):
 
 
 class Teacher(models.Model):
-    user_profile = models.OneToOneField(UserProfile, on_delete=models.CASCADE) 
-    position = models.CharField(max_length=100, choices=[
-        ('Professor', 'Professor'),
-        ('Associate Professor', 'Associate Professor'),
-        ('Assistant Professor', 'Assistant Professor'),
-        ('Lecturer', 'Lecturer'),
-        ('Researcher', 'Researcher'),
-    ])
-
+    user_profile = models.OneToOneField('UserProfile', on_delete=models.CASCADE)  # One-to-One with UserProfile
+    position = models.CharField(
+        max_length=100,
+        choices=[
+            ('Professor', 'Professor'),
+            ('Associate Professor', 'Associate Professor'),
+            ('Assistant Professor', 'Assistant Professor'),
+            ('Lecturer', 'Lecturer'),
+            ('Researcher', 'Researcher'),
+        ],
+        verbose_name="Designation",
+    )
+    pan = models.CharField(max_length=10, verbose_name="PAN", unique=True)  # Unique PAN
     def __str__(self):
-        return f"{self.user_profile.user.username} ({self.position})"
+        return f"{self.user_profile.user.username} - {self.position}"
+
 
 class ICTFacility(models.Model):
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
@@ -217,3 +222,133 @@ class PhDAward(models.Model):
 
     def __str__(self):
         return f"{self.scholar_name} - {self.title} ({self.award_year})"
+    
+class ResearchPaper(models.Model):
+    title = models.CharField(max_length=255, verbose_name="Title of the Paper")
+    authors = models.TextField(verbose_name="Name of the Author(s)")  # Supports multiple authors
+    department = models.ForeignKey(
+        Department,
+        on_delete=models.CASCADE,
+        related_name="research_papers",
+        verbose_name="Department"
+    )
+    journal = models.CharField(max_length=255, verbose_name="Name of the Journal")
+    year = models.PositiveIntegerField(verbose_name="Year of Publication")
+    issn = models.CharField(max_length=15, verbose_name="ISSN Number")  # Adjust max_length for ISSN
+    ugc_link = models.URLField(verbose_name="UGC Recognition Link", blank=True, null=True)
+    document = models.FileField(upload_to='research_paper/', blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.title} by {self.authors} ({self.year})"
+    
+from django.db import models
+
+class BookChapter(models.Model):
+    teacher_name = models.ForeignKey(Teacher, on_delete=models.CASCADE, verbose_name="Name of the Teacher")
+    book_title = models.CharField(max_length=255, verbose_name="Title of the Book/Chapter")
+    paper_title = models.CharField(max_length=255, verbose_name="Title of the Paper", blank=True, null=True)
+    proceedings_title = models.CharField(max_length=255, verbose_name="Title of the Proceedings", blank=True, null=True)
+    conference_name = models.CharField(max_length=255, verbose_name="Name of the Conference", blank=True, null=True)
+    national_international = models.CharField(
+        max_length=50,
+        choices=[('National', 'National'), ('International', 'International')],
+        verbose_name="National / International"
+    )
+    publication_year = models.PositiveIntegerField(verbose_name="Year of Publication")
+    isbn_issn = models.CharField(max_length=50, verbose_name="ISBN/ISSN", blank=True, null=True)
+    affiliating_institute = models.CharField(max_length=255, verbose_name="Affiliating Institute", blank=True, null=True)
+    publisher = models.CharField(max_length=255, verbose_name="Publisher")
+
+    def __str__(self):
+        return f"{self.book_title} by {self.teacher_name.user_profile.user.username} ({self.publication_year})"
+    
+class AdmittedStudent(models.Model):
+    year = models.IntegerField()
+    programme_name = models.CharField(max_length=255)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="admitted_students")
+
+    # Earmarked Seats
+    sc_earmarked = models.IntegerField(default=0)
+    st_earmarked = models.IntegerField(default=0)
+    obc_earmarked = models.IntegerField(default=0)
+    gen_earmarked = models.IntegerField(default=0)
+    others_earmarked = models.IntegerField(default=0)
+
+    # Admitted Students
+    sc_admitted = models.IntegerField(default=0)
+    st_admitted = models.IntegerField(default=0)
+    obc_admitted = models.IntegerField(default=0)
+    gen_admitted = models.IntegerField(default=0)
+    others_admitted = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.programme_name} ({self.year}) - {self.department.name}"
+
+class TeacherRecord(models.Model):
+    """
+    Model representing a Teacher's serving post details.
+    """
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name="teacher_records", verbose_name="Teacher Name")
+    qualification_year = models.CharField(max_length=255, verbose_name="Qualification and Year of Obtaining")
+    is_research_guide = models.BooleanField(default=False, verbose_name="Recognised as Research Guide")
+    year_of_recognition = models.PositiveIntegerField(verbose_name="Year of Recognition as Research Guide", null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.teacher.name} - {self.qualification_year}"
+    
+class TeacherServingPost(models.Model):
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name="serving_posts", verbose_name="Teacher")
+    appointment_year = models.PositiveIntegerField(verbose_name="Appointment Year")
+    nature_of_appointment = models.CharField(max_length=255, verbose_name="Nature of Appointment")
+    experience_years = models.PositiveIntegerField(verbose_name="Years of Experience")
+    is_serving = models.BooleanField(default=True, verbose_name="Is Still Serving?")
+    last_year_service = models.PositiveIntegerField(null=True, blank=True, verbose_name="Last Year of Service")
+
+    def __str__(self):
+        return f"{self.teacher.user_profile.user.username} - {self.appointment_year}"
+class FullTimeTeacher(models.Model):
+    teacher_name = models.ForeignKey(
+        Teacher,
+        on_delete=models.CASCADE, 
+        verbose_name="Name of Full-Time Teacher"
+    )
+    qualification_year = models.CharField(
+        max_length=255, 
+        verbose_name="Qualification (Ph.D./D.M/M.Ch./D.N.B Superspeciality/D.Sc./D’Lit.) and Year of Obtaining"
+    )
+    is_research_guide = models.BooleanField(
+        default=False, 
+        verbose_name="Whether Recognised as Research Guide"
+    )
+    year_of_recognition = models.PositiveIntegerField(
+        null=True, blank=True, 
+        verbose_name="Year of Recognition as Research Guide"
+    )
+
+    def __str__(self):
+        return f"{self.teacher_name.name} ({self.qualification_year})"
+    
+class TeacherAgainstSanctionedPost(models.Model):
+    teacher = models.ForeignKey(
+        Teacher,
+        on_delete=models.CASCADE,
+        verbose_name="Full-Time Teacher"
+    )
+    year_of_appointment = models.PositiveIntegerField(verbose_name="Year of Appointment")
+    nature_of_appointment = models.CharField(
+        max_length=255,
+        choices=[
+            ("Against Sanctioned Post", "Against Sanctioned Post"),
+            ("Temporary", "Temporary"),
+            ("Permanent", "Permanent"),
+        ],
+        verbose_name="Nature of Appointment"
+    )
+    years_of_experience = models.PositiveIntegerField(verbose_name="Total Years of Experience in the Same Institution")
+    still_serving = models.CharField(
+        max_length=255,
+        verbose_name="Is the teacher still serving / Last year of service"
+    )
+    last_year_of_service = models.PositiveIntegerField(null=True, blank=True, verbose_name="Last Year of Service")  # Ensure the name matches
+    def __str__(self):
+        return f"{self.teacher.name} - {self.nature_of_appointment}"

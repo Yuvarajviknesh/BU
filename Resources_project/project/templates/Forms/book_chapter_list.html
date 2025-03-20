@@ -29,6 +29,19 @@
       border: 1px solid #ddd;
       vertical-align: middle;
     }
+    .btn {
+      padding: 6px 15px;
+      text-transform: uppercase;
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      color: #fff;
+      cursor: pointer;
+    }
+    .btn-view {
+      background-color: #17a2b8; /* Light Blue for View */
+    }
 
     .btn-delete, .btn-edit {
       padding: 6px 15px;
@@ -79,7 +92,7 @@
   <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2 class="section-title m-0">Books and Chapters Published</h2>
-      <a href="{% url 'adddata7' %}" class="btn btn-add">+ Add</a>
+      <a href="{% url 'add_book_chapter' %}" class="btn btn-add">+ Add</a>
     </div>
 
     <div class="table-responsive">
@@ -115,6 +128,7 @@
             <td>{{ book.affiliating_institute }}</td>
             <td>{{ book.publisher }}</td>
             <td class="action-cell">
+              <a href="{% url 'view_book_chapter_details' book.id %}" class="btn btn-sm btn-view">🔍 View</a>
               <button class="btn btn-sm btn-edit" data-bs-toggle="modal" data-bs-target="#editModal"
                 data-id="{{ book.id }}"
                 data-teacher_name="{{ book.teacher_name }}"
@@ -127,7 +141,7 @@
                 data-isbn_issn="{{ book.isbn_issn }}"
                 data-affiliating_institute="{{ book.affiliating_institute }}"
                 data-publisher="{{ book.publisher }}"
-                data-update-url="{% url 'update_book_chapter' book.id %}">
+                data-update-url="{% url 'edit_book_chapter' book.id %}">
                 Edit
               </button>
               <a href="#" class="btn btn-sm btn-delete" onclick="confirmDelete(event, '{% url 'delete_book_chapter' book.id %}')">
@@ -154,10 +168,23 @@
           <div class="modal-body">
             <input type="hidden" name="id" id="editBookId">
 
+            {% if user.userprofile.is_department_staff %}
             <div class="mb-3">
-              <label class="form-label">Name of the Teacher</label>
-              <input type="text" class="form-control" name="teacher_name" id="editTeacherName" required>
+              <label for="teacherName" class="form-label">Teacher Name</label>
+              <select class="form-control" id="teacherName" name="teacher_name">
+                {% for teacher in teachers %}
+                <option value="{{ teacher.id }}" {% if teacher.id == book.teacher_name.id %}selected{% endif %}>
+                  {{ teacher.user_profile.user.username }}
+                </option>
+                {% endfor %}
+              </select>
             </div>
+            {% else %}
+            <div class="mb-3">
+              <label for="teacherName" class="form-label">Teacher Name</label>
+              <input type="text" class="form-control" id="teacherName" value="{{ book.teacher_name.user_profile.user.username }}" readonly>
+            </div>
+            {% endif %}
             <div class="mb-3">
               <label class="form-label">Title of the Book/Chapter</label>
               <input type="text" class="form-control" name="book_title" id="editBookTitle" required>
@@ -191,16 +218,44 @@
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       let editModal = document.getElementById("editModal");
-
+  
+      // Populate Edit Modal with Data
       editModal.addEventListener("show.bs.modal", function (event) {
         let button = event.relatedTarget;
         let form = document.getElementById("editForm");
-
+  
         document.getElementById("editBookId").value = button.getAttribute("data-id");
-        document.getElementById("editTeacherName").value = button.getAttribute("data-teacher_name");
+        document.getElementById("teacherName").value = button.getAttribute("data-teacher_name");
         document.getElementById("editBookTitle").value = button.getAttribute("data-book_title");
+        document.getElementById("editPaperTitle").value = button.getAttribute("data-paper_title");
+        document.getElementById("editPublicationYear").value = button.getAttribute("data-publication_year");
+        document.getElementById("editIsbnIssn").value = button.getAttribute("data-isbn_issn");
+        document.getElementById("editPublisher").value = button.getAttribute("data-publisher");
+  
+        // Set form action dynamically
         form.action = button.getAttribute("data-update-url");
       });
+  
+      // Confirm Delete Action
+      window.confirmDelete = function (event, deleteUrl) {
+        event.preventDefault();
+        if (confirm("Are you sure you want to delete this record?")) {
+          let form = document.createElement("form");
+          form.method = "POST";
+          form.action = deleteUrl;
+  
+          let csrfToken = document.createElement("input");
+          csrfToken.type = "hidden";
+          csrfToken.name = "csrfmiddlewaretoken";
+          csrfToken.value = "{{ csrf_token }}"; // Ensure CSRF token is available
+  
+          form.appendChild(csrfToken);
+          document.body.appendChild(form);
+          form.submit();
+        }
+      };
     });
   </script>
+  
+  
 {% endblock %}

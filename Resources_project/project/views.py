@@ -9,7 +9,7 @@ import pandas as pd
 from datetime import datetime
 from django.core.exceptions import PermissionDenied
 from django.core.files.storage import default_storage
-from .models import LibraryResource, UserProfile,Department,ICTFacility,EContentDevelopment,Teacher,Expenditure,TeacherAward,ResearchGrant,Investigator,AwardRecognition,Patent,PhDAward,DemandRatio
+from .models import LibraryResource, UserProfile,Department,ICTFacility,EContentDevelopment,Teacher,Expenditure,TeacherAward,ResearchGrant,Investigator,AwardRecognition,Patent,PhDAward,DemandRatio,ResearchPaper,BookChapter,AdmittedStudent,TeacherServingPost,FullTimeTeacher,TeacherAgainstSanctionedPost
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -1969,6 +1969,652 @@ def add_phd(request):
         return redirect("phd_list")
 
     return render(request, "AddData/phd_form.html", {"departments": departments})
+@login_required
+def edit_phd(request, phd_id):
+    """Edit an existing Ph.D. record."""
+    phd = get_object_or_404(PhDAward, id=phd_id)
+
+    if request.method == "POST":
+        # Retrieve updated data from the form
+        phd.scholar_name = request.POST.get("scholar_name", phd.scholar_name)
+        phd.guides = request.POST.get("guides", phd.guides)
+        phd.title = request.POST.get("title", phd.title)
+        phd.registration_year = request.POST.get("registration_year", phd.registration_year)
+        phd.award_year = request.POST.get("award_year", phd.award_year)
+
+        # Get the department code from the form
+        department_code = request.POST.get("department", phd.department.department_code)
+
+        # Retrieve the corresponding Department object
+        phd.department = get_object_or_404(Department, department_code=department_code)
+
+        # Save the updated record
+        phd.save()
+        messages.success(request, "Ph.D. record updated successfully.")
+        return redirect("phd_list")
+
+    # If not a POST request, redirect with an error message
+    messages.error(request, "Failed to update the Ph.D. record.")
+    return redirect("phd_list")
+@login_required
+def view_phd(request, phd_id):
+    """Display details of a specific Ph.D. record."""
+    phd = get_object_or_404(PhDAward, id=phd_id)
+    return render(request, "viewData/phd_details.html", {"phd": phd})
+@login_required
+def delete_phd(request, phd_id):
+    """Delete a Ph.D. record."""
+    phd = get_object_or_404(PhDAward, id=phd_id)
+
+    if request.method == "POST":  # Ensure this is a POST request
+        phd.delete()
+        messages.success(request, "Ph.D. record deleted successfully.")
+        return redirect("phd_list")  # Redirect to the list view after success
+
+    messages.error(request, "Failed to delete the record.")
+    return redirect("phd_list")
+@login_required
+def download_phd_pdf(request, phd_id):
+    """
+    Generate and download a PDF for a specific Ph.D. record.
+    """
+    # Get the Ph.D. record
+    phd = get_object_or_404(PhDAward, id=phd_id)
+    
+
+    # Set up the HTTP response for a PDF file
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="PhD_{phd.scholar_name}_Details.pdf"'
+
+    pdf = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    # **Background Color**
+    pdf.setFillColorRGB(0.95, 0.95, 0.95)
+    pdf.rect(0, 0, width, height, fill=True, stroke=False)
+
+    # **Add Logo**
+    try:
+        logo_path = finders.find("images/logo2.png")  # Ensure the logo path is correct
+        if logo_path:
+            logo = ImageReader(logo_path)
+            pdf.drawImage(logo, 50, height - 85, 140, 50, mask="auto")
+        else:
+            print("Logo file not found.")
+    except Exception as e:
+        print(f"Error loading logo: {e}")
+
+    # **Header Section**
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, height - 100, width - 40, 80, 10, fill=True, stroke=False)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawCentredString(width / 2, height - 60, "Ph.D. Scholar Details")
+
+    # **Table Data**
+    department_name = phd.department.department_name if phd.department else "N/A"
+    data = [
+        ["Scholar Name", phd.scholar_name],
+        ["Department", department_name],
+        ["Guide(s)", phd.guides],
+        ["Title of the Thesis", phd.title],
+        ["Year of Registration", phd.registration_year],
+        ["Year of Award", phd.award_year],
+        ["Document Available", "Yes" if phd.document else "No"],
+    ]
+
+    # **Style Table**
+    table = Table(data, colWidths=[250, 250])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.lightgrey),
+        ("GRID", (0, 0), (-1, -1), 1, colors.blue),
+        ("BOX", (0, 0), (-1, -1), 2, colors.blue),
+    ]))
+
+    # **Draw Table**
+    table_x = (width - 500) / 2
+    table_y = height - 300
+    table.wrapOn(pdf, width, height)
+    table.drawOn(pdf, table_x, table_y)
+
+    # **Footer Section**
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, 20, width - 40, 50, 10, fill=True, stroke=False)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica", 10)
+    pdf.drawCentredString(width / 2, 45, f"Generated on {datetime.now().strftime('%d-%m-%Y %H:%M:%S')}")
+    pdf.drawCentredString(width / 2, 30, "© 2025 Your Organization Name. All Rights Reserved.")
+
+    # **Curved Double Line Border**
+    pdf.setStrokeColor(colors.blue)
+    pdf.setLineWidth(2)
+    pdf.roundRect(10, 10, width - 20, height - 20, 15, stroke=True, fill=False)
+    pdf.roundRect(15, 15, width - 30, height - 30, 12, stroke=True, fill=False)
+
+    pdf.showPage()
+    pdf.save()
+
+    return response
+@login_required
+def view_research_papers(request):
+    """
+    View function to display research papers based on user restrictions.
+    - Superusers: Can view all papers.
+    - Regular users: Can only view their own papers and papers from their department.
+    """
+    if request.user.is_superuser:
+        # Superusers can see all papers
+        papers = ResearchPaper.objects.all()
+    else:
+        # Regular users can only see their papers and their department's papers
+        user_department = request.user.userprofile.department  # Assuming UserProfile links users to departments
+        papers = ResearchPaper.objects.filter(department=user_department)
+
+    return render(request, "Forms/research_paper.html", {"papers": papers})
+@login_required
+def add_research_paper(request):
+    """
+    View function to handle the addition of a new research paper.
+    """
+    if request.method == "POST":
+        # Get form data
+        paper_title = request.POST.get("paper_title")
+        author_name = request.POST.get("author_name")
+        journal_name = request.POST.get("journal_name")
+        publication_year = request.POST.get("publication_year")
+        issn_number = request.POST.get("issn_number")
+        ugc_link = request.POST.get("ugc_link")
+        document = request.FILES.get("document")
+
+        # Get the user's department
+        user_department = request.user.userprofile.department
+
+        # Save the research paper instance
+        research_paper = ResearchPaper.objects.create(
+            title=paper_title,
+            authors=author_name,
+            department=user_department,
+            journal=journal_name,
+            year=publication_year,
+            issn=issn_number,
+            ugc_link=ugc_link,
+            document=document
+        )
+        research_paper.save()
+        messages.success(request, "Research paper added successfully!")
+        return redirect("view_research_papers")  # Redirect to list view
+
+    # Render the form for GET requests
+    return render(request, "AddData/add_research_paper.html")
+
+@login_required
+def edit_research_paper(request, paper_id):
+    """
+    Edit an existing Research Paper record.
+    """
+    research_paper = get_object_or_404(ResearchPaper, id=paper_id)
+
+    if request.method == "POST":
+        # Retrieve updated data from the form
+        research_paper.title = request.POST.get("paper_title", research_paper.title)
+        research_paper.authors = request.POST.get("author_name", research_paper.authors)
+        research_paper.journal = request.POST.get("journal_name", research_paper.journal)
+        research_paper.year = request.POST.get("publication_year", research_paper.year)
+        research_paper.issn = request.POST.get("issn_number", research_paper.issn)
+        research_paper.ugc_link = request.POST.get("ugc_link", research_paper.ugc_link)
+
+        # Handle document upload if a new one is provided
+        if request.FILES.get("document"):
+            research_paper.document = request.FILES["document"]
+
+        # Save the record
+        research_paper.save()
+        messages.success(request, "Research Paper updated successfully!")
+        return redirect("view_research_papers")
+
+    # If not a POST request, redirect with an error message
+    messages.error(request, "Failed to update the Research Paper.")
+    return redirect("view_research_papers")
+@login_required
+def delete_research_paper(request, paper_id):
+    """
+    Delete a Research Paper record.
+    """
+    research_paper = get_object_or_404(ResearchPaper, id=paper_id)
+
+    if request.method == "POST":
+        research_paper.delete()
+        messages.success(request, "Research Paper deleted successfully!")
+        return redirect("view_research_papers")
+
+    messages.error(request, "Failed to delete the Research Paper.")
+    return redirect("view_research_papers")
+@login_required
+def view_research_paper(request, paper_id):
+    """
+    View details of a specific Research Paper.
+    """
+    paper = get_object_or_404(ResearchPaper, id=paper_id)
+    return render(request, "viewData/research_paper_detail.html", {"paper": paper})
+@login_required
+def download_research_paper_pdf(request, paper_id):
+    """
+    Generate and download a PDF for a specific Research Paper.
+    """
+    # Get the Research Paper record
+    paper = get_object_or_404(ResearchPaper, id=paper_id)
+
+    # Set up the HTTP response for a PDF file
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="ResearchPaper_{paper.title.replace(" ", "_")}.pdf"'
+
+    pdf = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    # **Background Color**
+    pdf.setFillColorRGB(0.95, 0.95, 0.95)
+    pdf.rect(0, 0, width, height, fill=True, stroke=False)
+
+    # **Add Logo**
+    try:
+        logo_path = finders.find("images/logo2.png")  # Ensure the logo path is correct
+        if logo_path:
+            logo = ImageReader(logo_path)
+            pdf.drawImage(logo, 50, height - 85, 140, 50, mask="auto")
+        else:
+            print("Logo file not found.")
+    except Exception as e:
+        print(f"Error loading logo: {e}")
+
+    # **Header Section**
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, height - 100, width - 40, 80, 10, fill=True, stroke=False)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawCentredString(width / 2, height - 60, "Research Paper Details")
+
+    # **Table Data**
+    department_name = paper.department.department_name if paper.department else "N/A"
+    data = [
+        ["Title of Paper", paper.title],
+        ["Authors", paper.authors],
+        ["Department", department_name],
+        ["Journal", paper.journal],
+        ["Year of Publication", paper.year],
+        ["ISSN", paper.issn],
+        ["UGC Link", paper.ugc_link if paper.ugc_link else "No link available"],
+    ]
+
+    # **Style Table**
+    table = Table(data, colWidths=[250, 250])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.lightgrey),
+        ("GRID", (0, 0), (-1, -1), 1, colors.blue),
+        ("BOX", (0, 0), (-1, -1), 2, colors.blue),
+    ]))
+
+    # **Draw Table**
+    table_x = (width - 500) / 2
+    table_y = height - 300
+    table.wrapOn(pdf, width, height)
+    table.drawOn(pdf, table_x, table_y)
+
+    # **Footer Section**
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, 20, width - 40, 50, 10, fill=True, stroke=False)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica", 10)
+    pdf.drawCentredString(width / 2, 45, f"Generated on {datetime.now().strftime('%d-%m-%Y %H:%M:%S')}")
+    pdf.drawCentredString(width / 2, 30, "© 2025 Your Organization Name. All Rights Reserved.")
+
+    # **Curved Double Line Border**
+    pdf.setStrokeColor(colors.blue)
+    pdf.setLineWidth(2)
+    pdf.roundRect(10, 10, width - 20, height - 20, 15, stroke=True, fill=False)
+    pdf.roundRect(15, 15, width - 30, height - 30, 12, stroke=True, fill=False)
+
+    pdf.showPage()
+    pdf.save()
+
+    return response
+
+@login_required
+def view_book_chapters(request):
+    """
+    View book/chapter records:
+    - Teachers and scholars can only see their own records.
+    - Department staff can see all records related to their department.
+    """
+    if request.user.userprofile.is_department_staff:
+        # Department staff can view all records related to their department
+        user_department = request.user.userprofile.department
+        books = BookChapter.objects.filter(teacher_name__user_profile__department=user_department)
+    else:
+        # Other users (teachers, scholars) can only view their own records
+        user_profile = request.user.userprofile
+        books = BookChapter.objects.filter(teacher_name__user_profile=user_profile)
+
+    return render(request, "Forms/book_chapter_list.html", {"books": books})
+@login_required
+def edit_book_chapter(request, book_id):
+    """
+    Edit a book/chapter record with access control.
+    """
+    book = get_object_or_404(BookChapter, id=book_id)
+
+    # Restrict access based on user role
+    if not request.user.userprofile.is_department_staff:
+        # For non-department staff, restrict editing to their own data
+        if book.teacher_name.user_profile != request.user.userprofile:
+            messages.error(request, "You are not authorized to edit this record.")
+            return redirect("view_book_chapters")
+
+    if request.method == "POST":
+        book.book_title = request.POST.get("book_title", book.book_title)
+        book.paper_title = request.POST.get("paper_title", book.paper_title)
+        book.proceedings_title = request.POST.get("proceedings_title", book.proceedings_title)
+        book.conference_name = request.POST.get("conference_name", book.conference_name)
+        book.national_international = request.POST.get("national_international", book.national_international)
+        book.publication_year = request.POST.get("publication_year", book.publication_year)
+        book.isbn_issn = request.POST.get("isbn_issn", book.isbn_issn)
+        book.affiliating_institute = request.POST.get("affiliating_institute", book.affiliating_institute)
+        book.publisher = request.POST.get("publisher", book.publisher)
+        book.save()
+
+        messages.success(request, "Book/Chapter record updated successfully!")
+        return redirect("view_book_chapters")
+
+    teachers = Teacher.objects.all()
+    return render(request, "Forms/edit_book_chapter.html", {"book": book, "teachers": teachers})
+@login_required
+def delete_book_chapter(request, book_id):
+    """
+    Delete a book/chapter record with access control.
+    """
+    book = get_object_or_404(BookChapter, id=book_id)
+
+    # Restrict access based on user role
+    if not request.user.userprofile.is_department_staff:
+        if book.teacher_name.user_profile != request.user.userprofile:
+            messages.error(request, "You are not authorized to delete this record.")
+            return redirect("view_book_chapters")
+
+    if request.method == "POST":
+        book.delete()
+        messages.success(request, "Book/Chapter record deleted successfully!")
+        return redirect("view_book_chapters")
+
+    messages.error(request, "Failed to delete the record.")
+    return redirect("view_book_chapters")
+@login_required
+def add_book_chapter(request):
+    """
+    Add a new book/chapter record.
+    """
+    if request.method == "POST":
+        try:
+            # Retrieve data from the POST request
+            teacher_id = request.POST.get("teacher_name")
+            book_title = request.POST.get("book_title")
+            paper_title = request.POST.get("paper_title")
+            proceedings_title = request.POST.get("proceedings_title")
+            conference_name = request.POST.get("conference_name")
+            national_international = request.POST.get("conference_type")  # Map to dropdown name
+            publication_year = request.POST.get("publication_year")
+            isbn_issn = request.POST.get("isbn")
+            affiliating_institute = request.POST.get("affiliating_institute")
+            publisher = request.POST.get("publisher")
+
+            # Validate National/International Dropdown
+            if not national_international:
+                messages.error(request, "Please select whether the conference is National or International.")
+                return redirect("add_book_chapter")
+
+            # Retrieve the teacher instance
+            teacher = Teacher.objects.get(id=teacher_id)
+
+            # Create the BookChapter record
+            BookChapter.objects.create(
+                teacher_name=teacher,
+                book_title=book_title,
+                paper_title=paper_title,
+                proceedings_title=proceedings_title,
+                conference_name=conference_name,
+                national_international=national_international,
+                publication_year=publication_year,
+                isbn_issn=isbn_issn,
+                affiliating_institute=affiliating_institute,
+                publisher=publisher,
+            )
+
+            messages.success(request, "Book/Chapter record added successfully!")
+            return redirect("view_book_chapters")
+        except Teacher.DoesNotExist:
+            messages.error(request, "Invalid teacher selected. Please choose a valid teacher.")
+            return redirect("add_book_chapter")
+        except Exception as e:
+            messages.error(request, f"An error occurred: {str(e)}")
+            return redirect("add_book_chapter")
+
+    # Render the form
+    teachers = Teacher.objects.all()
+    return render(request, "AddData/add_book_chapter.html", {"teachers": teachers})
+@login_required
+def view_book_chapter_details(request, book_id):
+    """
+    View details of a specific book/chapter record.
+    """
+    book = get_object_or_404(BookChapter, id=book_id)
+
+    return render(request, "viewData/book_chapter_details.html", {"book": book})
+@login_required
+def download_book_chapter_pdf(request, book_id):
+    """
+    Generate and download a PDF for a specific Book/Chapter.
+    """
+    book = get_object_or_404(BookChapter, id=book_id)
+
+    # Set up the HTTP response for a PDF file
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="book_chapter_{book.id}.pdf"'
+
+    # Create the PDF
+    pdf = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    # **Background Color**
+    pdf.setFillColorRGB(0.95, 0.95, 0.95)
+    pdf.rect(0, 0, width, height, fill=True, stroke=False)
+
+    # ✅ Find Logo File
+    logo_path = finders.find("images/logo2.png")
+    if logo_path:
+        logo = ImageReader(logo_path)
+        pdf.drawImage(logo, 50, height - 85, width=140, height=50, mask="auto")
+
+    # **Header Section**
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, height - 100, width - 40, 80, 10, fill=True, stroke=False)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawCentredString(width / 2, height - 60, "Book/Chapter Details")
+
+    # **Table Data**
+    data = [
+        ["Teacher Name", book.teacher_name.user_profile.user.username],
+        ["Book/Chapter Title", book.book_title],
+        ["Paper Title", book.paper_title or "N/A"],
+        ["Proceedings Title", book.proceedings_title or "N/A"],
+        ["Conference Name", book.conference_name or "N/A"],
+        ["National/International", book.national_international],
+        ["Year of Publication", book.publication_year],
+        ["ISBN/ISSN", book.isbn_issn or "N/A"],
+        ["Affiliating Institute", book.affiliating_institute or "N/A"],
+        ["Publisher", book.publisher],
+    ]
+
+    # Table Style
+    table = Table(data, colWidths=[200, 280])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.lightgrey),
+        ("GRID", (0, 0), (-1, -1), 1, colors.blue),
+        ("BOX", (0, 0), (-1, -1), 2, colors.blue),
+    ]))
+
+    # **Draw Table in the Center**
+    table_x = (width - 480) / 2
+    table_y = height - 280
+    table.wrapOn(pdf, width, height)
+    table.drawOn(pdf, table_x, table_y)
+
+    # **Footer Section**
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, 20, width - 40, 50, 10, fill=True, stroke=False)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica", 10)
+    pdf.drawCentredString(width / 2, 45, "© 2025 Bharathiar University. All Rights Reserved.")
+
+    # **Page Borders**
+    pdf.setStrokeColor(colors.blue)
+    pdf.setLineWidth(2)
+    pdf.roundRect(10, 10, width - 20, height - 20, 15, stroke=True, fill=False)
+    pdf.roundRect(15, 15, width - 30, height - 30, 12, stroke=True, fill=False)
+
+    pdf.showPage()
+    pdf.save()
+
+    return response
+
+@login_required
+def demand_ratio_list(request):
+    """
+    Display a list of Demand Ratio records with department-level restrictions.
+    Superusers can view all records, while department users see only their department's data.
+    """
+    # Check if the user is a superuser
+    if request.user.is_superuser:
+        # Superusers can view all data
+        records = DemandRatio.objects.all()
+    else:
+        # Department users can only view their department's data
+        if hasattr(request.user, "userprofile") and hasattr(request.user.userprofile, "department"):
+            user_department = request.user.userprofile.department
+            records = DemandRatio.objects.filter(department=user_department)
+        else:
+            # If the user has no associated department, return an empty queryset
+            records = DemandRatio.objects.none()
+
+    # Apply filters if provided
+    programme_name = request.GET.get('programme_name', '').strip()
+    programme_code = request.GET.get('programme_code', '').strip()
+    year_from = request.GET.get('year_from', '').strip()
+    year_to = request.GET.get('year_to', '').strip()
+
+    if programme_name:
+        records = records.filter(programme_name__icontains=programme_name)
+
+    if programme_code:
+        records = records.filter(programme_code__icontains=programme_code)
+
+    if year_from and year_to:
+        records = records.filter(academic_year__gte=year_from, academic_year__lte=year_to)
+    elif year_from:
+        records = records.filter(academic_year__gte=year_from)
+    elif year_to:
+        records = records.filter(academic_year__lte=year_to)
+
+    context = {
+        'records': records,
+    }
+
+    return render(request, 'Forms/demand_ratio_list.html', context)
+@login_required
+def download_demand_ratio_pdf(request, record_id):
+    """
+    Generate and download a PDF for a specific Demand Ratio record.
+    """
+    record = get_object_or_404(DemandRatio, id=record_id)
+
+    # Set up the HTTP response for a PDF file
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="demand_ratio_{record.id}.pdf"'
+
+    # Create the PDF
+    pdf = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    # **Background Color**
+    pdf.setFillColorRGB(0.95, 0.95, 0.95)
+    pdf.rect(0, 0, width, height, fill=True, stroke=False)
+
+    # Header Section with Title
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, height - 100, width - 40, 80, 10, fill=True, stroke=False)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawCentredString(width / 2, height - 60, "Demand Ratio Details")
+
+    # Table Data
+    data = [
+        ["Programme Name", record.programme_name],
+        ["Programme Code", record.programme_code],
+        ["Seats Available", record.num_seats],
+        ["Eligible Applications", record.num_applications],
+        ["Students Admitted", record.num_students_admitted],
+        ["Academic Year", record.academic_year],
+    ]
+
+    # Style the Table
+    table = Table(data, colWidths=[200, 280])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.lightgrey),
+        ("GRID", (0, 0), (-1, -1), 1, colors.blue),
+        ("BOX", (0, 0), (-1, -1), 2, colors.blue),
+    ]))
+
+    # Draw Table in the Center
+    table_x = (width - 480) / 2
+    table_y = height - 300
+    table.wrapOn(pdf, width, height)
+    table.drawOn(pdf, table_x, table_y)
+
+    # Footer Section
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, 20, width - 40, 50, 10, fill=True, stroke=False)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica", 10)
+    pdf.drawCentredString(width / 2, 45, "© 2025 Bharathiar University. All Rights Reserved.")
+
+    # **Page Borders**
+    pdf.setStrokeColor(colors.blue)
+    pdf.setLineWidth(2)
+    pdf.roundRect(10, 10, width - 20, height - 20, 15, stroke=True, fill=False)
+    pdf.roundRect(15, 15, width - 30, height - 30, 12, stroke=True, fill=False)
+
+    pdf.showPage()
+    pdf.save()
+
+    return response
 
 @login_required
 def add_demand_ratio(request):
@@ -2016,67 +2662,685 @@ def add_demand_ratio(request):
     departments = Department.objects.all() if request.user.is_superuser else [request.user.userprofile.department]
 
     return render(request, "AddData/add_demand_ratio.html", {"academic_years": academic_years, "departments": departments})
-
 @login_required
-def demand_ratio_list(request):
+def edit_demand_ratio(request, record_id):
     """
-    Display a list of Demand Ratio records with department-level restrictions.
-    Superusers can view all records, while department users see only their department's data.
+    Edit an existing Demand Ratio record.
     """
-    # Check if the user is a superuser
-    if request.user.is_superuser:
-        # Superusers can view all data
-        records = DemandRatio.objects.all()
-    else:
-        # Department users can only view their department's data
-        if hasattr(request.user, "userprofile") and hasattr(request.user.userprofile, "department"):
-            user_department = request.user.userprofile.department
-            records = DemandRatio.objects.filter(department=user_department)
-        else:
-            # If the user has no associated department, return an empty queryset
-            records = DemandRatio.objects.none()
+    record = get_object_or_404(DemandRatio, id=record_id)
 
-    # Apply filters if provided
-    programme_name = request.GET.get('programme_name', '').strip()
-    programme_code = request.GET.get('programme_code', '').strip()
-    year_from = request.GET.get('year_from', '').strip()
-    year_to = request.GET.get('year_to', '').strip()
+    if request.method == "POST":
+        record.programme_name = request.POST.get("programme_name", record.programme_name)
+        record.programme_code = request.POST.get("programme_code", record.programme_code)
+        record.num_seats = request.POST.get("num_seats", record.num_seats)
+        record.num_applications = request.POST.get("num_applications", record.num_applications)
+        record.num_students_admitted = request.POST.get("num_students_admitted", record.num_students_admitted)
+        record.academic_year = request.POST.get("academic_year", record.academic_year)
 
-    if programme_name:
-        records = records.filter(programme_name__icontains=programme_name)
+        try:
+            record.save()
+            messages.success(request, "Demand Ratio record updated successfully!")
+        except Exception as e:
+            messages.error(request, f"Error updating record: {e}")
 
-    if programme_code:
-        records = records.filter(programme_code__icontains=programme_code)
+        return redirect("demand_ratio_list")
 
-    if year_from and year_to:
-        records = records.filter(academic_year__gte=year_from, academic_year__lte=year_to)
-    elif year_from:
-        records = records.filter(academic_year__gte=year_from)
-    elif year_to:
-        records = records.filter(academic_year__lte=year_to)
+    messages.error(request, "Invalid request method.")
+    return redirect("demand_ratio_list")
+@login_required
+def view_demand_ratio_details(request, record_id):
+    """
+    View details of a specific Demand Ratio record.
+    """
+    record = get_object_or_404(DemandRatio, id=record_id)
+    return render(request, "viewData/demand_ratio_details.html", {"record": record})
+@login_required
+def delete_demand_ratio(request, record_id):
+    """
+    Delete a specific Demand Ratio record.
+    """
+    record = get_object_or_404(DemandRatio, id=record_id)
 
-    context = {
-        'records': records,
-    }
+    if request.method == "POST":
+        try:
+            record.delete()
+            messages.success(request, "Demand Ratio record deleted successfully!")
+        except Exception as e:
+            messages.error(request, f"Error deleting record: {e}")
+        return redirect("demand_ratio_list")
 
-    return render(request, 'Forms/demand_ratio_list.html', context)
+    messages.error(request, "Invalid request method.")
+    return redirect("demand_ratio_list")
 
 def admitted_student_list(request):
-    return render(request,'Forms/admited_students.html')
+    students = AdmittedStudent.objects.select_related('department').all()
+    return render(request,'Forms/admited_students.html',{'records': students})
+@login_required
 def add_admitted_student(request):
-    return render(request,'AddData/add_admitted_student.html')
+    """Handle form submission for adding a new admitted student"""
+    
+    # Get the logged-in user's department
+    try:
+        user_department = request.user.userprofile.department
+    except AttributeError:
+        user_department = None
+
+    if request.method == "POST":
+        year = request.POST.get('year', '')
+        programme_name = request.POST.get('programme_name', '')
+        department_id = request.POST.get('department', '')
+
+        sc_earmarked = request.POST.get('sc_earmarked', 0)
+        st_earmarked = request.POST.get('st_earmarked', 0)
+        obc_earmarked = request.POST.get('obc_earmarked', 0)
+        gen_earmarked = request.POST.get('gen_earmarked', 0)
+        others_earmarked = request.POST.get('others_earmarked', 0)
+
+        sc_admitted = request.POST.get('sc_admitted', 0)
+        st_admitted = request.POST.get('st_admitted', 0)
+        obc_admitted = request.POST.get('obc_admitted', 0)
+        gen_admitted = request.POST.get('gen_admitted', 0)
+        others_admitted = request.POST.get('others_admitted', 0)
+
+        # Ensure the department belongs to the user
+        if user_department and str(user_department.department_code) == department_id:
+            department = user_department
+        else:
+            return redirect('add_admitted_student')
+
+        # Create AdmittedStudent entry
+        AdmittedStudent.objects.create(
+            year=year,
+            programme_name=programme_name,
+            department=department,
+            sc_earmarked=sc_earmarked,
+            st_earmarked=st_earmarked,
+            obc_earmarked=obc_earmarked,
+            gen_earmarked=gen_earmarked,
+            others_earmarked=others_earmarked,
+            sc_admitted=sc_admitted,
+            st_admitted=st_admitted,
+            obc_admitted=obc_admitted,
+            gen_admitted=gen_admitted,
+            others_admitted=others_admitted,
+        )
+        return redirect('admitted_students_list')
+
+    # Only pass the logged-in user's department
+    departments = Department.objects.filter(department_code=user_department.department_code) if user_department else []
+
+    return render(request, 'AddData/add_admitted_student.html', {'departments': departments})
+
+@login_required
+def edit_admitted_student(request, record_id):
+    """
+    Edit an existing admitted student record.
+    """
+    record = get_object_or_404(AdmittedStudent, id=record_id)
+
+    if request.method == "POST":
+        try:
+            record.programme_name = request.POST.get("programme_name", record.programme_name)
+            record.year = request.POST.get("year", record.year)
+            record.sc_earmarked = request.POST.get("sc_earmarked", record.sc_earmarked)
+            record.st_earmarked = request.POST.get("st_earmarked", record.st_earmarked)
+            record.obc_earmarked = request.POST.get("obc_earmarked", record.obc_earmarked)
+            record.gen_earmarked = request.POST.get("gen_earmarked", record.gen_earmarked)
+            record.others_earmarked = request.POST.get("others_earmarked", record.others_earmarked)
+            record.sc_admitted = request.POST.get("sc_admitted", record.sc_admitted)
+            record.st_admitted = request.POST.get("st_admitted", record.st_admitted)
+            record.obc_admitted = request.POST.get("obc_admitted", record.obc_admitted)
+            record.gen_admitted = request.POST.get("gen_admitted", record.gen_admitted)
+            record.others_admitted = request.POST.get("others_admitted", record.others_admitted)
+
+            # Save updated record
+            record.save()
+            messages.success(request, "Admitted student record updated successfully!")
+        except Exception as e:
+            messages.error(request, f"Error updating record: {str(e)}")
+
+        return redirect("admitted_students_list")
+
+    messages.error(request, "Invalid request method.")
+    return redirect("admitted_students_list")
+@login_required
+def delete_admitted_student(request, record_id):
+    """
+    Delete an admitted student record.
+    """
+    record = get_object_or_404(AdmittedStudent, id=record_id)
+
+    if request.method == "POST":
+        try:
+            record.delete()
+            messages.success(request, "Admitted student record deleted successfully!")
+        except Exception as e:
+            messages.error(request, f"Error deleting record: {str(e)}")
+        return redirect("admitted_students_list")
+
+    messages.error(request, "Invalid request method.")
+    return redirect("admitted_students_list")
+@login_required
+def view_admitted_student_details(request, record_id):
+    """
+    View details of a specific Admitted Student.
+    """
+    record = get_object_or_404(AdmittedStudent, id=record_id)
+    return render(request, "viewData/admitted_student_details.html", {"record": record})
+@login_required
+def download_admitted_student_pdf(request, record_id):
+    """
+    Generate and download a PDF for a specific Admitted Student record.
+    """
+    # Get the specific Admitted Student record
+    record = get_object_or_404(AdmittedStudent, id=record_id)
+
+    # Set up the HTTP response for a PDF file
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="admitted_student_{record.id}.pdf"'
+
+    # Create the PDF
+    pdf = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    # **Background Color**
+    pdf.setFillColorRGB(0.95, 0.95, 0.95)
+    pdf.rect(0, 0, width, height, fill=True, stroke=False)
+
+    # Header Section with Title
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, height - 100, width - 40, 80, 10, fill=True, stroke=False)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawCentredString(width / 2, height - 60, "Admitted Student Details")
+
+    # Table Data
+    data = [
+        ["Year", record.year],
+        ["Programme Name", record.programme_name],
+        ["SC (Earmarked)", record.sc_earmarked],
+        ["ST (Earmarked)", record.st_earmarked],
+        ["OBC (Earmarked)", record.obc_earmarked],
+        ["General (Earmarked)", record.gen_earmarked],
+        ["Others (Earmarked)", record.others_earmarked],
+        ["SC (Admitted)", record.sc_admitted],
+        ["ST (Admitted)", record.st_admitted],
+        ["OBC (Admitted)", record.obc_admitted],
+        ["General (Admitted)", record.gen_admitted],
+        ["Others (Admitted)", record.others_admitted],
+    ]
+
+    # Style the Table
+    table = Table(data, colWidths=[200, 280])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.lightgrey),
+        ("GRID", (0, 0), (-1, -1), 1, colors.blue),
+        ("BOX", (0, 0), (-1, -1), 2, colors.blue),
+    ]))
+
+    # Draw Table in the Center
+    table_x = (width - 480) / 2
+    table_y = height - 300
+    table.wrapOn(pdf, width, height)
+    table.drawOn(pdf, table_x, table_y)
+
+    # Footer Section
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, 20, width - 40, 50, 10, fill=True, stroke=False)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica", 10)
+    pdf.drawCentredString(width / 2, 45, "© 2025 Bharathiar University. All Rights Reserved.")
+
+    # **Page Borders**
+    pdf.setStrokeColor(colors.blue)
+    pdf.setLineWidth(2)
+    pdf.roundRect(10, 10, width - 20, height - 20, 15, stroke=True, fill=False)
+    pdf.roundRect(15, 15, width - 30, height - 30, 12, stroke=True, fill=False)
+
+    pdf.showPage()
+    pdf.save()
+
+    return response
+@login_required
 def teacher_serving_post_list(request):
-    return render(request,'Forms/teacher_post.html')
+    """
+    View to list all Teacher Serving Post records with optional filters.
+    """
+    # Retrieve all records with related teacher information
+    records = TeacherServingPost.objects.select_related('teacher').all()
+
+    # Filters (based on POST data from filter form)
+    teacher_name = request.POST.get('teacher_name', '').strip()
+    department = request.POST.get('department', '').strip()
+    designation = request.POST.get('designation', '').strip()
+
+    if teacher_name:
+        records = records.filter(teacher__user_profile__user__username__icontains=teacher_name)
+    if department:
+        records = records.filter(teacher__department__icontains=department)
+    if designation:
+        records = records.filter(teacher__position__icontains=designation)
+
+    # Render the list template with filtered records
+    return render(request, 'Forms/teacher_serving_post_list.html', {'records': records})
+@login_required
 def add_teacher_serving_post(request):
-    return render(request,'AddData/add_teacher_post.html')
-def teacher(request):
-    return render(request,'Forms/teacher.html')
+    user_profile = get_object_or_404(UserProfile, user=request.user)
+
+    if user_profile.is_teacher:
+        try:
+            teacher = Teacher.objects.get(user_profile=user_profile)
+        except Teacher.DoesNotExist:
+            messages.error(request, "You are not associated with a teacher record.")
+            return redirect("teacher_serving_post_list")
+
+        if request.method == "POST":
+            # Retrieve the last_year_service value from the POST request
+            last_year_service = request.POST.get("last_year_service", "").strip() or None
+            appointment_year = request.POST.get("appointment_year").strip()
+            nature_of_appointment = request.POST.get("nature_of_appointment").strip()
+            experience_years = request.POST.get("experience_years").strip()
+            is_serving = request.POST.get("is_serving") == "Yes"
+
+            try:
+                # Save to the TeacherServingPost model
+                TeacherServingPost.objects.create(
+                    teacher=teacher,
+                    appointment_year=appointment_year,
+                    nature_of_appointment=nature_of_appointment,
+                    experience_years=experience_years,
+                    is_serving=is_serving,
+                    last_year_service=last_year_service
+                )
+                messages.success(request, "Teacher Serving Post record added successfully.")
+                return redirect("teacher_serving_post_list")
+            except Exception as e:
+                messages.error(request, f"An error occurred: {e}")
+
+        return render(request, 'AddData/add_teacher_serving_post.html', {"is_staff": False})
+
+    elif user_profile.is_department_staff:
+        teachers = Teacher.objects.filter(user_profile__department=user_profile.department)
+
+        if request.method == "POST":
+            teacher_id = request.POST.get("teacher")
+            last_year_service = request.POST.get("last_year_service", "").strip() or None
+            appointment_year = request.POST.get("appointment_year").strip()
+            nature_of_appointment = request.POST.get("nature_of_appointment").strip()
+            experience_years = request.POST.get("experience_years").strip()
+            is_serving = request.POST.get("is_serving") == "Yes"
+
+            try:
+                teacher = get_object_or_404(Teacher, id=teacher_id)
+                TeacherServingPost.objects.create(
+                    teacher=teacher,
+                    appointment_year=appointment_year,
+                    nature_of_appointment=nature_of_appointment,
+                    experience_years=experience_years,
+                    is_serving=is_serving,
+                    last_year_service=last_year_service
+                )
+                messages.success(request, "Teacher Serving Post record added successfully.")
+                return redirect("teacher_serving_post_list")
+            except Exception as e:
+                messages.error(request, f"An error occurred: {e}")
+
+        return render(request, 'AddData/add_teacher_serving_post.html', {"teachers": teachers, "is_staff": True})
+
+    else:
+        messages.error(request, "You do not have permission to access this page.")
+        return redirect("teacher_serving_post_list")
+
+@login_required
+def edit_teacher_serving_post(request, record_id):
+    """
+    View to edit a specific Teacher Serving Post record and route to the same Teacher Serving Post list page.
+    """
+    teacher_serving_post = get_object_or_404(TeacherServingPost, id=record_id)
+
+    if request.method == "POST":
+        appointment_year = request.POST.get("appointment_year", "").strip()
+        nature_of_appointment = request.POST.get("nature_of_appointment", "").strip()
+        experience_years = request.POST.get("experience_years", "").strip()
+        is_serving = request.POST.get("is_serving") == "Yes"
+        last_year_service = request.POST.get("last_year_service", "").strip() or None
+
+        try:
+            # Update the record
+            teacher_serving_post.appointment_year = appointment_year
+            teacher_serving_post.nature_of_appointment = nature_of_appointment
+            teacher_serving_post.experience_years = experience_years
+            teacher_serving_post.is_serving = is_serving
+            teacher_serving_post.last_year_service = last_year_service
+            teacher_serving_post.save()
+
+            # Success message
+            messages.success(request, "Record updated successfully.")
+        except Exception as e:
+            # Error message
+            messages.error(request, f"An error occurred while updating: {e}")
+
+        # Redirect to the same page (Teacher Serving Post list)
+        return redirect("teacher_serving_post_list")
+
+    # For GET requests, redirect to the Teacher Serving Post list (route to the same page)
+    return redirect("teacher_serving_post_list")
+@login_required
+def delete_teacher_serving_post(request, record_id):
+    """
+    View to delete a specific Teacher Serving Post record and route to the same list page with messages.
+    """
+    teacher_serving_post = get_object_or_404(TeacherServingPost, id=record_id)
+
+    if request.method == "POST":
+        try:
+            # Delete the record
+            teacher_serving_post.delete()
+            # Success message
+            messages.success(request, "Record deleted successfully.")
+        except Exception as e:
+            # Error message
+            messages.error(request, f"An error occurred while deleting: {e}")
+
+        # Redirect to the same page (list page)
+        return redirect("teacher_serving_post_list")
+
+    # If GET request, redirect to the list page
+    return redirect("teacher_serving_post_list")
+@login_required
+def full_time_teacher_list(request):
+    """
+    View to display Full-Time Teacher records.
+    - If the user is a teacher, show their records only.
+    - If the user is department staff, show all records related to their department.
+    """
+    user_profile = get_object_or_404(UserProfile, user=request.user)
+
+    # Initialize an empty queryset
+    records = FullTimeTeacher.objects.none()
+
+    if user_profile.is_teacher:
+        # Get the teacher object related to the logged-in user
+        teacher = get_object_or_404(Teacher, user_profile=user_profile)
+        # Fetch only records related to this teacher
+        records = FullTimeTeacher.objects.filter(teacher_name=teacher)
+
+    elif user_profile.is_department_staff:
+        # Fetch all teachers related to the department of the logged-in staff member
+        teachers_in_department = Teacher.objects.filter(user_profile__department=user_profile.department)
+        # Fetch all FullTimeTeacher records related to those teachers
+        records = FullTimeTeacher.objects.filter(teacher_name__in=teachers_in_department)
+
+    # Pass the filtered records to the template
+    return render(request, "Forms/teacher.html", {"records": records})
 def add_teacher(request):
-    return render(request,'AddData/add_teacher.html')
-def against_sanctioned_post(request):
-    return render(request,'Forms/against_sanctioned_post.html')
+    """
+    View to handle adding a new Full-Time Teacher record based on user roles.
+    """
+    user_profile = request.user.userprofile  # Get the user's profile to determine role
+
+    if request.method == "POST":
+        # If department staff, get the selected teacher from the dropdown; otherwise, get the logged-in teacher
+        teacher_name_id = (
+            request.POST.get("teacher") if user_profile.is_department_staff
+            else Teacher.objects.get(user_profile=user_profile).id
+        )
+        qualification_year = request.POST.get("qualification")
+        is_research_guide = request.POST.get("is_research_guide") == "Yes"
+        recognition_year = request.POST.get("recognition_year")
+
+        try:
+            # Fetch the teacher object
+            teacher_name = get_object_or_404(Teacher, id=teacher_name_id)
+
+            # Save the new record in the FullTimeTeacher table
+            FullTimeTeacher.objects.create(
+                teacher_name=teacher_name,
+                qualification_year=qualification_year,
+                is_research_guide=is_research_guide,
+                year_of_recognition=recognition_year,
+            )
+
+            # Success message
+            messages.success(request, "Teacher record added successfully.")
+            return redirect("full_time_teacher_list")  # Redirect to the list page
+        except Exception as e:
+            # Error message
+            messages.error(request, f"An error occurred: {str(e)}")
+
+    # Prepare context for GET requests
+    if user_profile.is_department_staff:
+        teachers = Teacher.objects.filter(user_profile__department=user_profile.department)
+    else:
+        teachers = None  # No dropdown for individual teachers
+
+    return render(
+        request,
+        "AddData/add_teacher.html",
+        {
+            "teachers": teachers,
+            "is_department_staff": user_profile.is_department_staff,
+            "user": request.user,
+        },
+    )
+@login_required
+def edit_teacher(request, record_id):
+    """
+    View to edit a specific Full-Time Teacher record and route to the same Teacher List page.
+    """
+    teacher_record = get_object_or_404(FullTimeTeacher, id=record_id)
+
+    if request.method == "POST":
+        # Fetch form data
+        qualification_year = request.POST.get("qualification_year", "").strip()
+        is_research_guide = request.POST.get("is_research_guide") == "Yes"
+        recognition_year = request.POST.get("year_of_recognition", "").strip()
+
+        # Handle empty recognition year
+        recognition_year = int(recognition_year) if recognition_year else None
+
+        try:
+            # Update the record
+            teacher_record.qualification_year = qualification_year
+            teacher_record.is_research_guide = is_research_guide
+            teacher_record.year_of_recognition = recognition_year
+            teacher_record.save()
+
+            # Success message
+            messages.success(request, "Record updated successfully.")
+        except Exception as e:
+            # Error message
+            messages.error(request, f"An error occurred while updating: {e}")
+
+        # Redirect to the same page (Teacher List page)
+        return redirect("full_time_teacher_list")
+
+    # Redirect to the Teacher List page for GET requests
+    return redirect("full_time_teacher_list")
+
+@login_required
+def delete_teacher(request, record_id):
+    """
+    View to delete a specific Full-Time Teacher record and route to the same Teacher List page.
+    """
+    teacher_record = get_object_or_404(FullTimeTeacher, id=record_id)
+
+    if request.method == "POST":
+        try:
+            # Delete the record
+            teacher_record.delete()
+
+            # Success message
+            messages.success(request, "Record deleted successfully.")
+        except Exception as e:
+            # Error message
+            messages.error(request, f"An error occurred while deleting: {str(e)}")
+
+        # Redirect to the teacher list page
+        return redirect("full_time_teacher_list")
+
+    # Redirect to the teacher list page for non-POST requests
+    return redirect("full_time_teacher_list")
+@login_required
+def teacher_sanctioned_post_list(request):
+    """
+    View to display teacher records.
+    - If the user is a teacher, display only their records.
+    - If the user is department staff, display all records related to their department.
+    """
+    user_profile = get_object_or_404(UserProfile, user=request.user)
+
+    # Initialize queryset
+    teachers = TeacherAgainstSanctionedPost.objects.none()
+
+    if user_profile.is_teacher:
+        # For logged-in teacher, fetch only their data
+        teacher = get_object_or_404(Teacher, user_profile=user_profile)
+        teachers = TeacherAgainstSanctionedPost.objects.filter(teacher=teacher)
+
+    elif user_profile.is_department_staff:
+        # For department staff, fetch all teachers in their department
+        department_teachers = Teacher.objects.filter(user_profile__department=user_profile.department)
+        teachers = TeacherAgainstSanctionedPost.objects.filter(teacher__in=department_teachers)
+
+    # Render the template with filtered records
+    return render(request, "Forms/teacher_sanctioned_post_list.html", {"teachers": teachers})
+
+@login_required
 def add_against_sanctioned_post(request):
-    return render(request,'AddData/add_against_sanctioned_post.html')
+    """
+    View to handle adding a new Teacher Against Sanctioned Post record.
+    """
+    user_profile = get_object_or_404(UserProfile, user=request.user)
+    teacher_data = None
+    department_teachers = None
+
+    # Role-based logic
+    if user_profile.is_teacher:
+        # Fetch data for the logged-in teacher
+        teacher = get_object_or_404(Teacher, user_profile=user_profile)
+        teacher_data = {
+            "name": teacher.name,
+            "pan": teacher.pan,
+            "designation": teacher.position,
+            "department": teacher.user_profile.department.department_name,
+        }
+    elif user_profile.is_department_staff:
+        # Fetch all teachers belonging to the department
+        department_teachers = Teacher.objects.filter(user_profile__department=user_profile.department)
+
+    if request.method == "POST":
+        if user_profile.is_department_staff:
+            # Get the selected teacher from the dropdown
+            teacher_id = request.POST.get("teacher_id")
+            teacher = get_object_or_404(Teacher, id=teacher_id)
+        else:
+            # Fetch teacher for logged-in user
+            teacher = get_object_or_404(Teacher, user_profile=user_profile)
+
+        # Collect form data
+        year_of_appointment = request.POST.get("yearOfAppointment", "").strip()
+        nature_of_appointment = request.POST.get("natureOfAppointment", "").strip()
+        experience_years = request.POST.get("experience", "").strip()
+        is_serving = request.POST.get("isServing", "").strip() == "Yes"
+        last_year_of_service = request.POST.get("lastYearOfService", "").strip()
+        last_year_of_service = int(last_year_of_service) if not is_serving and last_year_of_service else None
+
+        try:
+            # Save the record
+            TeacherAgainstSanctionedPost.objects.create(
+                teacher=teacher,
+                year_of_appointment=year_of_appointment,
+                nature_of_appointment=nature_of_appointment,
+                years_of_experience=experience_years,
+                still_serving="Yes" if is_serving else "No",
+                last_year_of_service=last_year_of_service,
+            )
+            messages.success(request, "Record added successfully.")
+            return redirect("teacher_sanctioned_post_list")
+        except Exception as e:
+            messages.error(request, f"Error while adding record: {e}")
+
+    return render(
+        request,
+        "AddData/add_against_sanctioned_post.html",
+        {
+            "is_teacher": user_profile.is_teacher,
+            "teacher_data": teacher_data,
+            "department_teachers": department_teachers,
+        },
+    )
+
+@login_required
+def edit_teacher_against_sanctioned_post(request, post_id):
+    """
+    View to edit a specific Teacher Against Sanctioned Post record and route to the same list page.
+    """
+    post_record = get_object_or_404(TeacherAgainstSanctionedPost, id=post_id)
+
+    if request.method == "POST":
+        # Fetch and validate form data
+        year_of_appointment = request.POST.get("yearOfAppointment", "").strip()
+        nature_of_appointment = request.POST.get("natureOfAppointment", "").strip()
+        experience_years = request.POST.get("experience", "").strip()
+        is_serving = request.POST.get("isServing", "").strip() == "Yes"
+        last_year_of_service = request.POST.get("lastYearOfService", "").strip()
+
+        try:
+            # Validate required fields
+            if not year_of_appointment or not year_of_appointment.isdigit():
+                raise ValueError("Year of Appointment must be a valid number.")
+
+            if not experience_years or not experience_years.isdigit():
+                raise ValueError("Years of Experience must be a valid number.")
+
+            # Handle empty "Last Year of Service"
+            last_year_of_service = int(last_year_of_service) if not is_serving and last_year_of_service else None
+
+            # Update the record
+            post_record.year_of_appointment = int(year_of_appointment)
+            post_record.nature_of_appointment = nature_of_appointment
+            post_record.years_of_experience = int(experience_years)
+            post_record.still_serving = "Yes" if is_serving else "No"
+            post_record.last_year_of_service = last_year_of_service
+            post_record.save()
+
+            # Success message
+            messages.success(request, "Record updated successfully.")
+        except ValueError as ve:
+            # Handle validation errors
+            messages.error(request, str(ve))
+        except Exception as e:
+            # Generic error handler
+            messages.error(request, f"An error occurred while updating: {e}")
+
+        # Redirect back to the list page
+        return redirect("teacher_sanctioned_post_list")
+
+    # Redirect to the list page for GET requests
+    return redirect("teacher_sanctioned_post_list")
+
+@login_required
+def delete_teacher_against_sanctioned_post(request, post_id):
+    """
+    View to delete a specific Teacher Against Sanctioned Post record.
+    """
+    post = get_object_or_404(TeacherAgainstSanctionedPost, id=post_id)
+
+    try:
+        post.delete()
+        messages.success(request, "Record deleted successfully.")
+    except Exception as e:
+        messages.error(request, f"An error occurred while deleting: {e}")
+
+    # Redirect to the same list page after deletion
+    return redirect("teacher_sanctioned_post_list")
+
 def e_governance(request):
     return render(request,"Forms/e_governance.html")
 def add_e_governance(request):

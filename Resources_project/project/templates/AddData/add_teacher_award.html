@@ -48,7 +48,7 @@
               <select class="form-control" name="teacher" required>
                 <option value="">Select Teacher</option>
                 {% for teacher in teachers %}
-                  <option value="{{ teacher.id }}">{{ teacher.user_profile.user.username }}</option>
+                  <option value="{{ teacher.id }}">{{ teacher.teacher.user_profile.user.first_name }}({{teacher.teacher.user_profile.user.last_name }})</option>
                 {% endfor %}
               </select>
             {% else %}

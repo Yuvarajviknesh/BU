@@ -86,7 +86,7 @@
             <label for="department" class="form-label fw-bold">Department</label>
             <select class="form-control" id="department" name="department" {% if not request.user.is_superuser %}readonly{% endif %} required>
               {% for department in departments %}
-                <option value="{{ department.id }}">{{ department.name }}</option>
+                <option value="{{ department.department_code }}">{{ department.department_name }}</option>
               {% endfor %}
             </select>
           </div>

@@ -48,7 +48,7 @@
         <h2 class="section-title m-0">Full-Time Teacher Records</h2>
         <div>
             <a href="" class="btn btn-success">📥 Download Excel</a>
-            <a href="{% url 'add_teacher_serving_post' %}" class="btn btn-add">+ Add</a>
+            <a href="{% url 'add_teacher' %}" class="btn btn-add">+ Add</a>
         </div>
     </div>
     <form method="POST" action="">
@@ -86,7 +86,7 @@
                 <tr>
                     <td>{{ record.teacher_name }}</td>
                     <td>{{ record.qualification_year }}</td>
-                    <td>{{ record.is_research_guide }}</td>
+                    <td>{{ record.is_research_guide|yesno:"Yes,No" }}</td>
                     <td>{{ record.year_of_recognition }}</td>
                     <td class="action-cell">
                         <a href="" class="btn btn-view">👁 View</a>
@@ -96,10 +96,10 @@
                             data-qualification_year="{{ record.qualification_year }}"
                             data-is_research_guide="{{ record.is_research_guide }}"
                             data-year_of_recognition="{{ record.year_of_recognition }}"
-                            data-update-url="">
+                            data-update-url="{% url "edit_teacher" record.id %}">
                             ✏️ Edit
                         </button>
-                        <form method="POST" action="" class="delete-form d-inline">
+                        <form method="POST" action="{% url "delete_teacher" record.id %}" class="delete-form d-inline">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-delete">🗑️ Delete</button>
                         </form>
@@ -122,22 +122,25 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" id="editId">
+                    <input type="hidden" id="editId" name="record_id">
                     <div class="form-group">
                         <label>Teacher Name</label>
-                        <input type="text" name="teacher_name" id="editTeacherName" class="form-control" required>
+                        <input type="text" name="teacher_name" id="editTeacherName" class="form-control" readonly required>
                     </div>
                     <div class="form-group">
                         <label>Qualification and Year of obtaining</label>
                         <input type="text" name="qualification_year" id="editQualificationYear" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label>Whether recognised as research Guide</label>
-                        <input type="text" name="is_research_guide" id="editIsResearchGuide" class="form-control" required>
+                        <label>Whether recognised as Research Guide</label>
+                        <select name="is_research_guide" id="editIsResearchGuide" class="form-control" required>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label>Year of Recognition as Research Guide</label>
-                        <input type="number" name="year_of_recognition" id="editYearOfRecognition" class="form-control" required>
+                        <input type="number" name="year_of_recognition" id="editYearOfRecognition" class="form-control">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -149,16 +152,21 @@
     </div>
 </div>
 
+
 <script>
     document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.getElementById('editId').value = btn.getAttribute('data-id');
             document.getElementById('editTeacherName').value = btn.getAttribute('data-teacher_name');
             document.getElementById('editQualificationYear').value = btn.getAttribute('data-qualification_year');
-            document.getElementById('editIsResearchGuide').value = btn.getAttribute('data-is_research_guide');
-            document.getElementById('editYearOfRecognition').value = btn.getAttribute('data-year_of_recognition');
+            
+            const isResearchGuide = btn.getAttribute('data-is_research_guide') === "True" ? "Yes" : "No";
+            document.getElementById('editIsResearchGuide').value = isResearchGuide;
+    
+            document.getElementById('editYearOfRecognition').value = btn.getAttribute('data-year_of_recognition') || "";
             document.getElementById('editForm').action = btn.getAttribute('data-update-url');
         });
     });
+    
 </script>
 {% endblock %}

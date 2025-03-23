@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .card-container {
+    max-width: 800px;
+    margin: 50px auto;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 100px;
+  }
+  .card-header {
+    background-color: #002d6b;
+    color: white;
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
+    padding: 15px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+  .form-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+</style>
+
+<div class="container">
+  <div class="card-container">
+    <div class="card-header">
+      Add Field Project / Research Project / Internship Record
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{% url 'add_student_project' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row">
+          <!-- Programme Name -->
+          <div class="col-md-12 mb-3">
+            <label for="programmeName" class="form-label fw-bold">Programme Name</label>
+            <input type="text" class="form-control" id="programmeName" name="programme_name" placeholder="Enter Programme Name" required>
+          </div>
+
+          <!-- Programme Code -->
+          <div class="col-md-12 mb-3">
+            <label for="programmeCode" class="form-label fw-bold">Programme Code</label>
+            <input type="text" class="form-control" id="programmeCode" name="programme_code" placeholder="Enter Programme Code" required>
+          </div>
+
+          <!-- List of Students -->
+          <div class="col-md-12 mb-3">
+            <label for="studentList" class="form-label fw-bold">List of Students</label>
+            <textarea class="form-control" id="studentList" name="students" placeholder="Enter the names of students (e.g., John Doe, Jane Smith)" rows="5" required></textarea>
+          </div>
+
+          <!-- Document Upload -->
+          <div class="col-md-12 mb-3">
+            <label for="document" class="form-label fw-bold">Upload Relevant Document</label>
+            <input type="file" class="form-control" id="document" name="document" accept=".pdf,.jpg,.png,.jpeg" required>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="form-footer">
+          <button type="button" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+          <button type="submit" class="btn btn-primary px-4">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

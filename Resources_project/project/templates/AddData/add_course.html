@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .form-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr; /* Two-column layout */
+      gap: 20px; /* Space between grid items */
+      align-items: start;
+  }
+  
+  .form-container .full-width {
+      grid-column: span 2; /* Full width across both columns */
+  }
+
+  .form-label {
+      font-weight: bold;
+  }
+
+  .form-control {
+      width: 100%; /* Ensures inputs take full width of their grid column */
+  }
+
+  .btn-container {
+      grid-column: span 2; /* Buttons span both columns */
+      text-align: center;
+  }
+</style>
+
+<div class="container mt-4">
+    <h2 class="mb-4 text-center">Add New Course</h2>
+    <form method="POST" enctype="multipart/form-data" action="{% url 'add_course' %}">
+        {% csrf_token %}
+        
+        <!-- Form Container -->
+        <div class="form-container">
+            
+            <!-- Department Field -->
+            <div>
+                <label for="department" class="form-label">Department</label>
+                <select class="form-control" id="department" name="department" required>
+                    <option value="" disabled selected>Select Department</option>
+                    {% for department in departments %}
+                    <option value="{{ department.department_code }}">{{ department.department_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Year of Introduction -->
+            <div>
+                <label for="yearOfIntroduction" class="form-label">Year of Introduction</label>
+                <input type="number" class="form-control" id="yearOfIntroduction" name="year_of_introduction" placeholder="Enter year of introduction" required>
+            </div>
+
+            <!-- Name of the Course -->
+            <div>
+                <label for="courseName" class="form-label">Name of the Course</label>
+                <input type="text" class="form-control" id="courseName" name="name" placeholder="Enter course name" required>
+            </div>
+
+            <!-- Course Code -->
+            <div>
+                <label for="courseCode" class="form-label">Course Code</label>
+                <input type="text" class="form-control" id="courseCode" name="code" placeholder="Enter course code" required>
+            </div>
+
+            <!-- Activities/Content -->
+            <div class="full-width">
+                <label for="activities" class="form-label">Employability/Skill Development Activities</label>
+                <textarea class="form-control" id="activities" name="activities" rows="4" placeholder="Describe activities or content" required></textarea>
+            </div>
+
+            <!-- Document Upload -->
+            <div class="full-width">
+                <label for="document" class="form-label">Upload Document (Optional)</label>
+                <input type="file" class="form-control" id="document" name="document">
+            </div>
+
+            <!-- Submit and Cancel Buttons -->
+            <div class="btn-container">
+                <button type="submit" class="btn btn-primary">Add Course</button>
+                <a href="{% url 'view_courses' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

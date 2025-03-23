@@ -128,7 +128,12 @@
     
     <script>
         const criteria = {
-            1: ["Title 1", "Title 2", "Title 3", "Title 4"],
+            1: [
+              { text : "Programme List" , url : "{% url 'program_list' %}"},
+              { text : "Courses Having Focus On Employability/ Entrepreneurship/ Skill Development Offered By The University " , url : " {% url "view_courses" %}"},
+              { text : "Value-Added Courses" , url : "{% url "value_added_courses" %}"},
+              { text : "Field Project / Research Project / Internship Records" , url : "{% url "student_project_list" %}"}
+            ],
             2: [
             {text : "Demand_Ratio_List", url : "{% url 'demand_ratio_list' %}"},
             {text : "Admitted_Student_List", url : "{% url 'admitted_students_list' %}"},

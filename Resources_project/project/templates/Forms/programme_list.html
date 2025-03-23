@@ -1,0 +1,426 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    /* General Body Styling */
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        overflow-x: hidden;
+        background-color: #f8f9fa; /* Subtle background color */
+    }
+    
+    /* General Container Styling */
+    .container {
+        margin: 20px auto;
+        width: 95%;
+        max-width: 100%;
+        padding: 0 10px;
+        box-sizing: border-box;
+    }
+    
+    /* Filter Section Styling */
+    .filter-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px; /* Space between filter elements */
+        margin-bottom: 20px;
+    }
+    
+    .filter-container input,
+    .filter-container select {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px; /* Smooth corners */
+        font-size: 14px;
+    }
+    
+    #searchBar {
+        width: 250px;
+        font-size: 15px;
+        border-radius: 6px;
+    }
+    
+    /* Dropdown Styling */
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .dropdown-button {
+        padding: 10px 16px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: white;
+        box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+        border-radius: 6px;
+        z-index: 1;
+        min-width: 160px;
+    }
+    
+    .dropdown-content a {
+        padding: 10px;
+        display: block;
+        color: black;
+        text-decoration: none;
+        border-radius: 6px;
+    }
+    
+    .dropdown:hover .dropdown-content {
+        display: block;
+    }
+    
+    /* Table Styling */
+    .programme-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        margin-top: 20px;
+    }
+    
+    .programme-table thead {
+        background-color: #002d6b;
+        color: white;
+    }
+    
+    .programme-table th,
+    .programme-table td {
+        padding: 12px;
+        text-align: center;
+        border: 1px solid #ddd;
+    }
+    
+    .programme-table tbody tr:hover {
+        background-color: #f4f4f9;
+    }
+    
+    .btn {
+        padding: 6px 15px;
+        text-transform: uppercase;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        color: #fff;
+        cursor: pointer;
+      }
+      
+      /* Button Variants */
+      .btn-add {
+        background-color: #f4a641; /* Orange for Add */
+      }
+      
+      .btn-delete {
+        background-color: #ed1b1b; /* Red for Delete */
+      }
+      
+      .btn-edit {
+        background-color: #007bff; /* Blue for Edit */
+      }
+      
+      .btn-view {
+        background-color: #17a2b8; /* Light Blue for View */
+      }
+      /* Back Button */
+    .btn-back {
+    background-color: #dc3545;
+    color: white;
+    }
+      
+      /* Hover Effects */
+      .btn:hover {
+        border-color: #000; /* Uniform hover effect for all buttons */
+      }
+      
+      /* Action Cell - Aligns buttons */
+      .action-cell {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        flex-wrap: nowrap; /* Ensure buttons stay in one row */
+      }
+    /* Media Queries for Responsive Design */
+    @media (max-width: 768px) {
+        .btn {
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+    
+        #searchBar {
+            width: 200px;
+        }
+    
+        .filter-container {
+            flex-direction: column; /* Stack filters vertically on small screens */
+        }
+    
+        .action-cell {
+            flex-direction: column; /* Stack buttons vertically on smaller screens */
+            gap: 5px;
+        }
+    }
+    
+</style>
+
+<!-- Back Button -->
+<a href="{% url 'department_dashboard' %}">
+    <button class="btn btn-back">&larr; Back</button>
+</a>
+
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>Programmes List</h2>
+        <a href="{% url 'add_program_list' %}" class="btn btn-add">+ Add</a>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="filter-container">
+        <div>
+            <label for="fromDate">From:</label>
+            <input type="date" id="fromDate" onchange="applyFilters()">
+        </div>
+        <div>
+            <label for="toDate">To:</label>
+            <input type="date" id="toDate" onchange="applyFilters()">
+        </div>
+        <div>
+            <select id="programmeFilter" onchange="applyFilters()">
+                <option value="">Filter by CBCS Status</option>
+                <option value="Yes">CBCS Implemented</option>
+                <option value="No">CBCS Not Implemented</option>
+            </select>
+        </div>
+        <div>
+            <input type="text" id="searchBar" placeholder="Search" onkeyup="applyFilters()">
+        </div>
+        <div class="dropdown">
+            <button class="dropdown-button">Download</button>
+            <div class="dropdown-content">
+                <a href="{% url 'download_excel' %}">Download Excel</a>
+                <a href="{% url 'download_pdf' %}">Download PDF</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Programmes Table -->
+    <div class="table-responsive">
+        <table class="programme-table">
+            <thead>
+                <tr>
+                    <th>Programme Code</th>
+                    <th>Programme Name</th>
+                    <th>Year of Introduction</th>
+                    <th>CBCS Status</th>
+                    <th>Year of CBCS Implementation</th>
+                    <th>Year of Revision</th>
+                    <th>Content Update (%)</th>
+                    <th>Document Link</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="programmeTableBody">
+                {% for programme in programmes %}
+                <tr>
+                    <td>{{ programme.programme_code }}</td>
+                    <td>{{ programme.programme_name }}</td>
+                    <td>{{ programme.year_of_introduction }}</td>
+                    <td>{{ programme.cbcs_status }}</td>
+                    <td>{{ programme.year_of_cbcs_implementation|default:"-" }}</td>
+                    <td>{{ programme.year_of_revision|default:"-" }}</td>
+                    <td>{{ programme.content_update_percentage|default:"-" }}</td>
+                    <td><a href="{{ programme.document_link }}" target="_blank">View Document</a></td>
+                    <td>
+                        <div class="action-cell">
+                            <!-- View Button -->
+                            <a href="{% url 'view_programme' programme.id %}" class="btn btn-info">🔍 View</a>
+                            <!-- Edit Button -->
+                            <button class="btn btn-edit" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#editModal"
+                                    data-id="{{ programme.id }}"
+                                    data-programme-code="{{ programme.programme_code }}"
+                                    data-programme-name="{{ programme.programme_name }}"
+                                    data-year-of-introduction="{{ programme.year_of_introduction }}"
+                                    data-cbcs-status="{{ programme.cbcs_status }}"
+                                    data-year-of-cbcs-implementation="{{ programme.year_of_cbcs_implementation }}"
+                                    data-year-of-revision="{{ programme.year_of_revision }}"
+                                    data-content-update-percentage="{{ programme.content_update_percentage }}"
+                                    data-document-link="{{ programme.document_link }}"
+                                    data-update-url="{% url 'edit_programme' programme.id %}">Edit</button>
+                    
+                            <!-- Delete Button -->
+                            <button class="btn btn-delete" 
+                                    onclick="confirmDelete(event, '{% url 'delete_programme' programme.id %}')">Delete</button>
+                        </div>
+                    </td>                                                                            
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Programme</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" id="programmeId" name="programme_id">
+
+                    <!-- Programme Code -->
+                    <div class="mb-3">
+                        <label class="form-label">Programme Code</label>
+                        <input type="text" class="form-control" id="programmeCode" name="programme_code" required>
+                    </div>
+
+                    <!-- Programme Name -->
+                    <div class="mb-3">
+                        <label class="form-label">Programme Name</label>
+                        <input type="text" class="form-control" id="programmeName" name="programme_name" required>
+                    </div>
+
+                    <!-- Year of Introduction -->
+                    <div class="mb-3">
+                        <label class="form-label">Year of Introduction</label>
+                        <input type="number" class="form-control" id="yearOfIntroduction" name="year_of_introduction" required>
+                    </div>
+
+                    <!-- CBCS Status -->
+                    <div class="mb-3">
+                        <label class="form-label">CBCS Status</label>
+                        <select class="form-control" id="cbcsStatus" name="cbcs_status" required>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+
+                    <!-- Year of CBCS Implementation -->
+                    <div class="mb-3">
+                        <label class="form-label">Year of CBCS Implementation</label>
+                        <input type="number" class="form-control" id="yearOfCBCSImplementation" name="year_of_cbcs_implementation">
+                    </div>
+
+                    <!-- Year of Revision -->
+                    <div class="mb-3">
+                        <label class="form-label">Year of Revision</label>
+                        <input type="number" class="form-control" id="yearOfRevision" name="year_of_revision">
+                    </div>
+
+                    <!-- Content Update (%) -->
+                    <div class="mb-3">
+                        <label class="form-label">Content Update (%)</label>
+                        <input type="number" class="form-control" id="contentUpdatePercentage" name="content_update_percentage">
+                    </div>
+
+                    <!-- Document Link -->
+                    <div class="mb-3">
+                        <label class="form-label">Document Link</label>
+                        <input type="url" class="form-control" id="documentLink" name="document_link" required>
+                    </div>
+
+                    <!-- Modal Footer with Buttons -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let editModal = document.getElementById("editModal");
+        editModal.addEventListener("show.bs.modal", function (event) {
+            let button = event.relatedTarget;
+    
+            // Populate modal fields with button's data attributes
+            document.getElementById("programmeId").value = button.getAttribute("data-id");
+            document.getElementById("programmeCode").value = button.getAttribute("data-programme-code");
+            document.getElementById("programmeName").value = button.getAttribute("data-programme-name");
+            document.getElementById("yearOfIntroduction").value = button.getAttribute("data-year-of-introduction");
+            document.getElementById("cbcsStatus").value = button.getAttribute("data-cbcs-status");
+            document.getElementById("yearOfCBCSImplementation").value = button.getAttribute("data-year-of-cbcs-implementation");
+            document.getElementById("yearOfRevision").value = button.getAttribute("data-year-of-revision");
+            document.getElementById("contentUpdatePercentage").value = button.getAttribute("data-content-update-percentage");
+            document.getElementById("documentLink").value = button.getAttribute("data-document-link");
+    
+            let form = document.getElementById("editForm");
+            form.action = button.getAttribute("data-update-url"); // Dynamically set the form's action
+        });
+    
+        // Delete confirmation
+        function confirmDelete(event, url) {
+            event.preventDefault();
+            if (confirm("Are you sure you want to delete this programme?")) {
+                window.location.href = url;
+            }
+        }
+    
+        // Apply filters on table rows
+        function applyFilters() {
+            let fromDate = document.getElementById("fromDate").value;
+            let toDate = document.getElementById("toDate").value;
+            let programmeFilter = document.getElementById("programmeFilter").value;
+            let searchBar = document.getElementById("searchBar").value.toLowerCase();
+    
+            let table = document.getElementById("programmeTableBody");
+            let rows = table.getElementsByTagName("tr");
+    
+            for (let row of rows) {
+                let cells = row.getElementsByTagName("td");
+                let showRow = true;
+    
+                // Filter by date range
+                if (fromDate || toDate) {
+                    let yearOfIntroduction = cells[2].textContent; // Assuming column 2 has year_of_introduction
+                    if (fromDate && yearOfIntroduction < fromDate || toDate && yearOfIntroduction > toDate) {
+                        showRow = false;
+                    }
+                }
+    
+                // Filter by CBCS status
+                if (programmeFilter) {
+                    let cbcsStatus = cells[3].textContent; // Assuming column 3 has cbcs_status
+                    if (cbcsStatus !== programmeFilter) {
+                        showRow = false;
+                    }
+                }
+    
+                // Filter by search bar text
+                let programmeCode = cells[0].textContent.toLowerCase(); // Assuming column 0 has programme_code
+                let programmeName = cells[1].textContent.toLowerCase(); // Assuming column 1 has programme_name
+                if (searchBar && !programmeCode.includes(searchBar) && !programmeName.includes(searchBar)) {
+                    showRow = false;
+                }
+    
+                // Show or hide rows based on filters
+                row.style.display = showRow ? "" : "none";
+            }
+        }
+    
+        // Expose functions globally for filter and delete actions
+        window.confirmDelete = confirmDelete;
+        window.applyFilters = applyFilters;
+    });
+</script>
+{% endblock %}    

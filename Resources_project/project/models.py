@@ -352,3 +352,64 @@ class TeacherAgainstSanctionedPost(models.Model):
     last_year_of_service = models.PositiveIntegerField(null=True, blank=True, verbose_name="Last Year of Service")  # Ensure the name matches
     def __str__(self):
         return f"{self.teacher.name} - {self.nature_of_appointment}"
+class Programme(models.Model):
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="programmes")
+    programme_code = models.CharField(max_length=50, unique=True)
+    programme_name = models.CharField(max_length=255)
+    year_of_introduction = models.IntegerField()
+    cbcs_status = models.CharField(max_length=15, choices=[('Yes', 'Yes'), ('No', 'No')])
+    year_of_cbcs_implementation = models.IntegerField(null=True, blank=True)
+    year_of_revision = models.IntegerField(null=True, blank=True)
+    content_update_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)  # Example: 50.00%
+    document_link = models.URLField(null=True, blank=True)  # Link to related documentation
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.programme_name} ({self.programme_code})"
+    
+class Course(models.Model):
+    """
+    Represents a course focusing on employability, entrepreneurship, or skill development.
+    """
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, verbose_name="Department")
+    name = models.CharField(max_length=100, verbose_name="Name of the Course")
+    code = models.CharField(max_length=20, unique=True, verbose_name="Course Code")
+    year_of_introduction = models.PositiveIntegerField(verbose_name="Year of Introduction")
+    activities = models.TextField(verbose_name="Employability/Skill Development Activities")
+    document = models.FileField(upload_to="course_documents/", null=True, blank=True, verbose_name="Relevant Document")
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+    
+class ValueAddedCourse(models.Model):
+    """
+    Model for Value-Added Courses.
+    """
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="courses", verbose_name="Department")
+    name = models.CharField(max_length=100, verbose_name="Course Name")
+    code = models.CharField(max_length=20,verbose_name="Course Code")
+    year_of_offering = models.PositiveIntegerField(verbose_name="Year of Offering")
+    times_offered = models.PositiveIntegerField(default=1, verbose_name="Number of Times Offered")
+    duration = models.CharField(max_length=50, verbose_name="Duration (e.g., 30 Hours)")
+    students_enrolled = models.PositiveIntegerField(verbose_name="Students Enrolled")
+    students_completed = models.PositiveIntegerField(verbose_name="Students Completed")
+    document = models.FileField(upload_to="course_documents/", null=True, blank=True, verbose_name="Supporting Document")
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+    
+class StudentProject(models.Model):
+    """
+    Model representing a field project, research project, or internship.
+    """
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="projects", verbose_name="Department")
+    programme_name = models.CharField(max_length=100, verbose_name="Programme Name")
+    programme_code = models.CharField(max_length=20, verbose_name="Programme Code")
+    students = models.TextField(verbose_name="List of Students")
+    document = models.FileField(upload_to="project_documents/", null=True, blank=True, verbose_name="Supporting Document")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
+
+    def __str__(self):
+        return f"{self.programme_name} ({self.programme_code})"

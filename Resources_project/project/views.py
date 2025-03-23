@@ -9,7 +9,8 @@ import pandas as pd
 from datetime import datetime
 from django.core.exceptions import PermissionDenied
 from django.core.files.storage import default_storage
-from .models import LibraryResource, UserProfile,Department,ICTFacility,EContentDevelopment,Teacher,Expenditure,TeacherAward,ResearchGrant,Investigator,AwardRecognition,Patent,PhDAward,DemandRatio,ResearchPaper,BookChapter,AdmittedStudent,TeacherServingPost,FullTimeTeacher,TeacherAgainstSanctionedPost
+from .models import LibraryResource, UserProfile,Department,ICTFacility,EContentDevelopment,Teacher,Expenditure,TeacherAward,ResearchGrant,Investigator,AwardRecognition,Patent,PhDAward,DemandRatio,ResearchPaper,BookChapter,AdmittedStudent,TeacherServingPost,FullTimeTeacher,TeacherAgainstSanctionedPost,Programme,ValueAddedCourse
+from .models import Course,StudentProject
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -3373,3 +3374,790 @@ def career_counseling(request):
     return render(request,"Forms/career_counseling.html")
 def add_career_counseling(request):
     return render(request,"AddData/add_career_counseling.html")
+def programme_list(request):
+    user_profile = request.user.userprofile
+
+    if request.user.is_superuser:
+        programmes = Programme.objects.all()
+    elif user_profile.is_department_staff:
+        programmes = Programme.objects.filter(department=user_profile.department)
+    else:
+        programmes = Programme.objects.none()  # No access
+
+    context = {"programmes": programmes}
+    return render(request, "Forms/programme_list.html", context)
+def add_programme(request):
+    """
+    View to handle the Add Programme form using POST.get() without using forms.
+    """
+    if request.method == "POST":
+        # Fetch data directly from POST
+        programme_code = request.POST.get("programme_code", "").strip()
+        programme_name = request.POST.get("programme_name", "").strip()
+        year_of_introduction = request.POST.get("year_of_introduction", "").strip()
+        cbcs_status = request.POST.get("cbcs_status", "").strip()
+        year_of_cbcs_implementation = request.POST.get("year_of_cbcs_implementation", "").strip()
+        year_of_revision = request.POST.get("year_of_revision", "").strip()
+        content_update_percentage = request.POST.get("content_update_percentage", "").strip()
+        document_link = request.POST.get("document_link", "").strip()
+
+        # Validate required fields
+        if not programme_code or not programme_name or not year_of_introduction or not cbcs_status:
+            messages.error(request, "Please fill out all required fields.")
+            return render(request, "add_programme.html")
+
+        # Convert numeric fields
+        try:
+            year_of_introduction = int(year_of_introduction)
+            year_of_cbcs_implementation = int(year_of_cbcs_implementation) if year_of_cbcs_implementation else None
+            year_of_revision = int(year_of_revision) if year_of_revision else None
+            content_update_percentage = float(content_update_percentage) if content_update_percentage else None
+        except ValueError:
+            messages.error(request, "Please enter valid numeric values where applicable.")
+            return render(request, "add_programme.html")
+
+        # Create and save the Programme object
+        programme = Programme(
+            programme_code=programme_code,
+            programme_name=programme_name,
+            year_of_introduction=year_of_introduction,
+            cbcs_status=cbcs_status,
+            year_of_cbcs_implementation=year_of_cbcs_implementation,
+            year_of_revision=year_of_revision,
+            content_update_percentage=content_update_percentage,
+            document_link=document_link,
+        )
+
+        # If logged-in department staff, set the department automatically
+        if request.user.userprofile.is_department_staff:
+            programme.department = request.user.userprofile.department
+
+        programme.save()
+        messages.success(request, "Programme added successfully.")
+        return redirect("program_list")  # Redirect to the programme list view
+
+    return render(request, "AddData/add_programme.html")
+def edit_programme_view(request, programme_id):
+    """
+    View to edit an existing programme.
+    """
+    # Fetch the programme object based on ID or return a 404 if not found
+    programme = get_object_or_404(Programme, id=programme_id)
+
+    if request.method == "POST":
+        # Fetch updated data from the POST request
+        programme.programme_code = request.POST.get("programme_code", programme.programme_code)
+        programme.programme_name = request.POST.get("programme_name", programme.programme_name)
+        programme.year_of_introduction = request.POST.get("year_of_introduction", programme.year_of_introduction)
+        programme.cbcs_status = request.POST.get("cbcs_status", programme.cbcs_status)
+        programme.year_of_cbcs_implementation = request.POST.get("year_of_cbcs_implementation", programme.year_of_cbcs_implementation)
+        programme.year_of_revision = request.POST.get("year_of_revision", programme.year_of_revision)
+        programme.content_update_percentage = request.POST.get("content_update_percentage", programme.content_update_percentage)
+        programme.document_link = request.POST.get("document_link", programme.document_link)
+
+        try:
+            # Save the updated programme
+            programme.save()
+            messages.success(request, "Programme updated successfully.")
+        except Exception as e:
+            messages.error(request, f"Error updating programme: {e}")
+
+        # Redirect to the programme list view after updating
+        return redirect("program_list")
+
+    # Render the edit form with current programme data if the request is GET
+    context = {
+        "programme": programme,
+    }
+    return render(request, "Forms/programme_list.html", context)
+def delete_programme_view(request, programme_id):
+    """
+    View to delete an existing programme.
+    """
+    # Fetch the programme object based on ID or return a 404 if not found
+    programme = get_object_or_404(Programme, id=programme_id)
+
+    try:
+        # Delete the programme
+        programme.delete()
+        messages.success(request, "Programme deleted successfully.")
+    except Exception as e:
+        messages.error(request, f"Error deleting programme: {e}")
+
+    # Redirect to the programme list view after deletion
+    return redirect("program_list")
+from openpyxl.styles import Font
+def download_excel(request):
+    # Create a workbook and worksheet
+    workbook = openpyxl.Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Programmes"
+
+    # Define headers
+    headers = [
+        "Programme Code", "Programme Name", "Year of Introduction",
+        "CBCS Status", "Year of CBCS Implementation",
+        "Year of Revision", "Content Update (%)", "Document Link"
+    ]
+    row_num = 1
+
+    # Add headers to the sheet
+    for col_num, header in enumerate(headers, 1):
+        cell = worksheet.cell(row=row_num, column=col_num)
+        cell.value = header
+        cell.font = Font(bold=True)  # Bold headers
+
+    # Add data rows
+    programmes = Programme.objects.all()
+    for programme in programmes:
+        row_num += 1
+        worksheet.cell(row=row_num, column=1).value = programme.programme_code
+        worksheet.cell(row=row_num, column=2).value = programme.programme_name
+        worksheet.cell(row=row_num, column=3).value = programme.year_of_introduction
+        worksheet.cell(row=row_num, column=4).value = programme.cbcs_status
+        worksheet.cell(row=row_num, column=5).value = programme.year_of_cbcs_implementation or "-"
+        worksheet.cell(row=row_num, column=6).value = programme.year_of_revision or "-"
+        worksheet.cell(row=row_num, column=7).value = programme.content_update_percentage or "-"
+        worksheet.cell(row=row_num, column=8).value = programme.document_link or "-"
+
+    # Create HTTP response with Excel file
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = 'attachment; filename="Programmes.xlsx"'
+    workbook.save(response)
+    return response
+from io import BytesIO
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from django.http import HttpResponse
+from .models import Programme
+
+def download_pdf(request):
+    buffer = BytesIO()
+    pdf = SimpleDocTemplate(
+        buffer, pagesize=A4, 
+        rightMargin=30, leftMargin=30, 
+        topMargin=30, bottomMargin=30
+    )
+
+    styles = getSampleStyleSheet()
+    text_style = styles["BodyText"]
+    text_style.wordWrap = "CJK"  # Proper word wrapping
+
+    # Table headers
+    data = [
+        [
+            "Programme Code", "Programme Name", "Year of Introduction",
+            "CBCS Status", "Year of CBCS Implementation", "Year of Revision",
+            "Content Update (%)", "Document Link"
+        ]
+    ]
+
+    # Fetch and format programme data
+    programmes = Programme.objects.all()
+    for programme in programmes:
+        data.append([
+            Paragraph(truncate_text(str(programme.programme_code or "-"), 15), text_style),
+            Paragraph(truncate_text(str(programme.programme_name or "-"), 25), text_style),
+            str(programme.year_of_introduction) if programme.year_of_introduction else "-",
+            Paragraph(str(programme.cbcs_status or "-"), text_style),
+            str(programme.year_of_cbcs_implementation) if programme.year_of_cbcs_implementation else "-",
+            str(programme.year_of_revision) if programme.year_of_revision else "-",
+            str(programme.content_update_percentage) if programme.content_update_percentage else "-",
+            Paragraph(f'<a href="{programme.document_link}">{truncate_text(programme.document_link or "-", 40)}</a>', styles["Normal"]),
+        ])
+
+    # Adjust table layout
+    table = Table(data, colWidths=[70, 120, 60, 70, 70, 70, 80, 120])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),  # Header background
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),  # Header text color
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),  # Center alignment
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),  # Bold header font
+        ("FONTSIZE", (0, 0), (-1, 0), 12),  # Header font size
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 10),  # Padding below header
+        ("GRID", (0, 0), (-1, -1), 1, colors.black),  # Add grid lines
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),  # Vertical alignment
+    ]))
+
+    # Add title and table to elements
+    elements = [Paragraph("Programmes List", styles["Title"]), Spacer(1, 20), table]
+
+    # Build PDF with a border
+    pdf.build(elements, onFirstPage=add_border, onLaterPages=add_border)
+
+    # Return PDF as response
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="Programmes_A4.pdf"'
+    return response
+
+def truncate_text(text, max_length):
+    """ Truncates text to a maximum length and appends '...' if it exceeds. """
+    return text if len(text) <= max_length else text[:max_length - 3] + "..."
+
+def add_border(canvas, doc):
+    """ Draws a border around the page content. """
+    canvas.saveState()
+    canvas.setStrokeColor(colors.black)
+    canvas.setLineWidth(1)
+    canvas.rect(
+        doc.leftMargin, doc.bottomMargin, 
+        doc.width, doc.height
+    )
+    canvas.restoreState()
+
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from reportlab.pdfgen import canvas
+from reportlab.platypus import Table, TableStyle
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+
+@login_required
+def download_programme_pdf(request, programme_id):
+    """
+    Generate and download a PDF for a specific Programme record.
+    """
+    # Fetch the specific Programme record
+    programme = get_object_or_404(Programme, id=programme_id)
+
+    # Set up the HTTP response for a PDF file
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="programme_{programme.programme_code}.pdf"'
+
+    # Create the PDF canvas
+    pdf = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    # **Background Color**
+    pdf.setFillColorRGB(0.95, 0.95, 0.95)
+    pdf.rect(0, 0, width, height, fill=True, stroke=False)
+
+    # Header Section
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, height - 100, width - 40, 80, 10, fill=True, stroke=False)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawCentredString(width / 2, height - 60, "Programme Details")
+
+    # Table Data for Programme Details
+    data = [
+        ["Programme Code", programme.programme_code],
+        ["Programme Name", programme.programme_name],
+        ["Year of Introduction", programme.year_of_introduction],
+        ["CBCS Status", programme.cbcs_status],
+        ["Year of CBCS Implementation", programme.year_of_cbcs_implementation or "N/A"],
+        ["Year of Revision", programme.year_of_revision or "N/A"],
+        ["Content Update (%)", programme.content_update_percentage or "N/A"],
+        ["Document Link", programme.document_link or "N/A"],
+    ]
+
+    # Style the Table
+    table = Table(data, colWidths=[200, 280])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.lightgrey),
+        ("GRID", (0, 0), (-1, -1), 1, colors.blue),
+        ("BOX", (0, 0), (-1, -1), 2, colors.blue),
+    ]))
+
+    # Draw Table in the Center
+    table_x = (width - 480) / 2
+    table_y = height - 350
+    table.wrapOn(pdf, width, height)
+    table.drawOn(pdf, table_x, table_y)
+
+    # Footer Section
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, 20, width - 40, 50, 10, fill=True, stroke=False)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica", 10)
+    pdf.drawCentredString(width / 2, 45, "© 2025 Bharathiar University. All Rights Reserved.")
+
+    # **Page Borders**
+    pdf.setStrokeColor(colors.blue)
+    pdf.setLineWidth(2)
+    pdf.roundRect(10, 10, width - 20, height - 20, 15, stroke=True, fill=False)
+    pdf.roundRect(15, 15, width - 30, height - 30, 12, stroke=True, fill=False)
+
+    pdf.showPage()
+    pdf.save()
+
+    return response
+def view_programme(request, id):
+    """
+    Displays the details of a specific programme.
+    """
+    # Fetch the programme object or return 404 if it doesn't exist
+    programme = get_object_or_404(Programme, id=id)
+
+    # Pass the programme to the template
+    return render(request, "viewData/programme_detail.html", {"programme": programme})
+
+@login_required
+def view_courses(request):
+    """
+    View function for displaying courses.
+    Department staff can see their department's data,
+    and superusers can see all department data.
+    """
+    if request.user.is_superuser:
+        # Superuser sees all courses
+        courses = Course.objects.all()
+    else:
+        # Non-superuser sees courses for their department
+        user_department = getattr(request.user, 'userprofile', None).department
+        courses = Course.objects.filter(department=user_department)
+
+    return render(request, "Forms/course_list.html", {"courses": courses})
+@login_required
+def add_course(request):
+    """
+    View to handle adding a new course with restrictions:
+    - Department staff can only see their department in the select dropdown.
+    - Superusers can see all departments.
+    """
+    if request.method == "POST":
+        department = Department.objects.get(department_code=request.POST["department"])
+        name = request.POST["name"]
+        code = request.POST["code"]
+        year_of_introduction = request.POST["year_of_introduction"]
+        activities = request.POST["activities"]
+        document = request.FILES.get("document", None)
+
+        # Create and save the new course
+        Course.objects.create(
+            department=department,
+            name=name,
+            code=code,
+            year_of_introduction=year_of_introduction,
+            activities=activities,
+            document=document
+        )
+        return redirect("view_courses")
+
+    # Fetch departments for the dropdown
+    if request.user.is_superuser:
+        # Superusers can see all departments
+        departments = Department.objects.all()
+    else:
+        # Staff can only see their associated department
+        user_department = getattr(request.user, "userprofile", None).department
+        departments = Department.objects.filter(department_code=user_department.department_code)
+
+    return render(request, "AddData/add_course.html", {"departments": departments})
+
+@login_required
+def edit_course(request, course_id):
+    """
+    View to edit an existing course.
+    """
+    # Fetch the course object based on ID or return 404 if not found
+    course = get_object_or_404(Course, id=course_id)
+
+    # Check if the request method is POST
+    if request.method == "POST":
+        # Get updated values from the POST request
+        course.name = request.POST.get("name", course.name)
+        course.code = request.POST.get("code", course.code)
+        course.year_of_introduction = request.POST.get("year_of_introduction", course.year_of_introduction)
+        course.activities = request.POST.get("activities", course.activities)
+
+        # Update the document if a new file is uploaded
+        if "document" in request.FILES:
+            course.document = request.FILES["document"]
+
+        # Update the department only if the user is a superuser
+        if request.user.is_superuser:
+            department_id = request.POST.get("department", course.department.id)
+            course.department = get_object_or_404(Department, id=department_id)
+
+        try:
+            # Save the updated course
+            course.save()
+            messages.success(request, "Course updated successfully.")
+        except Exception as e:
+            messages.error(request, f"Error updating course: {e}")
+
+        # Redirect to the course list page
+        return redirect("view_courses")
+
+    # Fetch department options for the dropdown
+    if request.user.is_superuser:
+        departments = Department.objects.all()  # Superuser can view all departments
+    else:
+        departments = Department.objects.filter(id=course.department.id)  # Staff sees their own department
+
+    # Render the form with pre-filled course data for GET requests
+    context = {
+        "course": course,
+        "departments": departments,
+    }
+    return render(request, "Forms/course_list.html", context)
+@login_required
+def delete_course_view(request, course_id):
+    """
+    View to delete an existing course.
+    """
+    # Fetch the course object based on ID or return a 404 if not found
+    course = get_object_or_404(Course, id=course_id)
+
+    # Restrict department staff to only delete their department's courses
+    if not request.user.is_superuser:
+        user_department = getattr(request.user, "userprofile", None).department
+        if course.department != user_department:
+            messages.error(request, "You do not have permission to delete this course.")
+            return redirect("view_courses")
+
+    # Delete the course
+    try:
+        course.delete()
+        messages.success(request, "Course deleted successfully.")
+    except Exception as e:
+        messages.error(request, f"Error deleting course: {e}")
+
+    # Redirect to the course list after deletion
+    return redirect("view_courses")
+@login_required
+def download_course_pdf(request, course_id):
+    """
+    Generate and download a PDF for a specific Course record.
+    """
+    # Fetch the specific Course record
+    course = get_object_or_404(Course, id=course_id)
+
+    # Set up the HTTP response for a PDF file
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="course_{course.code}.pdf"'
+
+    # Create the PDF canvas
+    pdf = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    # **Background Color**
+    pdf.setFillColorRGB(0.95, 0.95, 0.95)
+    pdf.rect(0, 0, width, height, fill=True, stroke=False)
+
+    # Header Section
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, height - 100, width - 40, 80, 10, fill=True, stroke=False)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawCentredString(width / 2, height - 60, "Course Details")
+
+    # Table Data for Course Details
+    data = [
+        ["Course Name", course.name],
+        ["Course Code", course.code],
+        ["Year of Introduction", course.year_of_introduction],
+        ["Employability/Skill Development Activities", course.activities],
+        ["Department", course.department.department_name],
+    ]
+
+    # Include document link if available
+    if course.document:
+        data.append(["Document", course.document.url])
+    else:
+        data.append(["Document", "No Document Available"])
+
+    # Style the Table
+    table = Table(data, colWidths=[200, 280])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.lightgrey),
+        ("GRID", (0, 0), (-1, -1), 1, colors.blue),
+        ("BOX", (0, 0), (-1, -1), 2, colors.blue),
+    ]))
+
+    # Draw Table in the Center
+    table_x = (width - 480) / 2
+    table_y = height - 350
+    table.wrapOn(pdf, width, height)
+    table.drawOn(pdf, table_x, table_y)
+
+    # Footer Section
+    pdf.setFillColor(colors.blue)
+    pdf.roundRect(20, 20, width - 40, 50, 10, fill=True, stroke=False)
+    pdf.setFillColor(colors.white)
+    pdf.setFont("Helvetica", 10)
+    pdf.drawCentredString(width / 2, 45, "© 2025 Bharathiar University. All Rights Reserved.")
+
+    # **Page Borders**
+    pdf.setStrokeColor(colors.blue)
+    pdf.setLineWidth(2)
+    pdf.roundRect(10, 10, width - 20, height - 20, 15, stroke=True, fill=False)
+    pdf.roundRect(15, 15, width - 30, height - 30, 12, stroke=True, fill=False)
+
+    pdf.showPage()
+    pdf.save()
+
+    return response
+@login_required
+def course_detail_view(request, course_id):
+    """
+    View to display details of a specific course.
+    """
+    # Fetch the course object or raise a 404 if not found
+    course = get_object_or_404(Course, id=course_id)
+
+    # Render the course detail template
+    context = {
+        "course": course,
+    }
+    return render(request, "viewData/course_details.html", context)
+def value_added_course(request):
+    """
+    View to display a list of Value-Added Courses.
+    - Department staff can only see their department's records.
+    - Superusers can see all records.
+    """
+    if request.user.is_superuser:
+        # Superusers see all records
+        courses = ValueAddedCourse.objects.all()
+    else:
+        # Department staff only see courses from their department
+        user_department = getattr(request.user, "userprofile", None).department
+        courses = ValueAddedCourse.objects.filter(department=user_department)
+
+    context = {
+        "courses": courses,
+    }
+    return render(request, "Forms/value_added_course.html", context)
+
+def add_value_added_course(request):
+    """
+    View to add a new Value-Added Course.
+    - Department staff can only add data for their own department.
+    - Superusers can add data for any department.
+    """
+    if request.method == "POST":
+        # Handle POST request
+        if request.user.is_superuser:
+            # Superuser can select any department
+            department = get_object_or_404(Department, department_code=request.POST["department"])
+        else:
+            # Department staff can only select their associated department
+            department = getattr(request.user, "userprofile", None).department
+
+        name = request.POST["name"]
+        code = request.POST["code"]
+        year_of_offering = request.POST["year_of_offering"]
+        times_offered = request.POST["times_offered"]
+        duration = request.POST["duration"]
+        students_enrolled = request.POST["students_enrolled"]
+        students_completed = request.POST["students_completed"]
+        document = request.FILES.get("document", None)
+
+        # Create the new course
+        ValueAddedCourse.objects.create(
+            department=department,
+            name=name,
+            code=code,
+            year_of_offering=year_of_offering,
+            times_offered=times_offered,
+            duration=duration,
+            students_enrolled=students_enrolled,
+            students_completed=students_completed,
+            document=document
+        )
+
+        return redirect("value_added_courses")
+
+    # Handle GET request: Display the form
+    if request.user.is_superuser:
+        # Superuser sees all departments
+        departments = Department.objects.all()
+    else:
+        # Department staff only sees their own department
+        departments = Department.objects.filter(department_code=request.user.userprofile.department.department_code)
+
+    return render(request, "AddData/add_value_added_course.html", {"departments": departments})
+@login_required
+def edit_value_added_course(request, course_id):
+    """
+    View to edit an existing Value-Added Course record.
+    - Department staff can only edit records for their department.
+    - Superusers can edit all records.
+    """
+    # Fetch the course or return a 404 if not found
+    course = get_object_or_404(ValueAddedCourse, id=course_id)
+
+    # Restrict department staff to only edit their department's courses
+    if not request.user.is_superuser:
+        user_department = getattr(request.user, "userprofile", None).department
+        if course.department != user_department:
+            messages.error(request, "You do not have permission to edit this record.")
+            return redirect("value_added_courses")
+
+    if request.method == "POST":
+        # Update the fields
+        course.name = request.POST.get("name", course.name)
+        course.code = request.POST.get("code", course.code)
+        course.year_of_offering = request.POST.get("year_of_offering", course.year_of_offering)
+        course.times_offered = request.POST.get("times_offered", course.times_offered)
+        course.duration = request.POST.get("duration", course.duration)
+        course.students_enrolled = request.POST.get("students_enrolled", course.students_enrolled)
+        course.students_completed = request.POST.get("students_completed", course.students_completed)
+
+        # Replace the document if a new file is uploaded
+        if "document" in request.FILES:
+            course.document = request.FILES["document"]
+
+        try:
+            course.save()
+            messages.success(request, "Record updated successfully.")
+        except Exception as e:
+            messages.error(request, f"Error updating record: {e}")
+        return redirect("value_added_courses")
+
+    context = {
+        "course": course,
+    }
+    return render(request, "Forms/value_added_course.html", context)
+@login_required
+def delete_value_added_course(request, course_id):
+    """
+    View to delete an existing Value-Added Course record.
+    - Superusers can delete any record.
+    - Department staff can only delete records from their own department.
+    """
+    # Fetch the course or return a 404 if not found
+    course = get_object_or_404(ValueAddedCourse, id=course_id)
+
+    # Restrict department staff to only delete their department's courses
+    if not request.user.is_superuser:
+        user_department = getattr(request.user, "userprofile", None).department
+        if course.department != user_department:
+            messages.error(request, "You do not have permission to delete this record.")
+            return redirect("value_added_courses")
+
+    try:
+        course.delete()
+        messages.success(request, "Record deleted successfully.")
+    except Exception as e:
+        messages.error(request, f"Error deleting record: {e}")
+
+    return redirect("value_added_courses")
+
+
+def student_project_list_view(request):
+    """
+    View to display a list of student projects.
+    - Department staff can only see records for their department.
+    - Superusers can see all records.
+    """
+    if request.user.is_superuser:
+        # Superusers can view all records
+        projects = StudentProject.objects.all()
+    else:
+        # Department staff can only view their department's records
+        user_department = getattr(request.user, "userprofile", None).department
+        projects = StudentProject.objects.filter(department=user_department)
+
+    context = {
+        "projects": projects,
+    }
+    return render(request, "Forms/field_project.html", context)
+def add_student_project_view(request):
+    """
+    View to add a new student project record.
+    - Department staff can only add data for their department.
+    - Superusers can add data for any department.
+    """
+    if request.method == "POST":
+        if request.user.is_superuser:
+            # Superuser can select any department
+            department = get_object_or_404(Department, department_code=request.POST["department"])
+        else:
+            # Department staff can only select their associated department
+            department = getattr(request.user, "userprofile", None).department
+
+        programme_name = request.POST["programme_name"]
+        programme_code = request.POST["programme_code"]
+        students = request.POST["students"]
+        document = request.FILES.get("document", None)
+
+        # Create the new record
+        StudentProject.objects.create(
+            department=department,
+            programme_name=programme_name,
+            programme_code=programme_code,
+            students=students,
+            document=document,
+        )
+
+        return redirect("student_project_list")
+
+    if request.user.is_superuser:
+        # Superusers see all departments
+        departments = Department.objects.all()
+    else:
+        # Department staff only see their own department
+        departments = Department.objects.filter(department_code=request.user.userprofile.department.department_code)
+
+    return render(request, "AddData/add_field_project.html", {"departments": departments})
+@login_required
+def edit_student_project_view(request, project_id):
+    """
+    View to edit an existing student project record.
+    """
+    # Fetch the project or return a 404 if not found
+    project = get_object_or_404(StudentProject, id=project_id)
+
+    if request.method == "POST":
+        # Update project details
+        project.programme_name = request.POST.get("programme_name", project.programme_name)
+        project.programme_code = request.POST.get("programme_code", project.programme_code)
+        project.students = request.POST.get("students", project.students)
+
+        # Handle document replacement only if a new document is uploaded
+        if "document" in request.FILES:
+            project.document = request.FILES["document"]
+
+        # Save the updated project instance
+        try:
+            project.save()
+            messages.success(request, "Record updated successfully.")
+        except Exception as e:
+            messages.error(request, f"Error updating record: {e}")
+
+        return redirect("student_project_list")
+
+    # For GET requests, render the edit modal with the current project data
+    context = {
+        "project": project,
+    }
+    return render(request, "Forms/field_project.html", context)
+@login_required
+def delete_student_project_view(request, project_id):
+    """
+    View to delete a student project record.
+    - Superusers can delete any record.
+    - Department staff can only delete records from their own department.
+    """
+    # Fetch the project or return a 404 if not found
+    project = get_object_or_404(StudentProject, id=project_id)
+
+    # Authorization check
+    if not request.user.is_superuser:
+        user_department = getattr(request.user, "userprofile", None).department
+        if project.department != user_department:
+            messages.error(request, "You do not have permission to delete this record.")
+            return redirect("student_project_list")
+
+    # If authorized, delete the record
+    project.delete()
+    messages.success(request, "Record deleted successfully.")
+    return redirect("student_project_list")

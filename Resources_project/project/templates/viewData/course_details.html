@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Course Details</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <tbody>
+                <tr>
+                    <th>Name of the Course</th>
+                    <td>{{ course.name }}</td>
+                </tr>
+                <tr>
+                    <th>Course Code</th>
+                    <td>{{ course.code }}</td>
+                </tr>
+                <tr>
+                    <th>Year of Introduction</th>
+                    <td>{{ course.year_of_introduction }}</td>
+                </tr>
+                <tr>
+                    <th>Employability/Skill Development Activities</th>
+                    <td>{{ course.activities }}</td>
+                </tr>
+                <tr>
+                    <th>Department</th>
+                    <td>{{ course.department.department_name }}</td>
+                </tr>
+                <tr>
+                    <th>Supporting Document</th>
+                    <td>
+                        {% if course.document %}
+                            <a href="{{ course.document.url }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                📂 View Document
+                            </a>
+                        {% else %}
+                            <span class="text-danger">No Document Available</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Buttons Section -->
+    <div class="mt-3">
+        <a href="{% url 'download_course_pdf' course.id %}" class="btn btn-primary">
+            📄 Download PDF
+        </a>
+        <a href="{% url 'view_courses' %}" class="btn btn-secondary">
+            ⬅ Back to List
+        </a>
+    </div>
+</div>
+{% endblock %}

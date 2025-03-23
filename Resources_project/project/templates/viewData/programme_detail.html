@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Programme Details</h2>
+    
+    <table class="table table-bordered">
+        <tr><th>Programme Code</th><td>{{ programme.programme_code }}</td></tr>
+        <tr><th>Programme Name</th><td>{{ programme.programme_name }}</td></tr>
+        <tr><th>Year of Introduction</th><td>{{ programme.year_of_introduction }}</td></tr>
+        <tr><th>CBCS Status</th><td>{{ programme.cbcs_status }}</td></tr>
+        <tr><th>Year of CBCS Implementation</th><td>{{ programme.year_of_cbcs_implementation }}</td></tr>
+        <tr><th>Year of Revision</th><td>{{ programme.year_of_revision }}</td></tr>
+        <tr><th>Content Update (%)</th><td>{{ programme.content_update_percentage }}</td></tr>
+        <tr>
+            <th>Document Link</th>
+            <td>
+                {% if programme.document_link %}
+                    <a href="{{ programme.document_link }}" target="_blank">View Document</a>
+                {% else %}
+                    <span class="text-danger">No Document Available</span>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <a href="{% url 'download_programme_pdf' programme.id %}" class="btn btn-primary">📄 Download PDF</a>
+    <a href="{% url 'program_list' %}" class="btn btn-secondary">⬅ Back to List</a>
+</div>
+{% endblock %}

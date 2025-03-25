@@ -1,86 +1,102 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
-  .form-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr; /* Two-column layout */
-      gap: 20px; /* Space between grid items */
-      align-items: start;
-  }
-  
-  .form-container .full-width {
-      grid-column: span 2; /* Full width across both columns */
-  }
-
-  .form-label {
+    .section-title {
+      font-size: 18px;
       font-weight: bold;
-  }
+      margin-top: 20px;
+      color: #002d6b;
+    }
+    .form-label {
+      font-weight: bold;
+    }
+    .container {
+      max-width: 1200px;
+      margin: auto;
+    }
+  </style>
 
-  .form-control {
-      width: 100%; /* Ensures inputs take full width of their grid column */
-  }
+<div class="container">
+  <!-- Form Title -->
+  <h2 class="text-center my-4" style="color: #002d6b;">Add New Course</h2>
 
-  .btn-container {
-      grid-column: span 2; /* Buttons span both columns */
-      text-align: center;
-  }
-</style>
-
-<div class="container mt-4">
-    <h2 class="mb-4 text-center">Add New Course</h2>
-    <form method="POST" enctype="multipart/form-data" action="{% url 'add_course' %}">
-        {% csrf_token %}
-        
-        <!-- Form Container -->
-        <div class="form-container">
-            
-            <!-- Department Field -->
-            <div>
-                <label for="department" class="form-label">Department</label>
-                <select class="form-control" id="department" name="department" required>
-                    <option value="" disabled selected>Select Department</option>
-                    {% for department in departments %}
-                    <option value="{{ department.department_code }}">{{ department.department_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <!-- Year of Introduction -->
-            <div>
-                <label for="yearOfIntroduction" class="form-label">Year of Introduction</label>
-                <input type="number" class="form-control" id="yearOfIntroduction" name="year_of_introduction" placeholder="Enter year of introduction" required>
-            </div>
-
-            <!-- Name of the Course -->
-            <div>
-                <label for="courseName" class="form-label">Name of the Course</label>
-                <input type="text" class="form-control" id="courseName" name="name" placeholder="Enter course name" required>
-            </div>
-
-            <!-- Course Code -->
-            <div>
-                <label for="courseCode" class="form-label">Course Code</label>
-                <input type="text" class="form-control" id="courseCode" name="code" placeholder="Enter course code" required>
-            </div>
-
-            <!-- Activities/Content -->
-            <div class="full-width">
-                <label for="activities" class="form-label">Employability/Skill Development Activities</label>
-                <textarea class="form-control" id="activities" name="activities" rows="4" placeholder="Describe activities or content" required></textarea>
-            </div>
-
-            <!-- Document Upload -->
-            <div class="full-width">
-                <label for="document" class="form-label">Upload Document (Optional)</label>
-                <input type="file" class="form-control" id="document" name="document">
-            </div>
-
-            <!-- Submit and Cancel Buttons -->
-            <div class="btn-container">
-                <button type="submit" class="btn btn-primary">Add Course</button>
-                <a href="{% url 'view_courses' %}" class="btn btn-secondary">Cancel</a>
-            </div>
+  <!-- Main Form -->
+  <form method="POST" enctype="multipart/form-data" action="{% url 'add_course' %}">
+    {% csrf_token %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-    </form>
+      {% endfor %}
+    {% endif %}
+    <div class="row">
+      <!-- Department Field -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Department</label>
+        <select class="form-control" name="department" required>
+          <option value="" disabled selected>Select Department</option>
+          {% for department in departments %}
+          <option value="{{ department.department_code }}">{{ department.department_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Year of Introduction -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Year of Introduction</label>
+        <input type="number" class="form-control" name="year_of_introduction" placeholder="Enter Year" required>
+      </div>
+
+      <!-- Name of the Course -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Name of the Course</label>
+        <input type="text" class="form-control" name="name" placeholder="Enter Course Name" required>
+      </div>
+
+      <!-- Course Code -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Course Code</label>
+        <input type="text" class="form-control" name="code" placeholder="Enter Course Code" required>
+      </div>
+
+      <!-- Employability/Skill Development Activities -->
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">Employability/Skill Development Activities</label>
+        <textarea class="form-control" name="activities" rows="4" placeholder="Describe Activities or Content" required></textarea>
+      </div>
+
+      <!-- Document Upload -->
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">Upload Document (Optional)</label>
+        <input type="file" class="form-control" name="document">
+      </div>
+    </div>
+    <div class="form-footer">
+      <button type="reset" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+      <button type="submit" class="btn btn-primary px-4">Submit</button>
+    </div>
+  </form>
+
+  <!-- Bulk Upload Section -->
+  <hr class="my-4">
+  <h2 class="text-center my-4" style="color: #002d6b;">Bulk Upload Courses</h2>
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-md-12 mb-3 text-center">
+        <label class="form-label fw-bold">Upload Excel File</label>
+        <input type="file" class="form-control" name="bulk_upload" accept=".xlsx, .xls" required>
+      </div>
+    </div>
+    <div class="text-center">
+      <!-- Link to download sample Excel file -->
+      <a href="" class="btn btn-success px-4">Download Sample Excel</a>
+      <button type="submit" class="btn btn-primary px-4">Upload</button>
+    </div>
+  </form>
+  <br/><br/><br/>
 </div>
+
 {% endblock %}

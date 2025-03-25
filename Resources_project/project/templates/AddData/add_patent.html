@@ -1,74 +1,82 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
-  .card-container {
-    max-width: 700px;
-    margin: 50px auto;
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-bottom: 100px;
-  }
-  .card-header {
-    background-color: #002d6b;
-    color: white;
-    text-align: center;
-    font-size: 20px;
+  .section-title {
+    font-size: 18px;
     font-weight: bold;
-    padding: 15px;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-  }
-  .form-footer {
     margin-top: 20px;
-    display: flex;
-    justify-content: center;
-    gap: 10px;
+    color: #002d6b;
+  }
+  .form-label {
+    font-weight: bold;
+  }
+  .container {
+    max-width: 1200px;
+    margin: auto;
   }
 </style>
 
 <div class="container">
-  <div class="card-container">
-    <div class="card-header">
-      Add Patent
-    </div>
-    <div class="card-body">
-      <form method="POST" action="" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label for="patenterName" class="form-label fw-bold">Name of the Patenter</label>
-            <input type="text" class="form-control" id="patenterName" name="patenter_name" placeholder="Enter Patenter's Name" required>
-          </div>
+  <!-- Form Title -->
+  <h2 class="text-center my-4" style="color: #002d6b;">Add Patent</h2>
 
-          <div class="col-md-6 mb-3">
-            <label for="patentNumber" class="form-label fw-bold">Patent Number</label>
-            <input type="text" class="form-control" id="patentNumber" name="patent_number" placeholder="Enter Patent Number" required>
-          </div>
-
-          <div class="col-md-6 mb-3">
-            <label for="patentTitle" class="form-label fw-bold">Title of the Patent</label>
-            <input type="text" class="form-control" id="patentTitle" name="patent_title" placeholder="Enter Patent Title" required>
-          </div>
-
-          <div class="col-md-6 mb-3">
-            <label for="awardYear" class="form-label fw-bold">Year of Award</label>
-            <input type="number" class="form-control" id="awardYear" name="award_year" placeholder="Enter Year (e.g., 2024)" min="1900" max="2100" required>
-          </div>
-
-          <div class="col-md-12 mb-3">
-            <label for="document" class="form-label fw-bold">Upload Supporting Document</label>
-            <input type="file" class="form-control" id="document" name="document" accept=".pdf,.jpg,.png,.jpeg" required>
-          </div>
+  <!-- Main Form -->
+  <form method="POST" action="" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-
-        <div class="form-footer">
-          <button type="button" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
-          <button type="submit" class="btn btn-primary px-4">Save</button>
-        </div>
-      </form>
+      {% endfor %}
+    {% endif %}
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Name of the Patenter</label>
+        <input type="text" class="form-control" name="patenter_name" placeholder="Enter Patenter's Name" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Patent Number</label>
+        <input type="text" class="form-control" name="patent_number" placeholder="Enter Patent Number" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Title of the Patent</label>
+        <input type="text" class="form-control" name="patent_title" placeholder="Enter Patent Title" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Year of Award</label>
+        <input type="number" class="form-control" name="award_year" placeholder="Enter Year (e.g., 2024)" min="1900" max="2100" required>
+      </div>
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">Upload Supporting Document</label>
+        <input type="file" class="form-control" name="document" accept=".pdf,.jpg,.png,.jpeg" required>
+      </div>
     </div>
-  </div>
+    <div class="form-footer">
+      <button type="reset" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+      <button type="submit" class="btn btn-primary px-4">Submit</button>
+    </div>
+  </form>
+
+  <!-- Bulk Upload Section -->
+  <hr class="my-4">
+  <h2 class="text-center my-4" style="color: #002d6b;">Bulk Upload Patents</h2>
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-md-12 mb-3 text-center">
+        <label class="form-label fw-bold">Upload Excel File</label>
+        <input type="file" class="form-control" name="bulk_upload" accept=".xlsx, .xls" required>
+      </div>
+    </div>
+    <div class="text-center">
+      <!-- Link to download sample Excel file -->
+      <a href="{% static 'sample_data/sample_patents.xlsx' %}" class="btn btn-success px-4">Download Sample Excel</a>
+      <button type="submit" class="btn btn-primary px-4">Upload</button>
+    </div>
+  </form>
+  <br/><br/><br/>
 </div>
+
 {% endblock %}

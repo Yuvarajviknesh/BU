@@ -1,74 +1,85 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
-  .card-container {
-    max-width: 800px;
-    margin: 50px auto;
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-bottom: 100px;
-  }
-  .card-header {
-    background-color: #002d6b;
-    color: white;
-    text-align: center;
-    font-size: 22px;
+  .section-title {
+    font-size: 18px;
     font-weight: bold;
-    padding: 15px;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-  }
-  .form-footer {
     margin-top: 20px;
-    display: flex;
-    justify-content: center;
-    gap: 10px;
+    color: #002d6b;
+  }
+  .form-label {
+    font-weight: bold;
+  }
+  .container {
+    max-width: 1200px;
+    margin: auto;
   }
 </style>
 
 <div class="container">
-  <div class="card-container">
-    <div class="card-header">
-      Add Field Project / Research Project / Internship Record
-    </div>
-    <div class="card-body">
-      <form method="POST" action="{% url 'add_student_project' %}" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="row">
-          <!-- Programme Name -->
-          <div class="col-md-12 mb-3">
-            <label for="programmeName" class="form-label fw-bold">Programme Name</label>
-            <input type="text" class="form-control" id="programmeName" name="programme_name" placeholder="Enter Programme Name" required>
-          </div>
+  <!-- Form Title -->
+  <h2 class="text-center my-4" style="color: #002d6b;">Add Field Project / Research Project / Internship Record</h2>
 
-          <!-- Programme Code -->
-          <div class="col-md-12 mb-3">
-            <label for="programmeCode" class="form-label fw-bold">Programme Code</label>
-            <input type="text" class="form-control" id="programmeCode" name="programme_code" placeholder="Enter Programme Code" required>
-          </div>
-
-          <!-- List of Students -->
-          <div class="col-md-12 mb-3">
-            <label for="studentList" class="form-label fw-bold">List of Students</label>
-            <textarea class="form-control" id="studentList" name="students" placeholder="Enter the names of students (e.g., John Doe, Jane Smith)" rows="5" required></textarea>
-          </div>
-
-          <!-- Document Upload -->
-          <div class="col-md-12 mb-3">
-            <label for="document" class="form-label fw-bold">Upload Relevant Document</label>
-            <input type="file" class="form-control" id="document" name="document" accept=".pdf,.jpg,.png,.jpeg" required>
-          </div>
+  <!-- Main Form -->
+  <form method="POST" action="{% url 'add_student_project' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
+      {% endfor %}
+    {% endif %}
+    <div class="row">
+      <!-- Programme Name -->
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">Programme Name</label>
+        <input type="text" class="form-control" name="programme_name" placeholder="Enter Programme Name" required>
+      </div>
 
-        <!-- Buttons -->
-        <div class="form-footer">
-          <button type="button" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
-          <button type="submit" class="btn btn-primary px-4">Save</button>
-        </div>
-      </form>
+      <!-- Programme Code -->
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">Programme Code</label>
+        <input type="text" class="form-control" name="programme_code" placeholder="Enter Programme Code" required>
+      </div>
+
+      <!-- List of Students -->
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">List of Students</label>
+        <textarea class="form-control" name="students" placeholder="Enter the names of students (e.g., John Doe, Jane Smith)" rows="5" required></textarea>
+      </div>
+
+      <!-- Document Upload -->
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">Upload Relevant Document</label>
+        <input type="file" class="form-control" name="document" accept=".pdf,.jpg,.png,.jpeg" required>
+      </div>
     </div>
-  </div>
+    <div class="form-footer">
+      <button type="reset" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+      <button type="submit" class="btn btn-primary px-4">Submit</button>
+    </div>
+  </form>
+
+  <!-- Bulk Upload Section -->
+  <hr class="my-4">
+  <h2 class="text-center my-4" style="color: #002d6b;">Bulk Upload Records</h2>
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-md-12 mb-3 text-center">
+        <label class="form-label fw-bold">Upload Excel File</label>
+        <input type="file" class="form-control" name="bulk_upload" accept=".xlsx, .xls" required>
+      </div>
+    </div>
+    <div class="text-center">
+      <!-- Link to download sample Excel file -->
+      <a href="" class="btn btn-success px-4">Download Sample Excel</a>
+      <button type="submit" class="btn btn-primary px-4">Upload</button>
+    </div>
+  </form>
+  <br/><br/><br/>
 </div>
+
 {% endblock %}

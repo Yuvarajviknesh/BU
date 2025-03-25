@@ -1,64 +1,78 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
-  .card-container {
-    max-width: 900px;
-    margin: 50px auto;
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-  .card-header {
-    background-color: #002d6b;
-    color: white;
-    text-align: center;
-    font-size: 20px;
+  .section-title {
+    font-size: 18px;
     font-weight: bold;
-    padding: 15px;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-  }
-  .form-footer {
     margin-top: 20px;
-    display: flex;
-    justify-content: center;
-    gap: 10px;
+    color: #002d6b;
+  }
+  .form-label {
+    font-weight: bold;
+  }
+  .container {
+    max-width: 1200px;
+    margin: auto;
   }
 </style>
 
 <div class="container">
-  <div class="card-container">
-    <div class="card-header">
-      Add Capacity Development Initiative
-    </div>
-    <div class="card-body">
-      <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="row">
-          <div class="col-md-12 mb-3">
-            <label for="programName" class="form-label fw-bold">Name of the Capability Enhancement Program</label>
-            <input type="text" class="form-control" id="programName" name="program_name" placeholder="Enter program name (e.g., Soft Skills, Communication Skills)" required>
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="implementationDate" class="form-label fw-bold">Date of Implementation</label>
-            <input type="date" class="form-control" id="implementationDate" name="implementation_date" required>
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="studentsEnrolled" class="form-label fw-bold">Number of Students Enrolled</label>
-            <input type="number" class="form-control" id="studentsEnrolled" name="students_enrolled" placeholder="Enter number of students" required>
-          </div>
-          <div class="col-md-12 mb-3">
-            <label for="agencyDetails" class="form-label fw-bold">Name of Agencies/Consultants Involved</label>
-            <textarea class="form-control" id="agencyDetails" name="agency_details" rows="3" placeholder="Enter agency/consultant details"></textarea>
-          </div>
+  <!-- Form Title -->
+  <h2 class="text-center my-4" style="color: #002d6b;">Add Capacity Development Initiative</h2>
+
+  <!-- Main Form -->
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-        <div class="form-footer">
-          <button type="button" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
-          <button type="submit" class="btn btn-primary px-4">Save</button>
-        </div>
-      </form>
+      {% endfor %}
+    {% endif %}
+    <div class="row">
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">Name of the Capability Enhancement Program</label>
+        <input type="text" class="form-control" name="program_name" placeholder="Enter program name (e.g., Soft Skills, Communication Skills)" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Date of Implementation</label>
+        <input type="date" class="form-control" name="implementation_date" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Number of Students Enrolled</label>
+        <input type="number" class="form-control" name="students_enrolled" placeholder="Enter number of students" required>
+      </div>
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">Name of Agencies/Consultants Involved</label>
+        <textarea class="form-control" name="agency_details" rows="3" placeholder="Enter agency/consultant details"></textarea>
+      </div>
     </div>
-  </div>
+    <div class="form-footer">
+      <button type="reset" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+      <button type="submit" class="btn btn-primary px-4">Submit</button>
+    </div>
+  </form>
+
+  <!-- Bulk Upload Section -->
+  <hr class="my-4">
+  <h2 class="text-center my-4" style="color: #002d6b;">Bulk Upload Initiatives</h2>
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-md-12 mb-3 text-center">
+        <label class="form-label fw-bold">Upload Excel File</label>
+        <input type="file" class="form-control" name="bulk_upload" accept=".xlsx, .xls" required>
+      </div>
+    </div>
+    <div class="text-center">
+      <!-- Link to download sample Excel file -->
+      <a href="" class="btn btn-success px-4">Download Sample Excel</a>
+      <button type="submit" class="btn btn-primary px-4">Upload</button>
+    </div>
+  </form>
+  <br/><br/><br/>
 </div>
+
 {% endblock %}

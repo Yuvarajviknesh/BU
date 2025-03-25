@@ -123,12 +123,22 @@
       }
       
       .btn-delete {
-        background-color: #ed1b1b; /* Red for Delete */
+        background-color: rgb(237, 27, 27);
+        color: #fff;
       }
-      
+      .btn-delete::before {
+        content: "🗑️ ";
+        margin-right: 3px;
+      }
       .btn-edit {
-        background-color: #007bff; /* Blue for Edit */
+        background-color: #007bff;
+        color: #fff;
       }
+      .btn-edit::before {
+        content: "✏️ ";
+        margin-right: 3px;
+      }
+
       
       .btn-view {
         background-color: #17a2b8; /* Light Blue for View */
@@ -160,7 +170,7 @@
         }
     
         #searchBar {
-            width: 200px;
+            width: 200px;    
         }
     
         .filter-container {
@@ -173,48 +183,72 @@
         }
     }
     
+    
 </style>
-
-<!-- Back Button -->
-<a href="{% url 'department_dashboard' %}">
-    <button class="btn btn-back">&larr; Back</button>
-</a>
-
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2>Programmes List</h2>
         <a href="{% url 'add_program_list' %}" class="btn btn-add">+ Add</a>
     </div>
 
-    <!-- Filters and Search -->
-    <div class="filter-container">
-        <div>
-            <label for="fromDate">From:</label>
-            <input type="date" id="fromDate" onchange="applyFilters()">
-        </div>
-        <div>
-            <label for="toDate">To:</label>
-            <input type="date" id="toDate" onchange="applyFilters()">
-        </div>
-        <div>
-            <select id="programmeFilter" onchange="applyFilters()">
-                <option value="">Filter by CBCS Status</option>
-                <option value="Yes">CBCS Implemented</option>
-                <option value="No">CBCS Not Implemented</option>
+    <form method="GET" class="filter-container d-flex flex-wrap gap-3 align-items-end">
+        <!-- From Year Dropdown -->
+        <div class="mb-3 me-3">
+            <label for="fromYear">From Year:</label>
+            <select name="fromYear" id="fromYear" class="form-control">
+                <option value="">Select Year</option>
+                {% for year in year_range %}
+                    <option value="{{ year }}" {% if from_year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
             </select>
         </div>
-        <div>
-            <input type="text" id="searchBar" placeholder="Search" onkeyup="applyFilters()">
+    
+        <!-- To Year Dropdown -->
+        <div class="mb-3 me-3">
+            <label for="toYear">To Year:</label>
+            <select name="toYear" id="toYear" class="form-control">
+                <option value="">Select Year</option>
+                {% for year in year_range %}
+                    <option value="{{ year }}" {% if to_year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
         </div>
-        <div class="dropdown">
-            <button class="dropdown-button">Download</button>
-            <div class="dropdown-content">
-                <a href="{% url 'download_excel' %}">Download Excel</a>
-                <a href="{% url 'download_pdf' %}">Download PDF</a>
-            </div>
+    
+        <!-- CBCS Filter -->
+        <div class="mb-3 me-3">
+            <label for="programmeFilter">CBCS Status:</label>
+            <select name="programmeFilter" id="programmeFilter" class="form-control">
+                <option value="">All</option>
+                <option value="CBCS" {% if cbcs_status == "CBCS" %}selected{% endif %}>CBCS Implemented</option>
+                <option value="Non-CBCS" {% if cbcs_status == "Non-CBCS" %}selected{% endif %}>CBCS Not Implemented</option>
+            </select>
         </div>
-    </div>
-
+    
+        <!-- Apply and Reset Buttons -->
+        <div class="d-flex gap-2 mb-3 me-3">
+            <button type="submit" class="btn btn-apply" style="background-color: blue; border-color: blue;">Apply</button>
+            <a href="{% url 'program_list' %}" class="btn btn-reset" style="background-color: red; border-color: red; color: white;">Reset</a>
+        </div>
+    
+        <!-- Search Bar and Search Button -->
+        <div class="d-flex align-items-center flex-grow-1 gap-2 mb-3">
+            <label for="searchBar">Search:</label>
+            <input type="text" name="searchBar" id="searchBar" class="form-control flex-grow-1"
+                   placeholder="Enter programme name" value="{{ search_query }}">
+            <button type="submit" class="btn btn-search" style="background-color: #0069d9; border-color: #0069d9;">Search</button>
+        </div>
+    
+        <!-- Download Options -->
+        <div class="dropdown mb-3">
+            <button class="btn btn-info dropdown-toggle" type="button" data-bs-toggle="dropdown">Download</button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{% url 'download_excel' %}">Download Excel</a></li>
+                <li><a class="dropdown-item" href="{% url 'download_pdf' %}">Download PDF</a></li>
+            </ul>
+        </div>
+    </form>
+    
+    
     <!-- Programmes Table -->
     <div class="table-responsive">
         <table class="programme-table">
@@ -349,11 +383,12 @@
 </div>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        let editModal = document.getElementById("editModal");
+        // Edit modal functionality
+        const editModal = document.getElementById("editModal");
         editModal.addEventListener("show.bs.modal", function (event) {
-            let button = event.relatedTarget;
-    
-            // Populate modal fields with button's data attributes
+            const button = event.relatedTarget;
+
+            // Dynamically populate modal fields based on button attributes
             document.getElementById("programmeId").value = button.getAttribute("data-id");
             document.getElementById("programmeCode").value = button.getAttribute("data-programme-code");
             document.getElementById("programmeName").value = button.getAttribute("data-programme-name");
@@ -363,64 +398,60 @@
             document.getElementById("yearOfRevision").value = button.getAttribute("data-year-of-revision");
             document.getElementById("contentUpdatePercentage").value = button.getAttribute("data-content-update-percentage");
             document.getElementById("documentLink").value = button.getAttribute("data-document-link");
-    
-            let form = document.getElementById("editForm");
-            form.action = button.getAttribute("data-update-url"); // Dynamically set the form's action
+
+            const form = document.getElementById("editForm");
+            form.action = button.getAttribute("data-update-url"); // Update form action URL
         });
-    
+
         // Delete confirmation
-        function confirmDelete(event, url) {
+        window.confirmDelete = function(event, url) {
             event.preventDefault();
             if (confirm("Are you sure you want to delete this programme?")) {
                 window.location.href = url;
             }
-        }
-    
-        // Apply filters on table rows
-        function applyFilters() {
-            let fromDate = document.getElementById("fromDate").value;
-            let toDate = document.getElementById("toDate").value;
-            let programmeFilter = document.getElementById("programmeFilter").value;
-            let searchBar = document.getElementById("searchBar").value.toLowerCase();
-    
-            let table = document.getElementById("programmeTableBody");
-            let rows = table.getElementsByTagName("tr");
-    
-            for (let row of rows) {
-                let cells = row.getElementsByTagName("td");
-                let showRow = true;
-    
-                // Filter by date range
-                if (fromDate || toDate) {
-                    let yearOfIntroduction = cells[2].textContent; // Assuming column 2 has year_of_introduction
-                    if (fromDate && yearOfIntroduction < fromDate || toDate && yearOfIntroduction > toDate) {
-                        showRow = false;
-                    }
+        };
+
+        // Apply filters to table rows
+        window.applyFilters = function() {
+            const fromYear = document.getElementById("fromYear").value;
+            const toYear = document.getElementById("toYear").value;
+            const programmeFilter = document.getElementById("programmeFilter").value;
+            const searchBar = document.getElementById("searchBar").value.toLowerCase();
+
+            const tableBody = document.getElementById("programmeTableBody");
+            const rows = tableBody.getElementsByTagName("tr");
+
+            for (const row of rows) {
+                const cells = row.getElementsByTagName("td");
+                let isVisible = true;
+
+                // Filter by year range
+                const yearOfIntroduction = parseInt(cells[2].textContent.trim(), 10); // Column index 2: "Year of Introduction"
+                if (fromYear && yearOfIntroduction < parseInt(fromYear)) {
+                    isVisible = false;
                 }
-    
+                if (toYear && yearOfIntroduction > parseInt(toYear)) {
+                    isVisible = false;
+                }
+
                 // Filter by CBCS status
-                if (programmeFilter) {
-                    let cbcsStatus = cells[3].textContent; // Assuming column 3 has cbcs_status
-                    if (cbcsStatus !== programmeFilter) {
-                        showRow = false;
-                    }
+                const cbcsStatus = cells[3].textContent.trim(); // Column index 3: "CBCS Status"
+                if (programmeFilter && cbcsStatus !== programmeFilter) {
+                    isVisible = false;
                 }
-    
-                // Filter by search bar text
-                let programmeCode = cells[0].textContent.toLowerCase(); // Assuming column 0 has programme_code
-                let programmeName = cells[1].textContent.toLowerCase(); // Assuming column 1 has programme_name
+
+                // Filter by search text
+                const programmeCode = cells[0].textContent.trim().toLowerCase(); // Column index 0: "Programme Code"
+                const programmeName = cells[1].textContent.trim().toLowerCase(); // Column index 1: "Programme Name"
                 if (searchBar && !programmeCode.includes(searchBar) && !programmeName.includes(searchBar)) {
-                    showRow = false;
+                    isVisible = false;
                 }
-    
+
                 // Show or hide rows based on filters
-                row.style.display = showRow ? "" : "none";
+                row.style.display = isVisible ? "" : "none";
             }
-        }
-    
-        // Expose functions globally for filter and delete actions
-        window.confirmDelete = confirmDelete;
-        window.applyFilters = applyFilters;
+        };
     });
 </script>
+
 {% endblock %}    

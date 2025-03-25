@@ -1,191 +1,157 @@
-/* General Styles */
-body, html {
-    font-family: Arial, sans-serif;
-    background-color: #f5f5f5;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    padding-top: 80px; /* To prevent content from hiding under fixed header */
-}
-
-/* Header Styles */
-.header {
-    background-color: #002d6b;
-    color: white;
-    padding: 15px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: fixed; /* Sticks the header to the top */
-    top: 0;
-    left: 0;
-    width: 100%; /* Full width */
-    z-index: 1000; /* On top of all elements */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-    box-sizing: border-box;
-}
-
-/* Logo */
-.logo {
-    height: 60px;
-    display: block;
-}
-
-/* User Info (Desktop) */
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.username {
-    color: white;
-    font-size: 16px;
-}
-
-.logout-btn {
-    text-decoration: none;
-    color: white;
-    font-size: 16px;
-    background-color: #f4a641;
-    padding: 5px 10px;
-    border-radius: 5px;
-}
-
-.logout-btn:hover {
-    background-color: #ff8800;
-}
-
-/* Mobile Navbar */
-@media (max-width: 768px) {
-    .user-info {
-        display: none; /* Hide username & logout on small screens */
+    /* General Styles */
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 0;
     }
 
-    .navbar-toggler {
-        background-color: white;
-        color: #002d6b;
-        font-size: 24px;
-        border: none;
-        padding: 5px 10px;
-        border-radius: 5px;
-    }
-
-    /* Full-width dropdown menu */
-    .fullwidth-menu {
-        width: 100%;
-        background-color: #002d6b;
-        text-align: center;
-        padding: 10px 0;
-    }
-
-    .menu-content {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .fullwidth-menu .username {
-        color: white;
-        font-size: 18px;
-    }
-
-    .fullwidth-menu .logout-btn {
-        color: white;
-        font-size: 16px;
-        background-color: #f4a641;
-        padding: 8px 15px;
-        border-radius: 5px;
-        text-decoration: none;
-    }
-}
-
-/* Footer Styles */
-.footer {
-    background-color: #002d6b;
-    color: white;
-    text-align: center;
-    padding: 10px 0;
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-}
-
-.footer a {
-    color: #f4a641;
-    text-decoration: none;
-}
-
-.footer a:hover {
-    text-decoration: underline;
-}
-
-/* Login Section */
-.login-section {
-    margin: 100px auto;
-    max-width: 400px;
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.login-section h2 {
-    text-align: center;
-    color: #002d6b;
-}
-
-/* Button Styles */
-.btn-primary {
-    background-color: #002d6b;
-    border: none;
-    color: white;
-    padding: 10px 20px;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-}
-
-.btn-primary:hover {
-    background-color: #f4a641;
-    border: none;
-}
-
-/* Utility Classes */
-.text-center {
-    text-align: center;
-}
-
-.mt-20 {
-    margin-top: 20px;
-}
-
-.mb-20 {
-    margin-bottom: 20px;
-}
-
-.p-20 {
-    padding: 20px;
-}
-
-/* Responsive Fixes */
-@media (max-width: 768px) {
+    /* Fixed Header */
     .header {
-        flex-direction: column;
-        padding: 10px;
+        background-color: #002d6b;
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1011;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
     .logo {
-        height: 50px;
-        margin-bottom: 10px;
+        height: 60px;
     }
 
-    .fullwidth-menu {
-        padding: 15px 0;
+    /* Back Button */
+    .back-btn {
+        background-color: red;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-left: 10px;
+        text-align: center;
     }
 
-    .login-section {
-        width: 90%;
-        margin: 120px auto;
+    /* User Info (Desktop) */
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
     }
-}
+
+    .username {
+        color: white;
+        font-size: 16px;
+    }
+
+    .home-btn {
+        text-decoration: none;
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .home-btn:hover {
+        background-color: #004080;
+    }
+
+    .logout-btn {
+        text-decoration: none;
+        color: white;
+        font-size: 16px;
+        background-color: #f4a641;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .logout-btn:hover {
+        background-color: #ff8800;
+    }
+
+    /* Mobile Navbar */
+    @media (max-width: 768px) {
+        .user-info {
+            display: none; /* Hide username & logout on small screens */
+        }
+
+        .navbar-toggler {
+            background-color: white;
+            color: #002d6b;
+            font-size: 24px;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            position: absolute;
+            top: 15px;
+            right: 20px; /* Ensure the menu icon stays on the right */
+        }
+
+        /* Full-width dropdown menu */
+        .fullwidth-menu {
+            width: 100%;
+            background-color: #002d6b;
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        .menu-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .fullwidth-menu .username {
+            color: white;
+            font-size: 18px;
+        }
+
+        .fullwidth-menu .home-btn {
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .fullwidth-menu .logout-btn {
+            color: white;
+            font-size: 16px;
+            background-color: #f4a641;
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+        .back-btn {
+            margin-left: 0;
+            margin-top: 10px;
+        }
+    }
+
+    /* Footer Styles */
+    .footer {
+        background-color: #002d6b;
+        color: white;
+        text-align: center;
+        padding: 10px 0;
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        z-index: 999;
+    }
+
+    .footer a {
+        color: #f4a641;
+        text-decoration: none;
+    }
+
+    .footer a:hover {
+        text-decoration: underline;
+    }

@@ -1,37 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
-  .card-container {
-    max-width: 900px;
-    margin: 50px auto;
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-bottom: 120px;
-  }
-  .card-header {
-    background-color: #002d6b;
-    color: white;
-    text-align: center;
-    font-size: 20px;
+  .section-title {
+    font-size: 18px;
     font-weight: bold;
-    padding: 15px;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-  }
-  .form-container {
-    padding: 20px;
-  }
-  .form-footer {
     margin-top: 20px;
-    display: flex;
-    justify-content: center;
-    gap: 10px;
+    color: #002d6b;
   }
-  .input-group {
-    display: flex;
-    align-items: center;
+  .form-label {
+    font-weight: bold;
+  }
+  .container {
+    max-width: 1200px;
+    margin: auto;
   }
   .add-investor-btn {
     background-color: #f4a641;
@@ -41,9 +22,6 @@
     padding: 6px 12px;
     display: flex;
     align-items: center;
-  }
-  .add-investor-btn i {
-    margin-right: 5px;
   }
   .add-investor-btn:hover {
     background-color: #f19823;
@@ -56,9 +34,6 @@
     cursor: pointer;
     padding: 5px;
   }
-  .remove-investor i {
-    font-size: 18px;
-  }
   .remove-investor:hover {
     color: darkred;
   }
@@ -68,94 +43,112 @@
   .investor-container .input-group {
     margin-bottom: 5px;
   }
-  .input-group select, .form-control {
-    width: 100%;
-  }
 </style>
 
 <div class="container">
-  <div class="card-container">
-    <div class="card-header">
-      Add Research Grants and Recognitions
-    </div>
-    <div class="card-body form-container">
-      <form id="addResearchGrantForm" method="post" action="{% url 'add_research_grant' %}">
-        {% csrf_token %}
-        <div class="row">
-          <div class="col-md-12 mb-3">
-            <label for="scheme_name" class="form-label fw-bold">Name of the Scheme/Project/Endowments/Chairs</label>
-            <input type="text" class="form-control" name="scheme_name" id="scheme_name" placeholder="Enter scheme/project name" required>
-          </div>
+  <!-- Form Title -->
+  <h2 class="text-center my-4" style="color: #002d6b;">Add Research Grants and Recognitions</h2>
 
-          <div class="col-md-12 mb-3">
-            <label for="investor" class="form-label fw-bold">Principal Investigator/Co-Investigator</label>
-            <div class="input-group">
-              <input type="text" class="form-control" name="investor[]" id="investor" placeholder="Enter investigator's name" required>
-              <button type="button" class="add-investor-btn" onclick="addInvestor()">
-              + Add Investigator
-              </button>
-            </div>
-            <div id="investorList" class="investor-container"></div>
-          </div>
-
-          <div class="col-md-12 mb-3">
-            <label for="funding_agency" class="form-label fw-bold">Name of the Funding Agency</label>
-            <input type="text" class="form-control" name="funding_agency" id="funding_agency" placeholder="Enter funding agency" required>
-          </div>
-
-          <div class="col-md-6 mb-3">
-            <label for="grant_type" class="form-label fw-bold">Type (Government/Non-Government)</label>
-            <select class="form-control" name="grant_type" id="grant_type" required>
-              <option value="">Select Type</option>
-              <option value="Government">Government</option>
-              <option value="Non-Government">Non-Government</option>
-            </select>
-          </div>
-
-          <div class="col-md-6 mb-3">
-            <label for="department" class="form-label fw-bold">Department</label>
-            {% if request.user.is_superuser %}
-              <select class="form-control" name="department" id="department">
-                <option value="">Select Department</option>
-                {% for dept in departments %}
-                  <option value="{{ dept.department_code }}">{{ dept.department_name }}</option>
-                {% endfor %}
-              </select>
-            {% else %}
-              <input type="text" class="form-control" name="department" id="department"
-                     value="{{ department.department_name }}" readonly>
-            {% endif %}
-          </div>
-
-          <div class="col-md-6 mb-3">
-            <label for="year_of_award" class="form-label fw-bold">Year of Award</label>
-            <input type="number" class="form-control" name="year_of_award" id="year_of_award" placeholder="Enter year" min="2000" max="2100" required>
-          </div>
-
-          <div class="col-md-6 mb-3">
-            <label for="funds_provided" class="form-label fw-bold">Funds Provided (INR in Lakhs)</label>
-            <input type="number" class="form-control" name="funds_provided" id="funds_provided" placeholder="Enter funds" min="1" required>
-          </div>
-
-          <div class="col-md-12 mb-3">
-            <label for="duration" class="form-label fw-bold">Duration of the Project</label>
-            <div class="input-group">
-              <input type="number" class="form-control" name="duration" id="duration" placeholder="Enter duration" min="1" required>
-              <select class="form-control" name="duration_unit" id="duration_unit" required>
-                <option value="Months">Months</option>
-                <option value="Years">Years</option>
-              </select>
-            </div>
-          </div>
+  <!-- Main Form -->
+  <form id="addResearchGrantForm" method="POST" action="{% url 'add_research_grant' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
+      {% endfor %}
+    {% endif %}
+    <div class="row">
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">Name of the Scheme/Project/Endowments/Chairs</label>
+        <input type="text" class="form-control" name="scheme_name" placeholder="Enter scheme/project name" required>
+      </div>
 
-        <div class="form-footer">
-          <button type="button" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
-          <button type="submit" class="btn btn-primary px-4">Save</button>
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">Principal Investigator/Co-Investigator</label>
+        <div class="input-group">
+          <input type="text" class="form-control" name="investor[]" placeholder="Enter investigator's name" required>
+          <button type="button" class="add-investor-btn" onclick="addInvestor()">+ Add Investigator</button>
         </div>
-      </form>
+        <div id="investorList" class="investor-container"></div>
+      </div>
+
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">Name of the Funding Agency</label>
+        <input type="text" class="form-control" name="funding_agency" placeholder="Enter funding agency" required>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Type (Government/Non-Government)</label>
+        <select class="form-control" name="grant_type" required>
+          <option value="">Select Type</option>
+          <option value="Government">Government</option>
+          <option value="Non-Government">Non-Government</option>
+        </select>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Department</label>
+        {% if request.user.is_superuser %}
+          <select class="form-control" name="department">
+            <option value="">Select Department</option>
+            {% for dept in departments %}
+              <option value="{{ dept.department_code }}">{{ dept.department_name }}</option>
+            {% endfor %}
+          </select>
+        {% else %}
+          <input type="text" class="form-control" name="department" value="{{ department.department_name }}" readonly>
+        {% endif %}
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Year of Award</label>
+        <input type="number" class="form-control" name="year_of_award" placeholder="Enter year" min="2000" max="2100" required>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Funds Provided (INR in Lakhs)</label>
+        <input type="number" class="form-control" name="funds_provided" placeholder="Enter funds" min="1" required>
+      </div>
+
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">Duration of the Project</label>
+        <div class="input-group">
+          <input type="number" class="form-control" name="duration" placeholder="Enter duration" min="1" required>
+          <select class="form-control" name="duration_unit" required>
+            <option value="Months">Months</option>
+            <option value="Years">Years</option>
+          </select>
+        </div>
+      </div>
     </div>
-  </div>
+
+    <div class="form-footer">
+      <button type="reset" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+      <button type="submit" class="btn btn-primary px-4">Submit</button>
+    </div>
+  </form>
+
+  <!-- Bulk Upload Section -->
+  <hr class="my-4">
+  <h2 class="text-center my-4" style="color: #002d6b;">Bulk Upload Research Grants</h2>
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-md-12 mb-3 text-center">
+        <label class="form-label fw-bold">Upload Excel File</label>
+        <input type="file" class="form-control" name="bulk_upload" accept=".xlsx, .xls" required>
+      </div>
+    </div>
+    <div class="text-center">
+      <!-- Link to download sample Excel file -->
+      <a href="" class="btn btn-success px-4">Download Sample Excel</a>
+      <button type="submit" class="btn btn-primary px-4">Upload</button>
+    </div>
+  </form>
+  <br/><br/><br/>
 </div>
 
 <script>

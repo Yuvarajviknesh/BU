@@ -3374,9 +3374,14 @@ def career_counseling(request):
     return render(request,"Forms/career_counseling.html")
 def add_career_counseling(request):
     return render(request,"AddData/add_career_counseling.html")
+from django.utils.timezone import now
+from django.db.models import Q
+from datetime import datetime
+@login_required
 def programme_list(request):
     user_profile = request.user.userprofile
 
+    # Base query
     if request.user.is_superuser:
         programmes = Programme.objects.all()
     elif user_profile.is_department_staff:
@@ -3384,8 +3389,42 @@ def programme_list(request):
     else:
         programmes = Programme.objects.none()  # No access
 
-    context = {"programmes": programmes}
+    # Get filter parameters
+    from_year = request.GET.get("fromYear")
+    to_year = request.GET.get("toYear")
+    cbcs_status = request.GET.get("programmeFilter")
+    search_query = request.GET.get("searchBar", "").strip()
+
+    # Construct filter query
+    filter_conditions = Q()
+    if from_year and from_year.isdigit():
+        filter_conditions &= Q(year_of_introduction__gte=int(from_year))
+    if to_year and to_year.isdigit():
+        filter_conditions &= Q(year_of_introduction__lte=int(to_year))
+    if cbcs_status:
+        filter_conditions &= Q(cbcs_status=cbcs_status)
+    if search_query:
+        filter_conditions &= Q(programme_name__icontains=search_query)
+
+    # Apply filters
+    programmes = programmes.filter(filter_conditions)
+
+    # Year range for dropdowns
+    current_year = now().year
+    year_range = [year for year in range(1999, current_year + 1)]
+
+    # Pass context
+    context = {
+        "programmes": programmes,
+        "year_range": year_range,
+        "from_year": from_year,
+        "to_year": to_year,
+        "cbcs_status": cbcs_status,
+        "search_query": search_query,
+    }
     return render(request, "Forms/programme_list.html", context)
+
+
 def add_programme(request):
     """
     View to handle the Add Programme form using POST.get() without using forms.

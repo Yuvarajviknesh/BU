@@ -1,104 +1,106 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
-  .card-container {
-    max-width: 700px;
-    margin: 50px auto;
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-  .card-header {
-    background-color: #002d6b;
-    color: white;
-    text-align: center;
-    font-size: 20px;
+  .section-title {
+    font-size: 18px;
     font-weight: bold;
-    padding: 15px;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-  }
-  .form-footer {
     margin-top: 20px;
-    display: flex;
-    justify-content: center;
-    gap: 10px;
+    color: #002d6b;
+  }
+  .form-label {
+    font-weight: bold;
+  }
+  .container {
+    max-width: 1200px;
+    margin: auto;
   }
 </style>
 
 <div class="container">
-  <div class="card-container">
-    <div class="card-header">
-      Add Demand Ratio
+  <!-- Form Title -->
+  <h2 class="text-center my-4" style="color: #002d6b;">Add Demand Ratio</h2>
+
+  <!-- Main Form -->
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    <div class="row">
+      <!-- Academic Year Dropdown -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Academic Year</label>
+        <select class="form-control" name="academic_year" required>
+          {% for year in academic_years %}
+            <option value="{{ year }}">{{ year }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Programme Name -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Programme Name</label>
+        <input type="text" class="form-control" name="programme_name" placeholder="Enter Programme Name" required>
+      </div>
+
+      <!-- Programme Code -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Programme Code</label>
+        <input type="text" class="form-control" name="programme_code" placeholder="Enter Programme Code" required>
+      </div>
+
+      <!-- Number of Seats -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Number of Seats Available</label>
+        <input type="number" class="form-control" name="num_seats" placeholder="Enter Number of Seats" min="1" required>
+      </div>
+
+      <!-- Number of Applications -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Number of Eligible Applications</label>
+        <input type="number" class="form-control" name="num_applications" placeholder="Enter Number of Applications" min="0" required>
+      </div>
+
+      <!-- Number of Students Admitted -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Number of Students Admitted</label>
+        <input type="number" class="form-control" name="num_students_admitted" placeholder="Enter Number of Students Admitted" min="0" required>
+      </div>
+
+      <!-- Department Dropdown -->
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">Department</label>
+        <select class="form-control" name="department" {% if not request.user.is_superuser %}readonly{% endif %} required>
+          {% for department in departments %}
+            <option value="{{ department.department_code }}">{{ department.department_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
     </div>
-    <div class="card-body">
-      {% if error %}
-        <div class="alert alert-danger">{{ error }}</div>
-      {% endif %}
-
-      <form method="POST">
-        {% csrf_token %}
-
-        <div class="row">
-          <!-- Academic Year Dropdown -->
-          <div class="col-md-6 mb-3">
-            <label for="academicYear" class="form-label fw-bold">Academic Year</label>
-            <select class="form-control" id="academicYear" name="academic_year" required>
-              {% for year in academic_years %}
-                <option value="{{ year }}">{{ year }}</option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <!-- Programme Name -->
-          <div class="col-md-6 mb-3">
-            <label for="programmeName" class="form-label fw-bold">Programme Name</label>
-            <input type="text" class="form-control" id="programmeName" name="programme_name" required>
-          </div>
-
-          <!-- Programme Code -->
-          <div class="col-md-6 mb-3">
-            <label for="programmeCode" class="form-label fw-bold">Programme Code</label>
-            <input type="text" class="form-control" id="programmeCode" name="programme_code" required>
-          </div>
-
-          <!-- Number of Seats -->
-          <div class="col-md-6 mb-3">
-            <label for="numSeats" class="form-label fw-bold">Number of Seats Available</label>
-            <input type="number" class="form-control" id="numSeats" name="num_seats" min="1" required>
-          </div>
-
-          <!-- Number of Applications -->
-          <div class="col-md-6 mb-3">
-            <label for="numApplications" class="form-label fw-bold">Number of Eligible Applications</label>
-            <input type="number" class="form-control" id="numApplications" name="num_applications" min="0" required>
-          </div>
-
-          <!-- Number of Students Admitted -->
-          <div class="col-md-6 mb-3">
-            <label for="numAdmitted" class="form-label fw-bold">Number of Students Admitted</label>
-            <input type="number" class="form-control" id="numAdmitted" name="num_students_admitted" min="0" required>
-          </div>
-
-          <!-- Department Dropdown (Restricted for non-superusers) -->
-          <div class="col-md-12 mb-3">
-            <label for="department" class="form-label fw-bold">Department</label>
-            <select class="form-control" id="department" name="department" {% if not request.user.is_superuser %}readonly{% endif %} required>
-              {% for department in departments %}
-                <option value="{{ department.department_code }}">{{ department.department_name }}</option>
-              {% endfor %}
-            </select>
-          </div>
-        </div>
-
-        <!-- Form Buttons -->
-        <div class="form-footer">
-          <button type="button" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
-          <button type="submit" class="btn btn-primary px-4">Save</button>
-        </div>
-      </form>
+    <div class="form-footer">
+      <button type="reset" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+      <button type="submit" class="btn btn-primary px-4">Submit</button>
     </div>
-  </div>
+  </form>
+
+  <!-- Bulk Upload Section -->
+  <hr class="my-4">
+  <h2 class="text-center my-4" style="color: #002d6b;">Bulk Upload Demand Ratios</h2>
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-md-12 mb-3 text-center">
+        <label class="form-label fw-bold">Upload Excel File</label>
+        <input type="file" class="form-control" name="bulk_upload" accept=".xlsx, .xls" required>
+      </div>
+    </div>
+    <div class="text-center">
+      <!-- Link to download sample Excel file -->
+      <a href="" class="btn btn-success px-4">Download Sample Excel</a>
+      <button type="submit" class="btn btn-primary px-4">Upload</button>
+    </div>
+  </form>
+  <br/><br/><br/>
 </div>
+
 {% endblock %}

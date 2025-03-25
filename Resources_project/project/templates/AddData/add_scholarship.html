@@ -1,88 +1,102 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
-  .card-container {
-    max-width: 800px;
-    margin: 50px auto;
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-  .card-header {
-    background-color: #002d6b;
-    color: white;
-    text-align: center;
-    font-size: 20px;
+  .section-title {
+    font-size: 18px;
     font-weight: bold;
-    padding: 15px;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-  }
-  .form-footer {
     margin-top: 20px;
-    display: flex;
-    justify-content: center;
-    gap: 10px;
+    color: #002d6b;
+  }
+  .form-label {
+    font-weight: bold;
+  }
+  .container {
+    max-width: 1200px;
+    margin: auto;
   }
 </style>
 
 <div class="container">
-  <div class="card-container">
-    <div class="card-header">
-      Add Scholarship Record
-    </div>
-    <div class="card-body">
-      <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label for="year" class="form-label fw-bold">Year</label>
-            <input type="number" class="form-control" id="year" name="year" placeholder="Enter Year (e.g., 2023)" required>
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="schemeName" class="form-label fw-bold">Name of the Scheme</label>
-            <input type="text" class="form-control" id="schemeName" name="scheme_name" placeholder="Enter Scheme Name" required>
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="govStudents" class="form-label fw-bold">Number of Students (Govt Scheme)</label>
-            <input type="number" class="form-control" id="govStudents" name="gov_students" placeholder="Number of Students">
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="govAmount" class="form-label fw-bold">Amount (Govt Scheme)</label>
-            <input type="number" class="form-control" id="govAmount" name="gov_amount" placeholder="Amount in INR">
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="institutionStudents" class="form-label fw-bold">Number of Students (Institution's Scheme)</label>
-            <input type="number" class="form-control" id="institutionStudents" name="institution_students" placeholder="Number of Students">
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="institutionAmount" class="form-label fw-bold">Amount (Institution's Scheme)</label>
-            <input type="number" class="form-control" id="institutionAmount" name="institution_amount" placeholder="Amount in INR">
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="ngoName" class="form-label fw-bold">Name of NGO/Agency</label>
-            <input type="text" class="form-control" id="ngoName" name="ngo_name" placeholder="Enter NGO/Agency Name">
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="ngoStudents" class="form-label fw-bold">Number of Students (NGO)</label>
-            <input type="number" class="form-control" id="ngoStudents" name="ngo_students" placeholder="Number of Students">
-          </div>
-          <div class="col-md-6 mb-3">
-            <label for="ngoAmount" class="form-label fw-bold">Amount (NGO)</label>
-            <input type="number" class="form-control" id="ngoAmount" name="ngo_amount" placeholder="Amount in INR">
-          </div>
-          <div class="col-md-12 mb-3">
-            <label for="document" class="form-label fw-bold">Upload Relevant Document</label>
-            <input type="file" class="form-control" id="document" name="document" accept=".pdf,.jpg,.png" required>
-          </div>
+  <!-- Form Title -->
+  <h2 class="text-center my-4" style="color: #002d6b;">Add Scholarship Record</h2>
+
+  <!-- Main Form -->
+  <form method="POST" action="" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-        <div class="form-footer">
-          <button type="button" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
-          <button type="submit" class="btn btn-primary px-4">Save</button>
-        </div>
-      </form>
+      {% endfor %}
+    {% endif %}
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Year</label>
+        <input type="number" class="form-control" name="year" placeholder="Enter Year (e.g., 2023)" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Name of the Scheme</label>
+        <input type="text" class="form-control" name="scheme_name" placeholder="Enter Scheme Name" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Number of Students (Govt Scheme)</label>
+        <input type="number" class="form-control" name="gov_students" placeholder="Number of Students">
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Amount (Govt Scheme)</label>
+        <input type="number" class="form-control" name="gov_amount" placeholder="Amount in INR">
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Number of Students (Institution's Scheme)</label>
+        <input type="number" class="form-control" name="institution_students" placeholder="Number of Students">
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Amount (Institution's Scheme)</label>
+        <input type="number" class="form-control" name="institution_amount" placeholder="Amount in INR">
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Name of NGO/Agency</label>
+        <input type="text" class="form-control" name="ngo_name" placeholder="Enter NGO/Agency Name">
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Number of Students (NGO)</label>
+        <input type="number" class="form-control" name="ngo_students" placeholder="Number of Students">
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Amount (NGO)</label>
+        <input type="number" class="form-control" name="ngo_amount" placeholder="Amount in INR">
+      </div>
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">Upload Relevant Document</label>
+        <input type="file" class="form-control" name="document" accept=".pdf,.jpg,.png" required>
+      </div>
     </div>
-  </div>
+    <div class="form-footer">
+      <button type="reset" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+      <button type="submit" class="btn btn-primary px-4">Submit</button>
+    </div>
+  </form>
+
+  <!-- Bulk Upload Section -->
+  <hr class="my-4">
+  <h2 class="text-center my-4" style="color: #002d6b;">Bulk Upload Scholarship Records</h2>
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-md-12 mb-3 text-center">
+        <label class="form-label fw-bold">Upload Excel File</label>
+        <input type="file" class="form-control" name="bulk_upload" accept=".xlsx, .xls" required>
+      </div>
+    </div>
+    <div class="text-center">
+      <!-- Link to download sample Excel file -->
+      <a href="" class="btn btn-success px-4">Download Sample Excel</a>
+      <button type="submit" class="btn btn-primary px-4">Upload</button>
+    </div>
+  </form>
+  <br/><br/><br/>
 </div>
+
 {% endblock %}

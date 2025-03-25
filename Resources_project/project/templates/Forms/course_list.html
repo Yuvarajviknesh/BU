@@ -63,6 +63,38 @@
       content: "🔍 ";
       margin-right: 3px;
     }
+    .btn-search {
+      background-color: #0069d9;
+      color:white;
+    }
+
+    .btn-reset {
+      background-color: red;
+      color: white;
+    }
+
+    .btn-apply {
+      background-color: blue;
+      color: white;
+    }
+    .filter-container input,
+    .filter-container select {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    #searchBar {
+      width: 250px;
+      font-size: 15px;
+      border-radius: 6px;
+    }
+
+    .dropdown.mb-3 {
+      align-self: flex-end;
+      margin-left: auto;
+    }
 
     .btn-add {
       background-color: #f4a641;
@@ -73,7 +105,7 @@
       transition: all 0.3s ease;
     }
 
-    .btn-add:hover, .btn-delete:hover, .btn-edit:hover, .btn-document:hover , .btn-view:hover {
+    .btn-add:hover, .btn-delete:hover, .btn-edit:hover, .btn-document:hover , .btn-view:hover, btn-search:hover, .btn-reset:hover, .btn-apply:hover {
       border-color: #000;
     }
 
@@ -95,6 +127,7 @@
         padding: 4px 10px;
       }
     }
+   
   </style>
 
   <div class="container mt-4">
@@ -102,6 +135,55 @@
       <h2 class="section-title m-0">Course List</h2>
       <a href="{% url 'add_course' %}" class="btn btn-add">+ Add</a>
     </div>
+
+    <form method="GET" class="filter-container d-flex flex-wrap gap-3 align-items-end">
+      <!-- From Year Dropdown -->
+      <div class="mb-3 me-3">
+          <label for="fromYear">From Year:</label>
+          <select name="fromYear" id="fromYear" class="form-control">
+              <option value="">Select Year</option>
+              {% for year in year_range %}
+                  <option value="{{ year }}" {% if from_year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+              {% endfor %}
+          </select>
+      </div>
+  
+      <!-- To Year Dropdown -->
+      <div class="mb-3 me-3">
+          <label for="toYear">To Year:</label>
+          <select name="toYear" id="toYear" class="form-control">
+              <option value="">Select Year</option>
+              {% for year in year_range %}
+                  <option value="{{ year }}" {% if to_year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+              {% endfor %}
+          </select>
+      </div>
+  
+      <!-- Apply and Reset Buttons -->
+      <div class="d-flex gap-2 mb-3 me-3">
+          <button type="submit" class="btn btn-apply">Apply</button>
+          <a href="{% url 'view_courses' %}" class="btn btn-reset">Reset</a>
+      </div>
+  
+      <!-- Search Bar and Search Button -->
+      <div class="d-flex align-items-center flex-grow-1 gap-2 mb-3">
+          <label for="searchBar">Search:</label>
+          <input type="text" name="searchBar" id="searchBar" class="form-control flex-grow-1"
+                 placeholder="Enter course name" value="{{ search_query }}">
+          <button type="submit" class="btn btn-search">Search</button>
+      </div>
+  
+      <!-- Download Options -->
+      <div class="dropdown mb-3">
+          <button class="btn btn-info dropdown-toggle" type="button" data-bs-toggle="dropdown">Download</button>
+          <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{% url 'download_excel' %}">Download Excel</a></li>
+              <li><a class="dropdown-item" href="{% url 'download_pdf' %}">Download PDF</a></li>
+          </ul>
+      </div>
+  </form>
+  
+
 
     <div class="table-responsive">
       <table class="table table-bordered table-hover">

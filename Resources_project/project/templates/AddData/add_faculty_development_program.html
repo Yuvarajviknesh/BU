@@ -1,70 +1,73 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
-    .card-container {
-        max-width: 700px;
-        margin: 50px auto;
-        background: #ffffff;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        margin-bottom: 100px;
+    .section-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 20px;
+      color: #002d6b;
     }
-    .card-header {
-        background-color: #002d6b;
-        color: white;
-        text-align: center;
-        font-size: 20px;
-        font-weight: bold;
-        padding: 15px;
-        border-top-left-radius: 10px;
-        border-top-right-radius: 10px;
+    .form-label {
+      font-weight: bold;
     }
-    .form-container {
-        padding: 20px;
+    .container {
+      max-width: 1200px;
+      margin: auto;
     }
-</style>
-
+  </style>
 <div class="container">
-    <div class="card-container">
-        <div class="card-header">
-            Add Data - Faculty Development Programmes
-        </div>
-        <div class="card-body form-container">
-            
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
+  <!-- Form Title -->
+  <h2 class="text-center my-4" style="color: #002d6b;">Add Data - Faculty Development Programmes</h2>
 
-            <form action="{% url 'add_faculty_development' %}" method="post">
-                {% csrf_token %}
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Name of teacher who attended</label>
-                        <input type="text" class="form-control" name="teacher_name" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Title of the program</label>
-                        <input type="text" class="form-control" name="program_title" required>
-                    </div>
-                    <div class="col-md-12 mb-3">
-                        <label class="form-label fw-bold">Duration (from – to) (DD-MM-YYYY)</label>
-                        <input type="text" class="form-control" name="duration" placeholder="DD-MM-YYYY to DD-MM-YYYY" required>
-                    </div>
-                </div>
-
-                <div class="text-center">
-                    <button type="reset" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
-                    <button type="submit" class="btn btn-primary px-4">Submit</button>
-                </div>
-            </form>
+  <!-- Main Form -->
+  <form action="{% url 'add_faculty_development' %}" method="post">
+    {% csrf_token %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
+      {% endfor %}
+    {% endif %}
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Name of teacher who attended</label>
+        <input type="text" class="form-control" name="teacher_name" placeholder="Enter Teacher Name" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Title of the program</label>
+        <input type="text" class="form-control" name="program_title" placeholder="Enter Program Title" required>
+      </div>
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">Duration (from – to) (DD-MM-YYYY)</label>
+        <input type="text" class="form-control" name="duration" placeholder="DD-MM-YYYY to DD-MM-YYYY" required>
+      </div>
     </div>
+    <div class="form-footer">
+      <button type="reset" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+      <button type="submit" class="btn btn-primary px-4">Submit</button>
+    </div>
+  </form>
+
+  <!-- Bulk Upload Section -->
+  <hr class="my-4">
+  <h2 class="text-center my-4" style="color: #002d6b;">Bulk Upload Faculty Development Programmes</h2>
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-md-12 mb-3 text-center">
+        <label class="form-label fw-bold">Upload Excel File</label>
+        <input type="file" class="form-control" name="bulk_upload" accept=".xlsx, .xls" required>
+      </div>
+    </div>
+    <div class="text-center">
+      <!-- Link to download sample Excel file -->
+      <a href="" class="btn btn-success px-4">Download Sample Excel</a>
+      <button type="submit" class="btn btn-primary px-4">Upload</button>
+    </div>
+  </form>
+  <br/><br/><br/>
 </div>
 
 {% endblock %}

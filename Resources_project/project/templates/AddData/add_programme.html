@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .section-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 20px;
+    color: #002d6b;
+  }
+  .form-label {
+    font-weight: bold;
+  }
+  .container {
+    max-width: 1200px;
+    margin: auto;
+  }
+</style>
+
+<div class="container">
+  <!-- Form Title -->
+  <h2 class="text-center my-4" style="color: #002d6b;">Add Programme</h2>
+
+  <!-- Main Form -->
+  <form method="POST" action="{% url 'add_program_list' %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+    <div class="row">
+      <!-- Programme Code -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Programme Code</label>
+        <input type="text" class="form-control" name="programme_code" placeholder="Enter Programme Code" required>
+      </div>
+
+      <!-- Programme Name -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Programme Name</label>
+        <input type="text" class="form-control" name="programme_name" placeholder="Enter Programme Name" required>
+      </div>
+
+      <!-- Year of Introduction -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Year of Introduction</label>
+        <input type="number" class="form-control" name="year_of_introduction" placeholder="Enter Year" min="1900" max="2100" required>
+      </div>
+
+      <!-- CBCS Status -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">CBCS Status</label>
+        <select class="form-control" name="cbcs_status" required>
+          <option value="" disabled selected>Select CBCS Status</option>
+          <option value="Yes">CBCS Implemented</option>
+          <option value="No">CBCS Not Implemented</option>
+        </select>
+      </div>
+
+      <!-- Year of CBCS Implementation -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Year of CBCS Implementation</label>
+        <input type="number" class="form-control" name="year_of_cbcs_implementation" placeholder="Enter Year of CBCS Implementation (if any)">
+      </div>
+
+      <!-- Year of Revision -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Year of Revision</label>
+        <input type="number" class="form-control" name="year_of_revision" placeholder="Enter Year of Revision (if any)">
+      </div>
+
+      <!-- Content Update (%) -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Content Update (%)</label>
+        <input type="number" class="form-control" name="content_update_percentage" placeholder="Enter Content Update Percentage">
+      </div>
+
+      <!-- Document Link -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Document Link</label>
+        <input type="url" class="form-control" name="document_link" placeholder="Enter Document Link" required>
+      </div>
+    </div>
+    <div class="form-footer">
+      <button type="reset" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+      <button type="submit" class="btn btn-primary px-4">Submit</button>
+    </div>
+  </form>
+
+  <!-- Bulk Upload Section -->
+  <hr class="my-4">
+  <h2 class="text-center my-4" style="color: #002d6b;">Bulk Upload Programmes</h2>
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-md-12 mb-3 text-center">
+        <label class="form-label fw-bold">Upload Excel File</label>
+        <input type="file" class="form-control" name="bulk_upload" accept=".xlsx, .xls" required>
+      </div>
+    </div>
+    <div class="text-center">
+      <!-- Link to download sample Excel file -->
+      <a href="" class="btn btn-success px-4">Download Sample Excel</a>
+      <button type="submit" class="btn btn-primary px-4">Upload</button>
+    </div>
+  </form>
+  <br/><br/><br/>
+</div>
+
+{% endblock %}

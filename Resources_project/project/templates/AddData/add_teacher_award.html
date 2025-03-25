@@ -1,94 +1,106 @@
 {% extends "base.html" %}
 {% block content %}
-
 <style>
-  .card-container {
-    max-width: 700px;
-    margin: 50px auto;
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-bottom: 120px;
-  }
-  .card-header {
-    background-color: #002d6b;
-    color: white;
-    text-align: center;
-    font-size: 20px;
+  .section-title {
+    font-size: 18px;
     font-weight: bold;
-    padding: 15px;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-  }
-  .form-container {
-    padding: 20px;
-  }
-  .form-footer {
     margin-top: 20px;
-    display: flex;
-    justify-content: center;
-    gap: 10px;
+    color: #002d6b;
+  }
+  .form-label {
+    font-weight: bold;
+  }
+  .container {
+    max-width: 1200px;
+    margin: auto;
   }
 </style>
 
 <div class="container">
-  <div class="card-container">
-    <div class="card-header">
-      Add Teacher Fellowship/Financial Support
-    </div>
-    <div class="card-body form-container">
-      <form id="addFellowshipForm" method="post">
-        {% csrf_token %}
-        <div class="row">
-          <div class="col-md-12 mb-3">
-            <label class="form-label fw-bold">Name of the Teacher</label>
+  <!-- Form Title -->
+  <h2 class="text-center my-4" style="color: #002d6b;">Add Teacher Fellowship/Financial Support</h2>
 
-            {% if is_admin %}
-              <select class="form-control" name="teacher" required>
-                <option value="">Select Teacher</option>
-                {% for teacher in teachers %}
-                  <option value="{{ teacher.id }}">{{ teacher.teacher.user_profile.user.first_name }}({{teacher.teacher.user_profile.user.last_name }})</option>
-                {% endfor %}
-              </select>
-            {% else %}
-              <input type="hidden" name="teacher" value="{{ user.id }}">
-              <input type="text" class="form-control" value="{{ user.get_full_name }}" readonly>
-            {% endif %}
-          </div>
-
-          <div class="col-md-12 mb-3">
-            <label class="form-label fw-bold">Name of the Award/Fellowship</label>
-            <input type="text" class="form-control" name="award_name" placeholder="Enter award/fellowship name" required>
-          </div>
-
-          <div class="col-md-6 mb-3">
-            <label class="form-label fw-bold">Year of Award</label>
-            <input type="number" class="form-control" name="award_year" min="1900" max="2025" required>
-          </div>
-
-          <div class="col-md-6 mb-3">
-            <label class="form-label fw-bold">Awarding Agency</label>
-            <input type="text" class="form-control" name="award_agency" placeholder="Enter awarding agency" required>
-          </div>
-
-          <div class="col-md-12 mb-3">
-            <label class="form-label fw-bold">Recognition Level</label>
-            <select class="form-control" name="recognition_level" required>
-              <option value="">Select Recognition Level</option>
-              <option value="National">National</option>
-              <option value="International">International</option>
-            </select>
-          </div>
+  <!-- Main Form -->
+  <form id="addFellowshipForm" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
+      {% endfor %}
+    {% endif %}
+    <div class="row">
+      <!-- Name of the Teacher -->
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">Name of the Teacher</label>
+        {% if is_admin %}
+          <select class="form-control" name="teacher" required>
+            <option value="">Select Teacher</option>
+            {% for teacher in teachers %}
+              <option value="{{ teacher.id }}">{{ teacher.teacher.user_profile.user.first_name }} ({{ teacher.teacher.user_profile.user.last_name }})</option>
+            {% endfor %}
+          </select>
+        {% else %}
+          <input type="hidden" name="teacher" value="{{ user.id }}">
+          <input type="text" class="form-control" value="{{ user.get_full_name }}" readonly>
+        {% endif %}
+      </div>
 
-        <div class="form-footer">
-          <button type="button" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
-          <button type="submit" class="btn btn-primary px-4">Save</button>
-        </div>
-      </form>
+      <!-- Name of the Award/Fellowship -->
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">Name of the Award/Fellowship</label>
+        <input type="text" class="form-control" name="award_name" placeholder="Enter award/fellowship name" required>
+      </div>
+
+      <!-- Year of Award -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Year of Award</label>
+        <input type="number" class="form-control" name="award_year" min="1900" max="2100" required>
+      </div>
+
+      <!-- Awarding Agency -->
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">Awarding Agency</label>
+        <input type="text" class="form-control" name="award_agency" placeholder="Enter awarding agency" required>
+      </div>
+
+      <!-- Recognition Level -->
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">Recognition Level</label>
+        <select class="form-control" name="recognition_level" required>
+          <option value="">Select Recognition Level</option>
+          <option value="National">National</option>
+          <option value="International">International</option>
+        </select>
+      </div>
     </div>
-  </div>
+
+    <div class="form-footer">
+      <button type="reset" class="btn btn-danger px-4" onclick="window.history.back();">Cancel</button>
+      <button type="submit" class="btn btn-primary px-4">Submit</button>
+    </div>
+  </form>
+
+  <!-- Bulk Upload Section -->
+  <hr class="my-4">
+  <h2 class="text-center my-4" style="color: #002d6b;">Bulk Upload Teacher Fellowships</h2>
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-md-12 mb-3 text-center">
+        <label class="form-label fw-bold">Upload Excel File</label>
+        <input type="file" class="form-control" name="bulk_upload" accept=".xlsx, .xls" required>
+      </div>
+    </div>
+    <div class="text-center">
+      <!-- Link to download sample Excel file -->
+      <a href="" class="btn btn-success px-4">Download Sample Excel</a>
+      <button type="submit" class="btn btn-primary px-4">Upload</button>
+    </div>
+  </form>
+  <br/><br/><br/>
 </div>
 
 {% endblock %}

@@ -1,0 +1,83 @@
+<!-- Language and Text Size Controls -->
+<div class="simple-controls">
+    <!-- Google Translate Dropdown -->
+    <div id="google_translate_element"></div>
+
+    <!-- Text Size Buttons -->
+    <div class="text-size-buttons">
+        <button id="text-smaller" onclick="adjustFontSize(-3)">A--</button>
+        <button id="text-small" onclick="adjustFontSize(-2)">A-</button>
+        <button id="text-normal" onclick="adjustFontSize(0)" class="active">A</button>
+        <button id="text-large" onclick="adjustFontSize(2)">A+</button>
+        <button id="text-larger" onclick="adjustFontSize(3)">A++</button>
+    </div>
+</div>
+
+<!-- Styling -->
+<style>
+    .simple-controls {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        margin-left: auto; /* Align to right */
+        padding-right: 20px;
+    }
+
+    .text-size-buttons {
+        display: flex;
+        gap: 5px;
+    }
+
+    .text-size-buttons button {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 5px 10px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    .text-size-buttons button.active {
+        background: #002d6b;
+        color: white;
+        border-color: #002d6b;
+    }
+</style>
+
+<!-- JavaScript -->
+<script>
+    // Load Google Translate API
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({ pageLanguage: 'en' }, 'google_translate_element');
+    }
+
+    // Load Google Translate Script
+    const translateScript = document.createElement('script');
+    translateScript.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+    document.body.appendChild(translateScript);
+
+    // Font Size Adjustment
+    function adjustFontSize(level) {
+        const defaultSize = 16;  // Default font size in px
+        let newSize;
+
+        if (level === 0) {
+            newSize = defaultSize; // Reset to normal
+        } else {
+            newSize = defaultSize + level;
+        }
+
+        document.documentElement.style.fontSize = newSize + "px";
+        localStorage.setItem('fontSize', newSize);
+
+        // Highlight Active Button
+        document.querySelectorAll('.text-size-buttons button').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`[onclick="adjustFontSize(${level})"]`).classList.add('active');
+    }
+
+    // Initialize Font Size on Page Load
+    document.addEventListener('DOMContentLoaded', function () {
+        const savedSize = localStorage.getItem('fontSize') || 16;
+        document.documentElement.style.fontSize = savedSize + "px";
+    });
+</script>

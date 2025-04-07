@@ -87,6 +87,60 @@
       gap: 10px;
       align-items: center;
     }
+    /* Updated Filter Section Styles */
+    .filter-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+      align-items: flex-end;
+    }
+
+    .year-filter-group {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .year-select-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .year-select-group label {
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+
+    .year-action-buttons {
+      display: flex;
+      gap: 10px;
+      margin-left: 10px;
+    }
+
+    .search-group {
+      display: flex;
+      flex-grow: 1;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .download-group {
+      margin-left: auto;
+    }
+
+    @media (max-width: 768px) {
+      .filter-container {
+        flex-direction: column;
+      }
+      .year-filter-group, .search-group {
+        width: 100%;
+      }
+      .download-group {
+        margin-left: 0;
+        width: 100%;
+      }
+    }
   </style>
 
   <div class="container mt-4">
@@ -94,6 +148,57 @@
       <h2 class="section-title m-0">Books and Chapters Published</h2>
       <a href="{% url 'add_book_chapter' %}" class="btn btn-add">+ Add</a>
     </div>
+        <!-- Filter Section with Year Range and Search -->
+        <form method="GET" class="filter-container">
+          <!-- Year Filter Group -->
+          <div class="year-filter-group">
+            <div class="year-select-group">
+              <label for="year_from">From Year</label>
+              <select name="year_from" id="year_from" class="form-control">
+                <option value="">All Years</option>
+                {% for year in year_range %}
+                  <option value="{{ year }}" {% if request.GET.year_from == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <div class="year-select-group">
+              <label for="year_to">To Year</label>
+              <select name="year_to" id="year_to" class="form-control">
+                <option value="">All Years</option>
+                {% for year in year_range %}
+                  <option value="{{ year }}" {% if request.GET.year_to == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <div class="year-action-buttons">
+              <button type="submit" name="apply_year" class="btn btn-primary">Apply</button>
+              <a href="{% url "view_book_chapters" %}" class="btn btn-danger">Reset</a>
+            </div>
+          </div>
+          
+          <!-- Search Bar Group -->
+          <div class="search-group">
+            <label for="search">Search:</label>
+            <input type="text" name="search" id="search" class="form-control" 
+                   placeholder="Search books/chapters..." value="{{ request.GET.search }}">
+            <button type="submit" name="apply_search" class="btn btn-primary">Search</button>
+          </div>
+          
+          <!-- Download Button -->
+          <div class="download-group">
+            <div class="dropdown">
+              <button class="btn btn-info dropdown-toggle" type="button" id="downloadDropdown" data-bs-toggle="dropdown">
+                Download
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="downloadDropdown">
+                <li><a class="dropdown-item" href="">Excel</a></li>
+                <li><a class="dropdown-item" href="">PDF</a></li>
+              </ul>
+            </div>
+          </div>
+        </form>
 
     <div class="table-responsive">
       <table class="table table-bordered table-hover">
@@ -131,7 +236,7 @@
               <a href="{% url 'view_book_chapter_details' book.id %}" class="btn btn-sm btn-view">🔍 View</a>
               <button class="btn btn-sm btn-edit" data-bs-toggle="modal" data-bs-target="#editModal"
                 data-id="{{ book.id }}"
-                data-teacher_name="{{ book.teacher_name }}"
+                data-teacher_name="{{ book.teacher_name}}"
                 data-book_title="{{ book.book_title }}"
                 data-paper_title="{{ book.paper_title }}"
                 data-proceedings_title="{{ book.proceedings_title }}"

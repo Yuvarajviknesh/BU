@@ -30,7 +30,7 @@
       vertical-align: middle;
     }
 
-    .btn-delete, .btn-edit {
+    .btn-delete, .btn-edit, .btn-view {
       padding: 6px 15px;
       border: 2px solid transparent;
       transition: all 0.3s ease;
@@ -54,11 +54,14 @@
         content: "✏️ ";
         margin-right: 3px;
       }
-
-    .btn-edit {
-      background-color: #007bff;
-      color: #fff;
-    }
+      .btn-view {
+        background-color: #17a2b8;
+        color: #fff;
+      }
+      .btn-view::before {
+        content: "🔍 ";
+        margin-right: 3px;
+      }
 
     .btn-add {
       background-color: #f4a641;
@@ -69,7 +72,7 @@
       transition: all 0.3s ease;
     }
 
-    .btn-add:hover, .btn-delete:hover, .btn-edit:hover, .btn-document:hover {
+    .btn-add:hover, .btn-delete:hover, .btn-edit:hover, .btn-document:hover, .btn-view:hover {
       border-color: #000;
     }
 
@@ -78,6 +81,40 @@
       justify-content: center;
       gap: 10px;
       align-items: center;
+    }
+
+    .btn-search {
+      background-color: #0069d9;
+      color: white;
+    }
+
+    .btn-reset {
+      background-color: red;
+      color: white;
+    }
+
+    .btn-apply {
+      background-color: blue;
+      color: white;
+    }
+
+    .filter-container input,
+    .filter-container select {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    #searchBar {
+      width: 250px;
+      font-size: 15px;
+      border-radius: 6px;
+    }
+
+    .dropdown.mb-3 {
+      align-self: flex-end;
+      margin-left: auto;
     }
 
     @media (max-width: 767px) {
@@ -98,6 +135,54 @@
       <h2 class="section-title m-0">Patents Published/Awarded During the Year</h2>
       <a href="{% url 'add_patent' %}" class="btn btn-add">+ Add</a>
     </div>
+
+    <!-- Filter Block -->
+    <form method="GET" class="filter-container d-flex flex-wrap gap-3 align-items-end">
+      <!-- From Year Dropdown -->
+      <div class="mb-3 me-3">
+          <label for="fromYear">From Year:</label>
+          <select name="fromYear" id="fromYear" class="form-control">
+              <option value="">Select Year</option>
+              {% for year in year_range %}
+                  <option value="{{ year }}" {% if from_year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+              {% endfor %}
+          </select>
+      </div>
+  
+      <!-- To Year Dropdown -->
+      <div class="mb-3 me-3">
+          <label for="toYear">To Year:</label>
+          <select name="toYear" id="toYear" class="form-control">
+              <option value="">Select Year</option>
+              {% for year in year_range %}
+                  <option value="{{ year }}" {% if to_year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+              {% endfor %}
+          </select>
+      </div>
+  
+      <!-- Apply and Reset Buttons -->
+      <div class="d-flex gap-2 mb-3 me-3">
+          <button type="submit" class="btn btn-apply">Apply</button>
+          <a href="{% url 'patent_list' %}" class="btn btn-reset">Reset</a>
+      </div>
+  
+      <!-- Search Bar and Search Button -->
+      <div class="d-flex align-items-center flex-grow-1 gap-2 mb-3">
+          <label for="searchBar">Search:</label>
+          <input type="text" name="searchBar" id="searchBar" class="form-control flex-grow-1"
+                 placeholder="Enter patent title or number" value="{{ search_query }}">
+          <button type="submit" class="btn btn-search">Search</button>
+      </div>
+  
+      <!-- Download Options -->
+      <div class="dropdown mb-3">
+        <button class="btn btn-info dropdown-toggle" type="button" data-bs-toggle="dropdown">Download</button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="">Download Excel (All Fields)</a></li>
+            <li><a class="dropdown-item" href="">Download PDF (All Fields)</a></li>
+        </ul>
+      </div>
+    </form>
 
     <div class="table-responsive">
       <table class="table table-bordered table-hover">
@@ -214,5 +299,4 @@
       }
     }
   </script>
-
 {% endblock %}

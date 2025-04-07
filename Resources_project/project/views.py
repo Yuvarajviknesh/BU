@@ -1,11 +1,14 @@
+from django.db import IntegrityError
 from django.shortcuts import render, redirect,get_object_or_404,HttpResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 import os
 import pandas as pd
+from django.core.paginator import Paginator
+from reportlab.lib.pagesizes import letter
 from datetime import datetime
 from django.core.exceptions import PermissionDenied
 from django.core.files.storage import default_storage
@@ -21,7 +24,237 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 from reportlab.lib import colors
-from reportlab.platypus import Table, TableStyle, SimpleDocTemplate
+from openpyxl import load_workbook
+from django.contrib.auth.hashers import make_password
+import json
+import random
+import string
+from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.db import transaction
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils.timezone import now
+from datetime import timedelta
+from .models import Department, UserProfile, Teacher, OtpVerification
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import HttpResponse
+from django.core.paginator import Paginator
+import openpyxl
+from .models import LibraryResource, Department
+from openpyxl.styles import Font
+from django.db.models import Q
+from datetime import datetime
+from io import BytesIO
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from .models import Programme
+from reportlab.pdfgen import canvas
+
+
+
+
+### report generation - admin
+
+from django.shortcuts import render
+from django.db.models import Q
+from datetime import datetime
+from django.http import HttpResponse
+import csv
+from reportlab.pdfgen import canvas
+from io import BytesIO
+
+# Temporary storage for OTPs (use Redis in production)
+otp_storage = {}
+
+User = get_user_model()
+
+def register_user(request):
+    if request.method == 'POST' and 'username' in request.POST:
+        try:
+            # Validate required fields
+            required_fields = ['username', 'email', 'password', 'full_name', 'department', 'role']
+            if not all(request.POST.get(field) for field in required_fields):
+                messages.error(request, "All fields are required.")
+                return redirect('register')
+            
+            # Begin atomic transaction
+            with transaction.atomic():
+                # Check if user already exists
+                if User.objects.filter(email=request.POST['email']).exists():
+                    messages.error(request, "Email already registered.")
+                    return redirect('register')
+                
+                # Step 1: Create the base User
+                user = User.objects.create_user(
+                    username=request.POST['username'],
+                    email=request.POST['email'],
+                    password=request.POST['password'],
+                    first_name=request.POST['full_name'].split(' ')[0],
+                    last_name=' '.join(request.POST['full_name'].split(' ')[1:]) if ' ' in request.POST['full_name'] else ''
+                )
+                
+                # Step 2: Fetch and validate the department
+                try:
+                    department = Department.objects.get(department_code=request.POST['department'])
+                except Department.DoesNotExist:
+                    messages.error(request, "Invalid department selected.")
+                    user.delete()  # Clean up the user if department fails
+                    return redirect('register')
+                
+                # Step 3: Create or update UserProfile
+                role = request.POST['role']
+                user_profile, created = UserProfile.objects.get_or_create(
+                    user=user,
+                    defaults={
+                        'department': department,
+                        'is_teacher': (role == 'Teacher'),
+                        'is_scholar': (role == 'Scholar'),
+                        'is_department_staff': (role == 'Department Staff')
+                    }
+                )
+                
+                if not created:
+                    # Update existing profile if needed
+                    user_profile.department = department
+                    user_profile.is_teacher = (role == 'Teacher')
+                    user_profile.is_scholar = (role == 'Scholar')
+                    user_profile.is_department_staff = (role == 'Department Staff')
+                    user_profile.save()
+                
+                # Step 4: Create or update Teacher profile (if applicable)
+                if role == 'Teacher':
+                    if not all([request.POST.get('position'), request.POST.get('pan')]):
+                        messages.error(request, "Position and PAN are required for teachers.")
+                        user.delete()  # Clean up the user and profile
+                        return redirect('register')
+                    
+                    Teacher.objects.update_or_create(
+                        user_profile=user_profile,
+                        defaults={
+                            'position': request.POST['position'],
+                            'pan': request.POST['pan']
+                        }
+                    )
+
+                # Step 5: Success message and redirection
+                messages.success(request, "Registration successful! Please login.")
+                return redirect('login')
+
+        except IntegrityError as e:
+            # Handle database-level errors gracefully
+            if 'user' in locals():
+                user.delete()
+            messages.error(request, f"Database error: {str(e)}")
+            return redirect('register')
+
+        except Exception as e:
+            # Handle any unexpected errors
+            if 'user' in locals():
+                user.delete()
+            messages.error(request, f"Registration failed: {str(e)}")
+            return redirect('register')
+
+    # For GET requests or initial display of registration form
+    departments = Department.objects.all()
+    return render(request, 'registration/register.html', {'departments': departments})
+
+
+@csrf_exempt
+def send_otp(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            
+            if not email:
+                return JsonResponse({'success': False, 'error': 'Email is required'})
+            
+            # Generate 6-digit OTP
+            otp = ''.join(random.choices(string.digits, k=6))
+            otp_storage[email] = otp  # Store OTP
+            
+            # Send email (configure email backend in settings.py)
+            send_mail(
+                'Your OTP for Bharathiar University Registration',
+                f'Your verification code is: {otp}',
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+            
+            return JsonResponse({'success': True})
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@csrf_exempt
+def verify_otp(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            otp = data.get('otp')
+            
+            if not email or not otp:
+                return JsonResponse({'success': False, 'error': 'Email and OTP are required'})
+            
+            # Verify OTP
+            if otp_storage.get(email) == otp:
+                del otp_storage[email]  # Remove used OTP
+                return JsonResponse({'success': True})
+            else:
+                return JsonResponse({'success': False, 'error': 'Invalid OTP'})
+                
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+
+@login_required
+def create_teacher_profile(request):
+    """
+    Allows teachers and scholars to create their teacher profile.
+    """
+    try:
+        user_profile = request.user.userprofile
+    except UserProfile.DoesNotExist:
+        messages.error(request, "User profile not found.")
+        return redirect('login')
+
+    if user_profile.is_department_staff:
+        # Restrict department staff from accessing this page
+        messages.error(request, "You are not authorized to create a teacher profile.")
+        return redirect('login')
+
+    if request.method == 'POST':
+        position = request.POST.get('position')
+        pan = request.POST.get('pan')
+
+        if not position or not pan:
+            messages.error(request, "All fields are required.")
+            return redirect('create_teacher_profile')
+
+        Teacher.objects.create(
+            user_profile=user_profile,
+            position=position,
+            pan=pan
+        )
+        messages.success(request, "Teacher profile created successfully!")
+        return redirect('login')
+
+    return render(request, 'create_teacher_profile.html')
+
+
 
 def user_login(request):
     if request.method == "POST":
@@ -66,7 +299,41 @@ def user_login(request):
             return redirect("user_login")
 
     return render(request, "login.html")
+def is_admin(user):
+    return user.is_authenticated and user.is_staff
 
+def admin_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None and user.is_staff:
+            login(request, user)
+            return redirect('admin_dashboard')
+        else:
+            messages.error(request, 'Invalid credentials or not an admin account')
+            return render(request, 'admin_login.html', {'form': request.POST})
+    
+    # If user is already logged in as admin, redirect to dashboard
+    if request.user.is_authenticated and request.user.is_staff:
+        return redirect('admin_dashboard')
+    
+    return render(request, 'admin_login.html')
+
+@login_required
+@user_passes_test(is_admin)
+def admin_dashboard(request):
+    # You can add any context data needed for the dashboard
+    context = {
+        'user': request.user,
+    }
+    return render(request, 'admin_dashboard.html', context)
+
+@login_required
+def admin_logout(request):
+    logout(request)
+    return redirect('admin_login')
 
 @login_required
 def department_dashboard(request):
@@ -85,6 +352,7 @@ def department_dashboard(request):
 def staff_dashboard(request):
     try:
         profile = request.user.userprofile
+        teacher = Teacher.objects.filter(user_profile=request.user.userprofile).first()
         if not profile.is_teacher:
             messages.error(request, "You are not authorized to access this page.")
             return redirect("login")
@@ -92,7 +360,7 @@ def staff_dashboard(request):
         messages.error(request, "User profile not found.")
         return redirect("login")
 
-    return render(request, "staff_dashboard.html")
+    return render(request, "staff_dashboard.html",{ 'teacher': teacher})
 
 @login_required
 def scholar_dashboard(request):
@@ -150,13 +418,6 @@ def user_is_library_or_superuser(user):
     except UserProfile.DoesNotExist:
         return False
 
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.http import HttpResponse
-from django.core.paginator import Paginator
-import openpyxl
-from .models import LibraryResource, Department
 
 @login_required
 def library_resources(request):
@@ -549,7 +810,7 @@ def ict_facility_list(request):
         facilities = facilities.filter(ict_facility__icontains=ict_facility)
 
     # Add pagination for scalability
-    from django.core.paginator import Paginator
+
     paginator = Paginator(facilities, 10)  # Show 10 facilities per page
     page_number = request.GET.get('page')
     facilities = paginator.get_page(page_number)
@@ -615,7 +876,6 @@ def download_ict_facilities(request):
 
     return response
 
-from reportlab.pdfgen import canvas
 
 def facility_detail(request, facility_id):
     facility = get_object_or_404(ICTFacility, id=facility_id)
@@ -1555,7 +1815,6 @@ def research_grants_list(request):
         'selected_department': selected_department  # Pass selected department to template
     })
 
-from django.views.decorators.csrf import csrf_exempt
 @csrf_exempt
 def add_research_grant(request):
     criterion_id = request.session.get('criterion_id')
@@ -2300,12 +2559,13 @@ def view_book_chapters(request):
         # Department staff can view all records related to their department
         user_department = request.user.userprofile.department
         books = BookChapter.objects.filter(teacher_name__user_profile__department=user_department)
+        teachers = Teacher.objects.all() 
     else:
         # Other users (teachers, scholars) can only view their own records
         user_profile = request.user.userprofile
         books = BookChapter.objects.filter(teacher_name__user_profile=user_profile)
 
-    return render(request, "Forms/book_chapter_list.html", {"books": books})
+    return render(request, "Forms/book_chapter_list.html", {"books": books, "teachers": teachers})
 @login_required
 def edit_book_chapter(request, book_id):
     """
@@ -2655,8 +2915,6 @@ def add_demand_ratio(request):
 
         return redirect("demand_ratio_list")  # Redirect to the list page after saving
 
-    # Generate academic year options in yyyy-yyyy format
-    from datetime import datetime
     current_year = datetime.now().year
     academic_years = [f"{y}-{y+1}" for y in range(2000, current_year + 1)]
 
@@ -2713,13 +2971,63 @@ def delete_demand_ratio(request, record_id):
     messages.error(request, "Invalid request method.")
     return redirect("demand_ratio_list")
 
+@login_required
 def admitted_student_list(request):
-    students = AdmittedStudent.objects.select_related('department').all()
-    return render(request,'Forms/admited_students.html',{'records': students})
+    """
+    Display a list of admitted students based on filters:
+    - From Year, To Year, Department, and Search Query.
+    - Admin/Superuser: Access all department data.
+    - Regular users: Access data only for their department.
+    """
+    # Get the current year and generate the year range dynamically
+    current_year = now().year
+    year_range = range(1999, current_year + 1)
+
+    # Get filter values from the request
+    from_year = request.GET.get('fromYear')
+    to_year = request.GET.get('toYear')
+    department_code = request.GET.get('department')
+    search_query = request.GET.get('searchBar')
+
+    # Superusers and staff (admins) can access all departments
+    if request.user.is_superuser or request.user.is_staff:
+        records = AdmittedStudent.objects.select_related('department').all()
+    else:
+        # Regular users can only access their department records
+        try:
+            user_department = request.user.userprofile.department
+            records = AdmittedStudent.objects.filter(department=user_department).select_related('department')
+        except AttributeError:
+            # If the user doesn't have a linked department
+            records = AdmittedStudent.objects.none()
+
+    # Apply filters
+    if from_year:
+        records = records.filter(year__gte=from_year)
+    if to_year:
+        records = records.filter(year__lte=to_year)
+    if department_code:
+        records = records.filter(department__department_code=department_code)
+    if search_query:
+        records = records.filter(programme_name__icontains=search_query)
+
+    # Get all departments for filtering options (admins)
+    departments = Department.objects.all() if request.user.is_superuser or request.user.is_staff else Department.objects.filter(department_code=request.user.userprofile.department.department_code)
+
+    context = {
+        'records': records,
+        'year_range': year_range,  # Pass year range for dropdown options
+        'departments': departments,  # Pass departments for dropdown options
+        'search_query': search_query,
+        'from_year': from_year,
+        'to_year': to_year,
+        'department_code': department_code,
+    }
+    return render(request, 'Forms/admited_students.html', context)
 @login_required
 def add_admitted_student(request):
-    """Handle form submission for adding a new admitted student"""
-    
+    """Handle form submission for adding a new admitted student or bulk upload."""
+
     # Get the logged-in user's department
     try:
         user_department = request.user.userprofile.department
@@ -2727,47 +3035,95 @@ def add_admitted_student(request):
         user_department = None
 
     if request.method == "POST":
-        year = request.POST.get('year', '')
-        programme_name = request.POST.get('programme_name', '')
-        department_id = request.POST.get('department', '')
+        if 'bulk_upload' in request.FILES:  # Bulk upload logic
+            excel_file = request.FILES['bulk_upload']
 
-        sc_earmarked = request.POST.get('sc_earmarked', 0)
-        st_earmarked = request.POST.get('st_earmarked', 0)
-        obc_earmarked = request.POST.get('obc_earmarked', 0)
-        gen_earmarked = request.POST.get('gen_earmarked', 0)
-        others_earmarked = request.POST.get('others_earmarked', 0)
+            try:
+                # Load the Excel file
+                workbook = load_workbook(excel_file)
+                sheet = workbook.active
 
-        sc_admitted = request.POST.get('sc_admitted', 0)
-        st_admitted = request.POST.get('st_admitted', 0)
-        obc_admitted = request.POST.get('obc_admitted', 0)
-        gen_admitted = request.POST.get('gen_admitted', 0)
-        others_admitted = request.POST.get('others_admitted', 0)
+                # Iterate through rows (skipping the header row)
+                for row in sheet.iter_rows(min_row=2, values_only=True):
+                    year, programme_name, department_code, sc_earmarked, st_earmarked, obc_earmarked, gen_earmarked, others_earmarked, sc_admitted, st_admitted, obc_admitted, gen_admitted, others_admitted = row
 
-        # Ensure the department belongs to the user
-        if user_department and str(user_department.department_code) == department_id:
-            department = user_department
-        else:
-            return redirect('add_admitted_student')
+                    # Verify the department belongs to the user
+                    if user_department and str(user_department.department_code) == department_code:
+                        department = user_department
+                    else:
+                        messages.error(request, f"Department mismatch for row: {row}. Skipping.")
+                        continue
 
-        # Create AdmittedStudent entry
-        AdmittedStudent.objects.create(
-            year=year,
-            programme_name=programme_name,
-            department=department,
-            sc_earmarked=sc_earmarked,
-            st_earmarked=st_earmarked,
-            obc_earmarked=obc_earmarked,
-            gen_earmarked=gen_earmarked,
-            others_earmarked=others_earmarked,
-            sc_admitted=sc_admitted,
-            st_admitted=st_admitted,
-            obc_admitted=obc_admitted,
-            gen_admitted=gen_admitted,
-            others_admitted=others_admitted,
-        )
-        return redirect('admitted_students_list')
+                    # Create or update the AdmittedStudent entry
+                    AdmittedStudent.objects.update_or_create(
+                        year=year,
+                        programme_name=programme_name,
+                        department=department,
+                        defaults={
+                            'sc_earmarked': sc_earmarked,
+                            'st_earmarked': st_earmarked,
+                            'obc_earmarked': obc_earmarked,
+                            'gen_earmarked': gen_earmarked,
+                            'others_earmarked': others_earmarked,
+                            'sc_admitted': sc_admitted,
+                            'st_admitted': st_admitted,
+                            'obc_admitted': obc_admitted,
+                            'gen_admitted': gen_admitted,
+                            'others_admitted': others_admitted,
+                        },
+                    )
 
-    # Only pass the logged-in user's department
+                messages.success(request, "Bulk upload completed successfully.")
+                return redirect('admitted_students_list')
+
+            except Exception as e:
+                messages.error(request, f"Error processing bulk upload: {str(e)}")
+                return redirect('add_admitted_student')
+
+        else:  # Individual form submission logic
+            year = request.POST.get('year', '')
+            programme_name = request.POST.get('programme_name', '')
+            department_id = request.POST.get('department', '')
+
+            sc_earmarked = request.POST.get('sc_earmarked', 0)
+            st_earmarked = request.POST.get('st_earmarked', 0)
+            obc_earmarked = request.POST.get('obc_earmarked', 0)
+            gen_earmarked = request.POST.get('gen_earmarked', 0)
+            others_earmarked = request.POST.get('others_earmarked', 0)
+
+            sc_admitted = request.POST.get('sc_admitted', 0)
+            st_admitted = request.POST.get('st_admitted', 0)
+            obc_admitted = request.POST.get('obc_admitted', 0)
+            gen_admitted = request.POST.get('gen_admitted', 0)
+            others_admitted = request.POST.get('others_admitted', 0)
+
+            # Ensure the department belongs to the user
+            if user_department and str(user_department.department_code) == department_id:
+                department = user_department
+            else:
+                messages.error(request, "Department mismatch. Unable to submit.")
+                return redirect('add_admitted_student')
+
+            # Create AdmittedStudent entry
+            AdmittedStudent.objects.create(
+                year=year,
+                programme_name=programme_name,
+                department=department,
+                sc_earmarked=sc_earmarked,
+                st_earmarked=st_earmarked,
+                obc_earmarked=obc_earmarked,
+                gen_earmarked=gen_earmarked,
+                others_earmarked=others_earmarked,
+                sc_admitted=sc_admitted,
+                st_admitted=st_admitted,
+                obc_admitted=obc_admitted,
+                gen_admitted=gen_admitted,
+                others_admitted=others_admitted,
+            )
+            messages.success(request, "Admitted student added successfully.")
+            return redirect('admitted_students_list')
+
+    # Pass the logged-in user's department
     departments = Department.objects.filter(department_code=user_department.department_code) if user_department else []
 
     return render(request, 'AddData/add_admitted_student.html', {'departments': departments})
@@ -3374,9 +3730,7 @@ def career_counseling(request):
     return render(request,"Forms/career_counseling.html")
 def add_career_counseling(request):
     return render(request,"AddData/add_career_counseling.html")
-from django.utils.timezone import now
-from django.db.models import Q
-from datetime import datetime
+
 @login_required
 def programme_list(request):
     user_profile = request.user.userprofile
@@ -3525,7 +3879,7 @@ def delete_programme_view(request, programme_id):
 
     # Redirect to the programme list view after deletion
     return redirect("program_list")
-from openpyxl.styles import Font
+
 def download_excel(request):
     # Create a workbook and worksheet
     workbook = openpyxl.Workbook()
@@ -3566,13 +3920,6 @@ def download_excel(request):
     response["Content-Disposition"] = 'attachment; filename="Programmes.xlsx"'
     workbook.save(response)
     return response
-from io import BytesIO
-from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
-from django.http import HttpResponse
-from .models import Programme
 
 def download_pdf(request):
     buffer = BytesIO()
@@ -3649,12 +3996,6 @@ def add_border(canvas, doc):
     )
     canvas.restoreState()
 
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-from reportlab.pdfgen import canvas
-from reportlab.platypus import Table, TableStyle
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
 
 @login_required
 def download_programme_pdf(request, programme_id):
@@ -3744,19 +4085,212 @@ def view_programme(request, id):
 @login_required
 def view_courses(request):
     """
-    View function for displaying courses.
-    Department staff can see their department's data,
-    and superusers can see all department data.
+    View function for displaying courses with filtering options.
+    Includes year range from 1999 to current year and download functionality.
     """
+    # Base queryset with department filter
     if request.user.is_superuser:
-        # Superuser sees all courses
         courses = Course.objects.all()
     else:
-        # Non-superuser sees courses for their department
-        user_department = getattr(request.user, 'userprofile', None).department
-        courses = Course.objects.filter(department=user_department)
+        user_department = getattr(request.user.userprofile, 'department', None)
+        courses = Course.objects.filter(department=user_department) if user_department else Course.objects.none()
 
-    return render(request, "Forms/course_list.html", {"courses": courses})
+    # Apply filters
+    search_query = request.GET.get('searchBar', '')
+    from_year = request.GET.get('fromYear')
+    to_year = request.GET.get('toYear')
+
+    if search_query:
+        courses = courses.filter(
+            Q(name__icontains=search_query) |
+            Q(code__icontains=search_query) |
+            Q(activities__icontains=search_query)
+        )
+
+    if from_year:
+        courses = courses.filter(year_of_introduction__gte=from_year)
+    if to_year:
+        courses = courses.filter(year_of_introduction__lte=to_year)
+
+    # Handle downloads
+    if 'download' in request.GET:
+        download_type = request.GET['download']
+        if download_type == 'excel':
+            return generate_excel(courses)
+        elif download_type == 'pdf':
+            return generate_pdf(courses)
+
+    # Generate year range from 1999 to current year
+    current_year = datetime.now().year
+    year_range = list(range(1999, current_year + 1))
+    year_range.reverse()  # Show most recent years first
+
+    context = {
+        'courses': courses,
+        'year_range': year_range,
+        'from_year': from_year,
+        'to_year': to_year,
+        'search_query': search_query,
+    }
+    return render(request, "Forms/course_list.html", context)
+
+@login_required
+def view_courses(request):
+    """
+    View function for displaying courses with filtering options.
+    Includes year range from 1999 to current year and download functionality.
+    """
+    # Base queryset with department filter
+    if request.user.is_superuser:
+        courses = Course.objects.all()
+    else:
+        user_department = getattr(request.user.userprofile, 'department', None)
+        courses = Course.objects.filter(department=user_department) if user_department else Course.objects.none()
+
+    # Apply filters
+    search_query = request.GET.get('searchBar', '')
+    from_year = request.GET.get('fromYear')
+    to_year = request.GET.get('toYear')
+
+    if search_query:
+        courses = courses.filter(
+            Q(name__icontains=search_query) |
+            Q(code__icontains=search_query) |
+            Q(activities__icontains=search_query)
+        )
+
+    if from_year:
+        courses = courses.filter(year_of_introduction__gte=from_year)
+    if to_year:
+        courses = courses.filter(year_of_introduction__lte=to_year)
+
+    # Handle downloads
+    if 'download' in request.GET:
+        download_type = request.GET['download']
+        if download_type == 'excel':
+            return generate_excel(courses)
+        elif download_type == 'pdf':
+            return generate_pdf(courses)
+
+    # Generate year range from 1999 to current year
+    current_year = datetime.now().year
+    year_range = list(range(1999, current_year + 1))
+    year_range.reverse()  # Show most recent years first
+
+    context = {
+        'courses': courses,
+        'year_range': year_range,
+        'from_year': from_year,
+        'to_year': to_year,
+        'search_query': search_query,
+    }
+    return render(request, "Forms/course_list.html", context)
+
+def generate_excel(queryset):
+    """Generate Excel file from queryset with all fields"""
+    data = []
+    headers = [
+        "Name of the Course", 
+        "Course Code", 
+        "Year of Introduction",
+        "Employability/Skill Development Activities",
+        "Document Available",
+        "Department",
+        "Created At",
+        "Updated At"
+    ]
+    
+    for course in queryset:
+        data.append([
+            course.name,
+            course.code,
+            course.year_of_introduction,
+            course.activities,
+            "Yes" if course.document else "No",
+            str(course.department) if course.department else "N/A",
+            course.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            course.updated_at.strftime("%Y-%m-%d %H:%M:%S")
+        ])
+    
+    df = pd.DataFrame(data, columns=headers)
+    
+    with BytesIO() as b:
+        with pd.ExcelWriter(b, engine='xlsxwriter') as writer:
+            df.to_excel(writer, sheet_name='Courses', index=False)
+            
+            # Auto-adjust column widths
+            worksheet = writer.sheets['Courses']
+            for i, col in enumerate(df.columns):
+                max_len = max(df[col].astype(str).map(len).max(), len(col)) + 2
+                worksheet.set_column(i, i, max_len)
+        
+        filename = f'courses_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        response = HttpResponse(
+            b.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+def generate_pdf(queryset):
+    """Generate PDF file from queryset with all fields"""
+    response = HttpResponse(content_type='application/pdf')
+    filename = f'courses_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    doc = SimpleDocTemplate(response, pagesize=letter)
+    elements = []
+    
+    # Title
+    styles = getSampleStyleSheet()
+    elements.append(Paragraph("Course List Report", styles['Title']))
+    elements.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles['Normal']))
+    elements.append(Paragraph(" ", styles['Normal']))  # Spacer
+    
+    # Prepare data with all fields
+    data = [[
+        "Course Name", 
+        "Code", 
+        "Year", 
+        "Activities", 
+        "Document", 
+        "Department",
+        "Created",
+        "Updated"
+    ]]
+    
+    for course in queryset:
+        data.append([
+            course.name,
+            course.code,
+            str(course.year_of_introduction),
+            course.activities[:100] + "..." if len(course.activities) > 100 else course.activities,
+            "Available" if course.document else "Not Available",
+            str(course.department) if course.department else "N/A",
+            course.created_at.strftime("%Y-%m-%d"),
+            course.updated_at.strftime("%Y-%m-%d")
+        ])
+    
+    # Create table
+    table = Table(data, repeatRows=1)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#002d6b')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey),
+        ('FONTSIZE', (0, 1), (-1, -1), 8),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('WORDWRAP', (3, 1), (3, -1), 200),  # Wrap activities column
+    ]))
+    
+    elements.append(table)
+    doc.build(elements)
+    
+    return response
 @login_required
 def add_course(request):
     """
@@ -4200,3 +4734,225 @@ def delete_student_project_view(request, project_id):
     project.delete()
     messages.success(request, "Record deleted successfully.")
     return redirect("student_project_list")
+
+
+import csv
+from io import BytesIO
+from datetime import datetime
+from django.db.models import Q
+from django.http import HttpResponse
+from django.shortcuts import render
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+import openpyxl
+from openpyxl.styles import Font, Alignment
+from openpyxl.utils import get_column_letter
+from datetime import datetime
+
+
+def admin_report_generator(request):
+    departments = Department.objects.all()
+    current_year = datetime.now().year
+    year_range = range(current_year, current_year - 10, -1)
+    
+    selected_criterion = request.GET.get('criterion', '')
+    selected_title = request.GET.get('criterion_title', '')
+    selected_department = request.GET.get('department', '')
+    from_year = request.GET.get('from_year', '')
+    to_year = request.GET.get('to_year', '')
+    download_format = request.GET.get('format', '')
+    
+    results = []
+    model_fields = []
+    model_name = ""
+
+    if request.method == 'GET' and any([selected_criterion, selected_title, selected_department, from_year, to_year]):
+        queryset, year_field, model_fields, model_name = get_filtered_queryset(
+            selected_criterion, selected_title
+        )
+        
+        if queryset is not None:
+            if selected_department:
+                queryset = queryset.filter(department__department_code=selected_department)
+            
+            if year_field and (from_year or to_year):
+                year_filters = Q()
+                if from_year:
+                    year_filters &= Q(**{f"{year_field}__gte": from_year})
+                if to_year:
+                    year_filters &= Q(**{f"{year_field}__lte": to_year})
+                queryset = queryset.filter(year_filters)
+            
+            results = list(queryset)
+            
+            if download_format:
+                if download_format == 'pdf':
+                    return generate_pdf_report(results, model_fields, model_name)
+                elif download_format == 'excel':
+                    return generate_excel_report(results, model_fields, model_name)
+    
+    context = {
+        'departments': departments,
+        'year_range': year_range,
+        'results': results,
+        'selected_criterion': selected_criterion,
+        'selected_department': selected_department,
+        'from_year': from_year,
+        'to_year': to_year,
+    }
+    
+    return render(request, 'admin_report_generator.html', context)
+
+def get_filtered_queryset(criterion, title):
+    MODEL_MAPPING = {
+        '1': {
+            'Programme List': (Programme, 'year_of_introduction'),
+            'Employability Courses': (Course, 'year_of_introduction'),
+            'Value-Added Courses': (ValueAddedCourse, 'year_of_offering'),
+            'Student Projects/Internships': (StudentProject, 'created_at__year'),
+        },
+        '2': {
+            'Demand Ratio List': (DemandRatio, 'academic_year'),
+            'Admitted Students List': (AdmittedStudent, 'year'),
+            'Teacher Serving Posts': (TeacherServingPost, 'appointment_year'),
+            'Full Time Teachers': (FullTimeTeacher, None),
+            'Sanctioned Posts': (TeacherAgainstSanctionedPost, 'year_of_appointment'),
+        },
+        '3': {
+            'Teacher Awards': (TeacherAward, 'year_of_award'),
+            'Research Grants': (ResearchGrant, 'year_of_award'),
+            'Research Awards': (AwardRecognition, 'award_year'),
+            'Patents': (Patent, 'award_year'),
+            'Ph.D. Awards': (PhDAward, 'award_year'),
+            'Research Papers': (ResearchPaper, 'year'),
+            'Books & Chapters': (BookChapter, 'publication_year'),
+        },
+        '4': {
+            'ICT Facilities': (ICTFacility, None),
+            'E-Library Resources': (LibraryResource, 'academic_year'),
+            'Expenditure on Facilities': (Expenditure, 'year'),
+            'E-Content Development': (EContentDevelopment, 'launch_date__year'),
+        },
+    }
+    
+    if criterion in MODEL_MAPPING and title in MODEL_MAPPING[criterion]:
+        model, year_field = MODEL_MAPPING[criterion][title]
+        fields = [field.name for field in model._meta.fields if field.name != 'id']
+        return model.objects.all(), year_field, fields, model.__name__
+    
+    return None, None, [], ""
+
+def generate_pdf_report(data, fields, model_name):
+    response = HttpResponse(content_type='application/pdf')
+    filename = f"report_{model_name}_{datetime.datetime.now().strftime('%Y%m%d')}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    elements = []
+
+    styles = getSampleStyleSheet()
+    elements.append(Paragraph(f"{model_name} Report", styles['Title']))
+    elements.append(Paragraph(f"Generated on: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}", styles['Normal']))
+
+    # Prepare table data
+    table_data = [fields]  # Header row
+
+    for item in data:
+        row = []
+        for field in fields:
+            value = getattr(item, field, '')
+            if hasattr(value, 'pk'):  # Handle foreign keys
+                value = str(value)
+            row.append(str(value) if value is not None else '')
+        table_data.append(row)
+
+    # Create table
+    table = Table(table_data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+
+    elements.append(table)
+    doc.build(elements)
+
+    pdf = buffer.getvalue()
+    buffer.close()
+    response.write(pdf)
+
+    return response
+
+
+def generate_excel_report(data, fields, model_name):
+    from datetime import datetime, date  # just in case it's not global
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    filename = f"report_{model_name}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Report Data"
+
+    # Write header
+    for col_num, field in enumerate(fields, 1):
+        col_letter = get_column_letter(col_num)
+        ws[f'{col_letter}1'] = field.replace('_', ' ').title()
+        ws[f'{col_letter}1'].font = Font(bold=True)
+        ws[f'{col_letter}1'].alignment = Alignment(horizontal='center')
+
+    # Write data rows
+    for row_num, item in enumerate(data, 2):
+        for col_num, field in enumerate(fields, 1):
+            try:
+                value = getattr(item, field, '')
+
+                if value is None:
+                    cell_value = ''
+                elif hasattr(value, 'pk'):  # Foreign key
+                    cell_value = str(value)
+                elif isinstance(value, datetime):
+                    if value.tzinfo is not None:
+                        value = value.replace(tzinfo=None)
+                    cell_value = value
+                elif isinstance(value, date):
+                    cell_value = value
+                else:
+                    cell_value = str(value)
+
+                cell = ws.cell(row=row_num, column=col_num, value=cell_value)
+
+                # Format datetime/date
+                if isinstance(value, datetime):
+                    cell.number_format = 'YYYY-MM-DD HH:MM:SS'
+                elif isinstance(value, date):
+                    cell.number_format = 'YYYY-MM-DD'
+
+            except Exception as e:
+                ws.cell(row=row_num, column=col_num, value=f'Error: {str(e)}')
+
+    # Auto-size columns
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if cell.value and len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = (max_length + 2) * 1.2
+        ws.column_dimensions[column].width = adjusted_width
+
+    wb.save(response)
+    return response

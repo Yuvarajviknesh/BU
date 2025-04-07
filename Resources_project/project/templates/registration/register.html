@@ -1,0 +1,748 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Registration | Bharathiar University</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="shortcut icon" href="{% static 'images/bu_logo_icon.png' %}" type="image/x-icon">
+    <style>
+        :root {
+            --primary-blue: #002d6b;
+            --secondary-gold: #f4a641;
+            --light-gray: #f8f9fa;
+            --dark-gray: #343a40;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-gray);
+            color: var(--dark-gray);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header Styles */
+        .header {
+            background-color: var(--primary-blue);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header img {
+            height: 50px;
+            transition: transform 0.3s ease;
+        }
+        
+        .header img:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+        
+        /* Registration Card */
+        .registration-card {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 45, 107, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .registration-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0, 45, 107, 0.15);
+        }
+        
+        .card-header {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+        
+        .card-header h2 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+        
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+            position: relative;
+        }
+        
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: rgba(255, 255, 255, 0.3);
+            z-index: 1;
+        }
+        
+        .step {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.3);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .step.active .step-number {
+            background-color: var(--secondary-gold);
+            color: var(--primary-blue);
+        }
+        
+        .step-label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .step.active .step-label {
+            color: white;
+            font-weight: 500;
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        /* Form Elements */
+        .form-label {
+            font-weight: 500;
+            color: var(--primary-blue);
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-control {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: var(--secondary-gold);
+            box-shadow: 0 0 0 0.25rem rgba(244, 166, 65, 0.25);
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-blue);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background-color: #001f4d;
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline-primary {
+            border-color: var(--primary-blue);
+            color: var(--primary-blue);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary-blue);
+            color: white;
+        }
+        
+        .btn-outline-success {
+            border-color: #28a745;
+            color: #28a745;
+        }
+        
+        .btn-outline-success:hover {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        /* OTP Section */
+        #otp-section {
+            transition: all 0.3s ease;
+        }
+        
+        /* Footer */
+        .footer {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            margin-top: auto;
+        }
+        
+        .footer a {
+            color: var(--secondary-gold);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer a:hover {
+            color: #ffc107;
+            text-decoration: underline;
+        }
+        
+        /* Responsive Adjustments */
+        @media (max-width: 576px) {
+            .header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .card-body {
+                padding: 1.5rem;
+            }
+        }
+        
+        /* Step 2 specific styles */
+        #step2 {
+            display: none;
+        }
+        
+        .password-strength {
+            height: 4px;
+            background-color: #e9ecef;
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .password-strength-bar {
+            height: 100%;
+            width: 0;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+        
+        .password-hints {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+        
+        .password-hints ul {
+            padding-left: 1.2rem;
+            margin-bottom: 0;
+        }
+        
+        .password-hints .valid {
+            color: #28a745;
+        }
+        
+        .password-hints .invalid {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header d-flex justify-content-between align-items-center">
+        <div>
+            <img src="{% static 'images/logo2.png' %}" alt="Bharathiar University" class="img-fluid">
+        </div>
+        <div>
+            <a href="{% url 'login' %}" class="btn btn-outline-light">
+                <i class="fas fa-arrow-left me-2"></i> Back to Login
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="registration-card">
+            <div class="card-header">
+                <h2><i class="fas fa-user-plus me-2"></i>User Registration</h2>
+                <div class="progress-steps">
+                    <div class="step active" id="step1-indicator">
+                        <div class="step-number">1</div>
+                        <div class="step-label">Basic Information</div>
+                    </div>
+                    <div class="step" id="step2-indicator">
+                        <div class="step-number">2</div>
+                        <div class="step-label">Account Details</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 1: Basic Information -->
+            <div class="card-body" id="step1">
+                <form id="registration-form-step1" method="POST">
+                    {% csrf_token %}
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <!-- Full Name -->
+                    <div class="mb-4">
+                        <label for="full_name" class="form-label">Full Name</label>
+                        <input type="text" name="full_name" id="full_name" class="form-control" placeholder="Enter your full name" required>
+                    </div>
+                    
+                    <!-- Email and OTP -->
+                    <div class="mb-4">
+                        <label for="email" class="form-label">Email Address</label>
+                        <div class="input-group mb-2">
+                            <input type="email" name="email" id="email" class="form-control" placeholder="Enter your email" required>
+                            <button type="button" id="send-otp-btn" class="btn btn-outline-primary">
+                                <i class="fas fa-paper-plane me-1"></i> Send OTP
+                            </button>
+                        </div>
+                        <small class="text-muted">We'll send a verification code to this email</small>
+                    </div>
+                    
+                    <div class="mb-4" id="otp-section" style="display: none;">
+                        <label for="otp" class="form-label">Verification Code</label>
+                        <div class="input-group mb-2">
+                            <input type="text" id="otp" class="form-control" placeholder="Enter 6-digit OTP">
+                            <button type="button" id="verify-otp-btn" class="btn btn-outline-success">
+                                <i class="fas fa-check-circle me-1"></i> Verify
+                            </button>
+                        </div>
+                        <small id="otp-status" class="text-muted">OTP valid for 5 minutes</small>
+                    </div>
+                    
+                    <div class="d-grid mt-4">
+                        <button type="button" id="continue-btn" class="btn btn-primary" disabled>
+                            <i class="fas fa-arrow-right me-2"></i> Continue to Step 2
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Step 2: Account Details -->
+            <div class="card-body" id="step2">
+                <form id="registration-form-step2" method="POST" action="{% url 'register' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="full_name" id="step2-full_name">
+                    <input type="hidden" name="email" id="step2-email">
+                    
+                    <div class="mb-4">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" name="username" id="username" class="form-control" placeholder="Enter your username" required>
+                        <small class="text-muted">This will be your unique identifier</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" name="password" id="password" class="form-control" placeholder="Create password" required>
+                        <div class="password-strength">
+                            <div class="password-strength-bar" id="password-strength-bar"></div>
+                        </div>
+                        <div class="password-hints">
+                            <ul>
+                                <li class="invalid" id="length-requirement">At least 8 characters</li>
+                                <li class="invalid" id="uppercase-requirement">At least 1 uppercase letter</li>
+                                <li class="invalid" id="number-requirement">At least 1 number</li>
+                                <li class="invalid" id="special-requirement">At least 1 special character</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="confirm_password" class="form-label">Confirm Password</label>
+                        <input type="password" name="confirm_password" id="confirm_password" class="form-control" placeholder="Confirm your password" required>
+                        <small id="password-match" class="text-danger" style="display: none;">Passwords do not match</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="department" class="form-label">Department</label>
+                        <select name="department" id="department" class="form-control" required>
+                            <option value="" disabled selected>Select Department</option>
+                            {% for department in departments %}
+                                <option value="{{ department.department_code }}">{{ department.department_name }} ({{ department.department_code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="role" class="form-label">Select Your Role</label>
+                        <select name="role" id="role" class="form-control" required>
+                            <option value="" selected disabled>Choose your role</option>
+                            <option value="Teacher">Teacher</option>
+                            <option value="Scholar">Scholar</option>
+                            <option value="Department Staff">Department Staff</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Teacher-specific fields (hidden by default) -->
+                    <div id="teacher-fields" class="mb-4" style="display: none;">
+                        <div class="mb-3">
+                            <label for="position" class="form-label">Position/Designation</label>
+                            <select name="position" id="position" class="form-control">
+                                <option value="" disabled selected>Select Position</option>
+                                <option value="Professor">Professor</option>
+                                <option value="Associate Professor">Associate Professor</option>
+                                <option value="Assistant Professor">Assistant Professor</option>
+                                <option value="Lecturer">Lecturer</option>
+                                <option value="Researcher">Researcher</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="pan" class="form-label">PAN Number</label>
+                            <input type="text" name="pan" id="pan" class="form-control" 
+                                   placeholder="Enter 10-digit PAN" maxlength="10">
+                            <small class="text-muted">Must be exactly 10 characters</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-between mt-4">
+                        <button type="button" id="back-btn" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-2"></i> Back
+                        </button>
+                        <button type="submit" id="register-btn" class="btn btn-primary">
+                            <i class="fas fa-user-plus me-2"></i> Complete Registration
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p class="mb-0">&copy; 2025 Bharathiar University. All Rights Reserved. <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Form elements
+            const sendOtpBtn = document.getElementById('send-otp-btn');
+            const verifyOtpBtn = document.getElementById('verify-otp-btn');
+            const otpSection = document.getElementById('otp-section');
+            const otpStatus = document.getElementById('otp-status');
+            const continueBtn = document.getElementById('continue-btn');
+            const backBtn = document.getElementById('back-btn');
+            const registerBtn = document.getElementById('register-btn');
+            const emailInput = document.getElementById('email');
+            const fullNameInput = document.getElementById('full_name');
+            const step1 = document.getElementById('step1');
+            const step2 = document.getElementById('step2');
+            const step1Indicator = document.getElementById('step1-indicator');
+            const step2Indicator = document.getElementById('step2-indicator');
+            const roleSelect = document.getElementById('role');
+            const teacherFields = document.getElementById('teacher-fields');
+            const panInput = document.getElementById('pan');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirm_password');
+            const passwordMatch = document.getElementById('password-match');
+            const passwordStrengthBar = document.getElementById('password-strength-bar');
+            const step2FullName = document.getElementById('step2-full_name');
+            const step2Email = document.getElementById('step2-email');
+
+            // Email validation
+            emailInput.addEventListener('input', function() {
+                if (!this.value.includes('@')) {
+                    this.setCustomValidity('Please enter a valid email address');
+                } else {
+                    this.setCustomValidity('');
+                }
+            });
+
+            // Send OTP handler
+            sendOtpBtn.addEventListener('click', function () {
+                const email = emailInput.value.trim();
+                if (!email) {
+                    alert("Please enter your email address.");
+                    return;
+                }
+
+                // Show loading state
+                sendOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Sending...';
+                sendOtpBtn.disabled = true;
+
+                fetch("{% url 'send_otp' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify({ email: email })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        otpSection.style.display = 'block';
+                        otpStatus.innerHTML = '<span class="text-success"><i class="fas fa-check-circle me-1"></i> OTP sent to your email</span>';
+                        sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Resend OTP';
+                        // Enable OTP input field
+                        document.getElementById('otp').disabled = false;
+                    } else {
+                        otpStatus.innerHTML = `<span class="text-danger"><i class="fas fa-exclamation-circle me-1"></i> ${data.error || "Failed to send OTP"}</span>`;
+                        sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Send OTP';
+                    }
+                    sendOtpBtn.disabled = false;
+                })
+                .catch(error => {
+                    otpStatus.innerHTML = '<span class="text-danger"><i class="fas fa-exclamation-circle me-1"></i> Network error. Please try again.</span>';
+                    sendOtpBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Send OTP';
+                    sendOtpBtn.disabled = false;
+                });
+            });
+
+            // Verify OTP handler
+            verifyOtpBtn.addEventListener('click', function () {
+                const email = emailInput.value.trim();
+                const otp = document.getElementById('otp').value.trim();
+                
+                if (!otp || otp.length !== 6) {
+                    alert("Please enter a valid 6-digit OTP.");
+                    return;
+                }
+
+                // Show loading state
+                verifyOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Verifying...';
+                verifyOtpBtn.disabled = true;
+
+                fetch("{% url 'verify_otp' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify({ email: email, otp: otp })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        otpStatus.innerHTML = '<span class="text-success"><i class="fas fa-check-circle me-1"></i> Email verified successfully!</span>';
+                        continueBtn.disabled = false;
+                        verifyOtpBtn.innerHTML = '<i class="fas fa-check-circle me-1"></i> Verified';
+                        verifyOtpBtn.classList.remove('btn-outline-success');
+                        verifyOtpBtn.classList.add('btn-success');
+                        verifyOtpBtn.disabled = true;
+                        // Disable OTP input after verification
+                        document.getElementById('otp').disabled = true;
+                    } else {
+                        otpStatus.innerHTML = `<span class="text-danger"><i class="fas fa-exclamation-circle me-1"></i> ${data.error || "Invalid OTP"}</span>`;
+                        verifyOtpBtn.innerHTML = '<i class="fas fa-check-circle me-1"></i> Verify';
+                        verifyOtpBtn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    otpStatus.innerHTML = '<span class="text-danger"><i class="fas fa-exclamation-circle me-1"></i> Verification failed. Try again.</span>';
+                    verifyOtpBtn.innerHTML = '<i class="fas fa-check-circle me-1"></i> Verify';
+                    verifyOtpBtn.disabled = false;
+                });
+            });
+
+            // Continue to Step 2
+            continueBtn.addEventListener('click', function() {
+                // Validate required fields
+                if (!fullNameInput.value.trim()) {
+                    alert("Please enter your full name.");
+                    return;
+                }
+                
+                if (continueBtn.disabled) {
+                    alert("Please verify your email with OTP first.");
+                    return;
+                }
+                
+                // Transfer data to step 2
+                step2FullName.value = fullNameInput.value.trim();
+                step2Email.value = emailInput.value.trim();
+                
+                // Switch to step 2
+                step1.style.display = 'none';
+                step2.style.display = 'block';
+                step1Indicator.classList.remove('active');
+                step2Indicator.classList.add('active');
+            });
+
+            // Back to Step 1
+            backBtn.addEventListener('click', function() {
+                step2.style.display = 'none';
+                step1.style.display = 'block';
+                step2Indicator.classList.remove('active');
+                step1Indicator.classList.add('active');
+            });
+
+            // Teacher fields visibility toggle
+            roleSelect.addEventListener('change', function() {
+                if (this.value === 'Teacher') {
+                    teacherFields.style.display = 'block';
+                    document.getElementById('position').required = true;
+                    document.getElementById('pan').required = true;
+                } else {
+                    teacherFields.style.display = 'none';
+                    document.getElementById('position').required = false;
+                    document.getElementById('pan').required = false;
+                }
+            });
+            
+            // PAN number validation
+            if (panInput) {
+                panInput.addEventListener('input', function() {
+                    // Convert to uppercase and remove special characters
+                    this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                    // Limit to 10 characters
+                    if (this.value.length > 10) {
+                        this.value = this.value.slice(0, 10);
+                    }
+                });
+            }
+
+            // Password strength checker
+            passwordInput.addEventListener('input', function() {
+                const password = this.value;
+                let strength = 0;
+                
+                // Check length
+                const hasLength = password.length >= 8;
+                document.getElementById('length-requirement').className = hasLength ? 'valid' : 'invalid';
+                if (hasLength) strength += 25;
+                
+                // Check uppercase
+                const hasUpper = /[A-Z]/.test(password);
+                document.getElementById('uppercase-requirement').className = hasUpper ? 'valid' : 'invalid';
+                if (hasUpper) strength += 25;
+                
+                // Check numbers
+                const hasNumber = /[0-9]/.test(password);
+                document.getElementById('number-requirement').className = hasNumber ? 'valid' : 'invalid';
+                if (hasNumber) strength += 25;
+                
+                // Check special chars
+                const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+                document.getElementById('special-requirement').className = hasSpecial ? 'valid' : 'invalid';
+                if (hasSpecial) strength += 25;
+                
+                // Update strength bar
+                passwordStrengthBar.style.width = strength + '%';
+                
+                // Update color based on strength
+                if (strength < 50) {
+                    passwordStrengthBar.style.backgroundColor = '#dc3545'; // Red
+                } else if (strength < 75) {
+                    passwordStrengthBar.style.backgroundColor = '#fd7e14'; // Orange
+                } else {
+                    passwordStrengthBar.style.backgroundColor = '#28a745'; // Green
+                }
+                
+                // Check password match
+                checkPasswordMatch();
+            });
+
+            // Confirm password match
+            confirmPasswordInput.addEventListener('input', checkPasswordMatch);
+            
+            function checkPasswordMatch() {
+                if (passwordInput.value && confirmPasswordInput.value) {
+                    if (passwordInput.value !== confirmPasswordInput.value) {
+                        passwordMatch.style.display = 'block';
+                        return false;
+                    } else {
+                        passwordMatch.style.display = 'none';
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // Form submission validation
+            document.getElementById('registration-form-step2').addEventListener('submit', function(e) {
+                // Check password match
+                if (!checkPasswordMatch()) {
+                    e.preventDefault();
+                    alert('Passwords do not match.');
+                    return false;
+                }
+                
+                // Check password strength
+                const password = passwordInput.value;
+                if (password.length < 8) {
+                    e.preventDefault();
+                    alert('Password must be at least 8 characters long.');
+                    return false;
+                }
+                
+                // Teacher fields validation
+                if (roleSelect.value === 'Teacher') {
+                    const pan = document.getElementById('pan').value;
+                    if (pan.length !== 10) {
+                        e.preventDefault();
+                        alert('PAN number must be exactly 10 characters.');
+                        return false;
+                    }
+                    
+                    const position = document.getElementById('position').value;
+                    if (!position) {
+                        e.preventDefault();
+                        alert('Please select your position/designation.');
+                        return false;
+                    }
+                }
+                
+                // Show loading state on register button
+                registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
+                registerBtn.disabled = true;
+                
+                return true;
+            });
+
+            // Initialize role-based fields if page reloaded
+            if (roleSelect.value === 'Teacher') {
+                roleSelect.dispatchEvent(new Event('change'));
+            }
+
+            // Disable OTP input initially
+            document.getElementById('otp').disabled = true;
+        });
+    </script>
+</body>
+</html>

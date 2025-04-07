@@ -29,7 +29,7 @@
   }
 
   /* Action Buttons */
-  .btn-delete, .btn-edit {
+  .btn-delete, .btn-edit, .btn-view {
     padding: 6px 15px;
     text-transform: uppercase;
     border: 2px solid transparent;
@@ -53,7 +53,15 @@
     content: "✏️ ";
     margin-right: 3px;
   }
-  .btn-delete:hover, .btn-edit:hover,.btn-document:hover {
+  .btn-view {
+    background-color: #17a2b8;
+    color: #fff;
+  }
+  .btn-view::before {
+    content: "🔍 ";
+    margin-right: 3px;
+  }
+  .btn-delete:hover, .btn-edit:hover, .btn-document:hover, .btn-view:hover {
     border-color: #000;
   }
   .btn-add {
@@ -75,6 +83,34 @@
     justify-content: center;
     gap: 10px;
   }
+  .btn-search {
+    background-color: #0069d9;
+    color: white;
+  }
+  .btn-reset {
+    background-color: red;
+    color: white;
+  }
+  .btn-apply {
+    background-color: blue;
+    color: white;
+  }
+  .filter-container input,
+  .filter-container select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  #searchBar {
+    width: 250px;
+    font-size: 15px;
+    border-radius: 6px;
+  }
+  .dropdown.mb-3 {
+    align-self: flex-end;
+    margin-left: auto;
+  }
 </style>
 
 <div class="container mt-4">
@@ -83,13 +119,80 @@
     <a href="{% url 'add_research_grant' %}" class="btn btn-add">+ Add</a>
   </div>
 
+  <!-- Filter Block -->
+  <form method="GET" class="filter-container d-flex flex-wrap gap-3 align-items-end">
+    <!-- From Year Dropdown -->
+    <div class="mb-3 me-3">
+        <label for="fromYear">From Year:</label>
+        <select name="fromYear" id="fromYear" class="form-control">
+            <option value="">Select Year</option>
+            {% for year in year_range %}
+                <option value="{{ year }}" {% if from_year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- To Year Dropdown -->
+    <div class="mb-3 me-3">
+        <label for="toYear">To Year:</label>
+        <select name="toYear" id="toYear" class="form-control">
+            <option value="">Select Year</option>
+            {% for year in year_range %}
+                <option value="{{ year }}" {% if to_year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Department Filter -->
+    <div class="mb-3 me-3">
+        <label for="department">Department:</label>
+        <select name="department" id="department" class="form-control">
+            <option value="">All Departments</option>
+            {% for dept in departments %}
+                <option value="{{ dept.id }}" {% if department_filter == dept.id|stringformat:"s" %}selected{% endif %}>{{ dept.department_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Grant Type Filter -->
+    <div class="mb-3 me-3">
+        <label for="grantType">Grant Type:</label>
+        <select name="grantType" id="grantType" class="form-control">
+            <option value="">All Types</option>
+            <option value="Government" {% if grant_type_filter == "Government" %}selected{% endif %}>Government</option>
+            <option value="Non-Government" {% if grant_type_filter == "Non-Government" %}selected{% endif %}>Non-Government</option>
+        </select>
+    </div>
+
+    <!-- Apply and Reset Buttons -->
+    <div class="d-flex gap-2 mb-3 me-3">
+        <button type="submit" class="btn btn-apply">Apply</button>
+        <a href="{% url 'research_grants_list' %}" class="btn btn-reset">Reset</a>
+    </div>
+
+    <!-- Search Bar and Search Button -->
+    <div class="d-flex align-items-center flex-grow-1 gap-2 mb-3">
+        <label for="searchBar">Search:</label>
+        <input type="text" name="searchBar" id="searchBar" class="form-control flex-grow-1"
+               placeholder="Enter scheme or investigator name" value="{{ search_query }}">
+        <button type="submit" class="btn btn-search">Search</button>
+    </div>
+
+    <!-- Download Options -->
+    <div class="dropdown mb-3">
+      <button class="btn btn-info dropdown-toggle" type="button" data-bs-toggle="dropdown">Download</button>
+      <ul class="dropdown-menu">
+          <li><a class="dropdown-item" href="">Download Excel (All Fields)</a></li>
+          <li><a class="dropdown-item" href="">Download PDF (All Fields)</a></li>
+      </ul>
+    </div>
+  </form>
+
   <div class="table-responsive">
     <table class="table table-bordered">
       <thead>
         <tr>
-          <th>Name of the Scheme/Project
-          /Endowments/Chairs
-        </th>
+          <th>Name of the Scheme/Project/Endowments/Chairs</th>
           <th>Name of the Principal Investigator/Co Investigator</th>
           <th>Name of the Funding Agency</th>
           <th>Type (Government/Non-Government)</th>
@@ -280,4 +383,3 @@ function confirmDelete(event, deleteUrl) {
 </script>
 
 {% endblock %}
-

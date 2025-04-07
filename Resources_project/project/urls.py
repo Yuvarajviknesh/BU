@@ -2,7 +2,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("home/", views.home_view, name="home"),  # Home page
+    path('register/', views.register_user, name='register'),
+    path('send_otp/', views.send_otp, name='send_otp'),
+    path('verify_otp/', views.verify_otp, name='verify_otp'),
+    path('create_teacher_profile/', views.create_teacher_profile, name='create_teacher_profile'),
     path("user-login/", views.user_login, name="user_login"),
     path("", views.user_login, name="login"),  
     path("logout/", views.logout_view, name="logout"),  
@@ -10,6 +13,14 @@ urlpatterns = [
     path("department-dashboard/", views.department_dashboard, name="department_dashboard"),
     path("staff-dashboard/", views.staff_dashboard, name="staff_dashboard"),
     path("scholar-dashboard/", views.scholar_dashboard, name="scholar_dashboard"),
+    path('admin/reports/', views.admin_report_generator, name='generator'),
+    
+    
+
+    #admin block
+    path('admin-login/', views.admin_login, name='admin_login'),
+    path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('admin-logout/', views.admin_logout, name='admin_logout'),
 
     
 
@@ -174,7 +185,10 @@ urlpatterns = [
     path("download-pdf/", views.download_pdf, name="download_pdf"),
     path('programme/<int:programme_id>/pdf/', views.download_programme_pdf, name='download_programme_pdf'),
     path('programme/<int:id>/', views.view_programme, name='view_programme'),
-    path("courses/", views.view_courses, name="view_courses"),
+    path('courses/', views.view_courses, name='view_courses'),
+    path('courses/download/', views.view_courses, name='course_downloads'),
+   path('courses/download_excel/', views.view_courses, {'download': 'excel'}, name='download_excel'),
+   path('courses/download_pdf/', views.view_courses, {'download': 'pdf'}, name='download_pdf'),
      path("courses/add/", views.add_course, name="add_course"),
      path("courses/edit/<int:course_id>/", views.edit_course, name="edit_course"),
      path("courses/delete/<int:course_id>/", views.delete_course_view, name="delete_course"),

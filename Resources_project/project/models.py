@@ -4,6 +4,11 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+import random
+from django.utils.timezone import now
+from django.utils import timezone
+from datetime import timedelta
+import random
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -24,19 +29,71 @@ class Department(models.Model):
 
     def __str__(self):
         return self.department_name
-
 class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        primary_key=True  # This enforces one profile per user
+    )
+    department = models.ForeignKey(
+        Department,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
     is_teacher = models.BooleanField(default=False)
     is_scholar = models.BooleanField(default=False)
-    is_department_staff = models.BooleanField(default=False)  # New field added
+    is_department_staff = models.BooleanField(default=False)
 
-    def is_library_user(self):
-        return self.department and self.department.department_name.lower() == "library"
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user'],
+                name='unique_user_profile'
+            )
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.department.department_name if self.department else 'No Department'}"
+
+class Teacher(models.Model):
+    POSITION_CHOICES = [
+        ('Professor', 'Professor'),
+        ('Associate Professor', 'Associate Professor'),
+        ('Assistant Professor', 'Assistant Professor'),
+        ('Lecturer', 'Lecturer'),
+        ('Researcher', 'Researcher'),
+    ]
+    
+    user_profile = models.OneToOneField(
+        UserProfile,
+        on_delete=models.CASCADE,
+        related_name='teacher_profile'
+    )
+    position = models.CharField(max_length=50, choices=POSITION_CHOICES)
+    pan = models.CharField(max_length=10, unique=True)
+
+    def __str__(self):
+        return f"{self.user_profile.user.get_full_name()} - {self.position}"
+
+class OtpVerification(models.Model):
+    email = models.EmailField(unique=True)
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_verified = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timedelta(minutes=5)
+        super().save(*args, **kwargs)
+
+    def is_valid(self):
+        return timezone.now() < self.expires_at and not self.is_verified
+
+    def __str__(self):
+        return f"OTP for {self.email}"
+
 
 class DemandRatio(models.Model):
     department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="demand_ratios")
@@ -49,25 +106,6 @@ class DemandRatio(models.Model):
 
     def __str__(self):
         return f"{self.programme_name} - {self.academic_year}"
-
-
-class Teacher(models.Model):
-    user_profile = models.OneToOneField('UserProfile', on_delete=models.CASCADE)  # One-to-One with UserProfile
-    position = models.CharField(
-        max_length=100,
-        choices=[
-            ('Professor', 'Professor'),
-            ('Associate Professor', 'Associate Professor'),
-            ('Assistant Professor', 'Assistant Professor'),
-            ('Lecturer', 'Lecturer'),
-            ('Researcher', 'Researcher'),
-        ],
-        verbose_name="Designation",
-    )
-    pan = models.CharField(max_length=10, verbose_name="PAN", unique=True)  # Unique PAN
-    def __str__(self):
-        return f"{self.user_profile.user.username} - {self.position}"
-
 
 class ICTFacility(models.Model):
     department = models.ForeignKey(Department, on_delete=models.CASCADE)

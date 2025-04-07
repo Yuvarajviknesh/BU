@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0 text-center">
+                        <i class="fas fa-chalkboard-teacher me-2"></i>Teacher Profile
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Position Field -->
+                        <div class="mb-4">
+                            <label for="position" class="form-label fw-bold text-primary">
+                                <i class="fas fa-user-tie me-2"></i>Position
+                            </label>
+                            <select name="position" id="position" class="form-select form-control-lg" required>
+                                <option value="" disabled selected>Select your position</option>
+                                <option value="Professor">Professor</option>
+                                <option value="Associate Professor">Associate Professor</option>
+                                <option value="Assistant Professor">Assistant Professor</option>
+                                <option value="Lecturer">Lecturer</option>
+                                <option value="Researcher">Researcher</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select your position
+                            </div>
+                        </div>
+                        
+                        <!-- PAN Field -->
+                        <div class="mb-4">
+                            <label for="pan" class="form-label fw-bold text-primary">
+                                <i class="fas fa-id-card me-2"></i>PAN Number
+                            </label>
+                            <input type="text" name="pan" id="pan" 
+                                   class="form-control form-control-lg" 
+                                   pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" 
+                                   title="Please enter a valid PAN (e.g., ABCDE1234F)"
+                                   required>
+                            <div class="invalid-feedback">
+                                Please enter a valid PAN number (Format: ABCDE1234F)
+                            </div>
+                            <small class="form-text text-muted">
+                                Format: 5 letters, 4 digits, 1 letter (e.g., ABCDE1234F)
+                            </small>
+                        </div>
+                        
+                        <!-- Additional Fields (Example) -->
+                        <div class="mb-4">
+                            <label for="specialization" class="form-label fw-bold text-primary">
+                                <i class="fas fa-graduation-cap me-2"></i>Specialization
+                            </label>
+                            <input type="text" name="specialization" id="specialization" 
+                                   class="form-control form-control-lg" 
+                                   placeholder="Enter your area of specialization">
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i>Save Profile
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Additional Help Section -->
+            <div class="card mt-4 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">
+                        <i class="fas fa-question-circle me-2"></i>Need Help?
+                    </h5>
+                    <p class="card-text">
+                        Contact the administration office if you need assistance with your profile.
+                    </p>
+                    <a href="mailto:support@university.edu" class="btn btn-outline-primary">
+                        <i class="fas fa-envelope me-2"></i>Contact Support
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Client-side Validation Script -->
+<script>
+// Example starter JavaScript for disabling form submissions if there are invalid fields
+(function () {
+    'use strict'
+    
+    // Fetch all the forms we want to apply custom Bootstrap validation styles to
+    var forms = document.querySelectorAll('.needs-validation')
+    
+    // Loop over them and prevent submission
+    Array.prototype.slice.call(forms)
+        .forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+                
+                form.classList.add('was-validated')
+            }, false)
+        })
+})()
+</script>
+
+<style>
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .form-control-lg, .form-select-lg {
+        padding: 0.75rem 1.25rem;
+        font-size: 1.05rem;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .text-primary {
+        color: #002d6b !important;
+    }
+    
+    .bg-primary {
+        background-color: #002d6b !important;
+    }
+    
+    .btn-primary {
+        background-color: #002d6b;
+        border-color: #002d6b;
+    }
+    
+    .btn-primary:hover {
+        background-color: #f4a641;
+        border-color: #f4a641;
+    }
+    
+    .btn-outline-primary {
+        color: #002d6b;
+        border-color: #002d6b;
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: #002d6b;
+        color: white;
+    }
+</style>
+{% endblock %}

@@ -21,11 +21,12 @@ import project.urls
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import redirect
+from django.conf.urls.i18n import set_language
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', lambda request: redirect('resource_management/', permanent=True)), 
-    path('resource_management/',include(project.urls),)
+    path('resource_management/',include(project.urls),),
+    path('i18n/setlang/', set_language, name='set_language'),
 ]
 
 if settings.DEBUG:

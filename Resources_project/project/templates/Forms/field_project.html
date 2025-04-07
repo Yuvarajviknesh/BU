@@ -53,11 +53,55 @@
 </style>
 
 <div class="container mt-4">
-  <h2 class="mb-4">Field Project / Research Project / Internship Records</h2>
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <a href="" class="btn btn-success">⬇️ Download Excel</a>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Field Project / Research Project / Internship Records</h2>
     <a href="{% url 'add_student_project' %}" class="btn btn-add">+ Add New Record</a>
   </div>
+  <form method="GET" class="filter-container d-flex flex-wrap gap-3 align-items-end">
+    <!-- From Year Dropdown -->
+    <div class="mb-3 me-3">
+        <label for="fromYear">From Year:</label>
+        <select name="fromYear" id="fromYear" class="form-control">
+            <option value="">Select Year</option>
+            {% for year in year_range %}
+                <option value="{{ year }}" {% if from_year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- To Year Dropdown -->
+    <div class="mb-3 me-3">
+        <label for="toYear">To Year:</label>
+        <select name="toYear" id="toYear" class="form-control">
+            <option value="">Select Year</option>
+            {% for year in year_range %}
+                <option value="{{ year }}" {% if to_year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <!-- Apply and Reset Buttons -->
+    <div class="d-flex gap-2 mb-3 me-3">
+        <button type="submit" class="btn btn-apply" style="background-color: blue; border-color: blue;">Apply</button>
+        <a href="{% url 'student_project_list' %}" class="btn btn-reset" style="background-color: red; border-color: red; color: white;">Reset</a>
+    </div>
+
+    <!-- Search Bar and Search Button -->
+    <div class="d-flex align-items-center flex-grow-1 gap-2 mb-3">
+        <label for="searchBar">Search:</label>
+        <input type="text" name="searchBar" id="searchBar" class="form-control flex-grow-1"
+               placeholder="Enter programme name">
+        <button type="submit" class="btn btn-search" style="background-color: #0069d9; border-color: #0069d9;">Search</button>
+    </div>
+
+    <!-- Download Options -->
+    <div class="dropdown mb-3">
+        <button class="btn btn-info dropdown-toggle" type="button" data-bs-toggle="dropdown">Download</button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="">Download Excel</a></li>
+            <li><a class="dropdown-item" href="">Download PDF</a></li>
+        </ul>
+    </div>
+</form>
   <div class="table-responsive">
     <table class="table table-bordered project-table">
       <thead>
@@ -85,6 +129,10 @@
             {% endif %}
           </td>
           <td>
+             <!-- View Button-->
+             <a href="" class="btn btn-view">
+              <span>🔍</span> View
+          </a>
             <button 
                 class="btn btn-sm btn-edit" 
                 data-bs-toggle="modal" 

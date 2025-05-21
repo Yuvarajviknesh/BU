@@ -142,9 +142,9 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'fortunedragonyt@gmail.com'  # Your full Gmail address
-EMAIL_HOST_PASSWORD = 'prkv vqqc eopm outo'  # Your 16-character App Password
-DEFAULT_FROM_EMAIL = 'fortunedragonyt@gmail.com'  # Should match EMAIL_HOST_USER
+EMAIL_HOST_USER = ''  # Your full Gmail address
+EMAIL_HOST_PASSWORD = ''  # Your 16-character App Password
+DEFAULT_FROM_EMAIL = ''  # Should match EMAIL_HOST_USER
 
 from django.utils.translation import gettext_lazy as _
 
